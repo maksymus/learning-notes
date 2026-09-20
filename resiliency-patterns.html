@@ -1,0 +1,2105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resiliency Patterns — Comprehensive Course</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.7; color: #1a1a1a; background: #fff; }
+  .cover { page-break-after: always; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%); color: white; text-align: center; padding: 60px; }
+  .cover h1 { font-size: 64px; font-weight: 900; letter-spacing: -2px; margin-bottom: 16px; background: linear-gradient(90deg, #00d2ff, #7b2ff7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .cover h2 { font-size: 24px; font-weight: 300; color: #a0a0b0; margin-bottom: 40px; }
+  .cover .subtitle { font-size: 16px; color: #606080; border-top: 1px solid #333; padding-top: 24px; }
+  .toc { page-break-after: always; padding: 60px; max-width: 900px; margin: 0 auto; }
+  .toc h2 { font-size: 32px; margin-bottom: 32px; color: #0a0a2e; border-bottom: 3px solid #00d2ff; padding-bottom: 12px; }
+  .toc ol { list-style: none; counter-reset: toc-counter; }
+  .toc > ol > li { counter-increment: toc-counter; margin-bottom: 12px; }
+  .toc > ol > li::before { content: counter(toc-counter) ". "; font-weight: bold; color: #7b2ff7; }
+  .toc a { text-decoration: none; color: #1a1a1a; font-size: 15px; }
+  .toc a:hover { color: #7b2ff7; text-decoration: underline; }
+  .toc ul { margin-left: 28px; margin-top: 6px; }
+  .toc ul li { margin-bottom: 4px; list-style: disc; font-size: 13px; color: #555; }
+  .chapter { page-break-before: always; padding: 60px; max-width: 900px; margin: 0 auto; }
+  .chapter-header { background: linear-gradient(135deg, #0a0a2e, #1a1a4e); color: white; padding: 40px; margin: -60px -60px 40px -60px; }
+  .chapter-header .chapter-num { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: #00d2ff; margin-bottom: 8px; }
+  .chapter-header h2 { font-size: 36px; font-weight: 800; }
+  h3 { font-size: 22px; margin: 36px 0 14px; color: #0a0a2e; border-left: 4px solid #7b2ff7; padding-left: 12px; }
+  h4 { font-size: 17px; margin: 24px 0 10px; color: #1a1a4e; }
+  p { margin-bottom: 14px; color: #2a2a2a; }
+  pre { background: #0d1117; color: #e6edf3; padding: 20px 24px; border-radius: 8px; overflow-x: auto; margin: 16px 0 24px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; border-left: 4px solid #00d2ff; }
+  code { font-family: 'Courier New', monospace; font-size: 13px; }
+  .inline-code { background: #f0f0f8; padding: 2px 6px; border-radius: 3px; color: #7b2ff7; font-family: 'Courier New', monospace; font-size: 12px; }
+  .tip { background: #e8f4fd; border-left: 4px solid #0077cc; padding: 14px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; }
+  .tip strong { color: #0077cc; }
+  .warning { background: #fff8e1; border-left: 4px solid #f59e0b; padding: 14px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; }
+  .warning strong { color: #d97706; }
+  .key-concept { background: #f5f0ff; border: 1px solid #c4b5fd; padding: 16px 20px; margin: 16px 0; border-radius: 8px; }
+  .key-concept h5 { color: #7b2ff7; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  ul, ol { margin: 10px 0 16px 28px; }
+  li { margin-bottom: 5px; }
+  .go-keyword { color: #ff7b72; }
+  .go-string { color: #a5d6ff; }
+  .go-type { color: #ffa657; }
+  .go-func { color: #d2a8ff; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; }
+  th { background: #1a1a2e; color: #fff; padding: 10px 14px; text-align: left; }
+  td { padding: 9px 14px; border-bottom: 1px solid #e0e0f0; }
+  tr:nth-child(even) { background: #f8f8ff; }
+  tbody tr:hover { background: #ededff !important; }
+  .section-break { border: none; border-top: 2px dashed #e0e0f0; margin: 32px 0; }
+
+  /* ── Progress bar ── */
+  #progress-bar { position: fixed; top: 0; left: 0; height: 3px; width: 0%; background: linear-gradient(90deg, #00d2ff, #7b2ff7); z-index: 2000; pointer-events: none; }
+
+  /* ── Sidebar navigation ── */
+  #sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 256px;
+    background: #080818; border-right: 1px solid rgba(255,255,255,0.07);
+    overflow-y: auto; z-index: 1000;
+    display: flex; flex-direction: column;
+    scrollbar-width: thin; scrollbar-color: #333355 transparent;
+  }
+  #sidebar::-webkit-scrollbar { width: 4px; }
+  #sidebar::-webkit-scrollbar-track { background: transparent; }
+  #sidebar::-webkit-scrollbar-thumb { background: #333355; border-radius: 2px; }
+
+  #sidebar-logo {
+    padding: 18px 16px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  #sidebar-logo a {
+    text-decoration: none;
+    font-size: 15px; font-weight: 800; letter-spacing: -0.3px;
+    background: linear-gradient(90deg, #00d2ff, #7b2ff7);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  #sidebar-close {
+    display: none; background: none; border: none; color: #666; font-size: 20px;
+    cursor: pointer; padding: 0 4px; line-height: 1;
+  }
+
+  #sidebar-body { padding: 8px 0 24px; flex: 1; }
+
+  .nav-ch { margin-bottom: 2px; }
+  .nav-ch-btn {
+    width: 100%; background: none; border: none; cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 14px 7px 12px;
+    color: #8888aa; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    transition: color 0.15s, background 0.15s;
+    border-left: 3px solid transparent;
+    text-align: left;
+  }
+  .nav-ch-btn:hover { color: #ccd0e0; background: rgba(255,255,255,0.04); }
+  .nav-ch-btn.active { color: #fff; border-left-color: #00d2ff; background: rgba(0,210,255,0.06); }
+  .nav-ch-num { font-size: 10px; color: #00d2ff; min-width: 18px; }
+  .nav-ch-btn.active .nav-ch-num { color: #00d2ff; }
+  .nav-ch-label { flex: 1; }
+  .nav-ch-arrow {
+    font-size: 10px; color: #555577; transition: transform 0.2s;
+    transform: rotate(0deg);
+  }
+  .nav-ch.open .nav-ch-arrow { transform: rotate(90deg); }
+
+  .nav-sections {
+    list-style: none; margin: 0; padding: 0 0 4px 0;
+    max-height: 0; overflow: hidden; transition: max-height 0.25s ease;
+  }
+  .nav-ch.open .nav-sections { max-height: 600px; }
+
+  .nav-sections li a {
+    display: block; text-decoration: none;
+    padding: 5px 14px 5px 38px;
+    color: #60607a; font-size: 12px; line-height: 1.4;
+    transition: color 0.15s, background 0.15s;
+    border-left: 2px solid transparent; margin-left: 10px;
+  }
+  .nav-sections li a:hover { color: #b0b0cc; background: rgba(255,255,255,0.04); }
+  .nav-sections li a.active {
+    color: #e0e0ff;
+    background: rgba(255,255,255,0.06);
+    border-left-color: currentColor;
+  }
+  .nav-sections li a .sec-num { color: #555577; font-size: 10px; margin-right: 5px; font-family: 'Courier New', monospace; }
+  .nav-sections li a.active .sec-num { color: #00d2ff; }
+
+  /* Per-chapter active accent colors in sidebar */
+  #nav-ch1 .nav-ch-btn.active { border-left-color: #00b894; background: rgba(0,184,148,0.06); }
+  #nav-ch2 .nav-ch-btn.active { border-left-color: #e17055; background: rgba(225,112,85,0.06); }
+  #nav-ch3 .nav-ch-btn.active { border-left-color: #27ae60; background: rgba(39,174,96,0.06); }
+  #nav-ch4 .nav-ch-btn.active { border-left-color: #e84393; background: rgba(232,67,147,0.06); }
+  #nav-ch5 .nav-ch-btn.active { border-left-color: #6c5ce7; background: rgba(108,92,231,0.06); }
+  #nav-ch6 .nav-ch-btn.active { border-left-color: #f39c12; background: rgba(243,156,18,0.06); }
+  #nav-ch1 .nav-sections li a.active { border-left-color: #00b894; }
+  #nav-ch2 .nav-sections li a.active { border-left-color: #e17055; }
+  #nav-ch3 .nav-sections li a.active { border-left-color: #27ae60; }
+  #nav-ch4 .nav-sections li a.active { border-left-color: #e84393; }
+  #nav-ch5 .nav-sections li a.active { border-left-color: #6c5ce7; }
+  #nav-ch6 .nav-sections li a.active { border-left-color: #f39c12; }
+
+  /* ── Layout: main content offset by sidebar ── */
+  body { padding-left: 256px; padding-top: 3px; }
+
+  /* ── Mobile: hamburger toggle ── */
+  #nav-toggle {
+    display: none; position: fixed; top: 10px; left: 10px; z-index: 1100;
+    background: rgba(8,8,24,0.92); border: 1px solid rgba(255,255,255,0.15);
+    color: #a0a0c0; font-size: 16px; width: 36px; height: 36px;
+    border-radius: 6px; cursor: pointer; backdrop-filter: blur(6px);
+  }
+  #sidebar-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    z-index: 999; backdrop-filter: blur(2px);
+  }
+
+  @media (max-width: 768px) {
+    body { padding-left: 0; padding-top: 0; }
+    #sidebar { transform: translateX(-100%); transition: transform 0.25s ease; box-shadow: 4px 0 24px rgba(0,0,0,0.5); }
+    #sidebar.open { transform: translateX(0); }
+    #nav-toggle { display: flex; align-items: center; justify-content: center; }
+    #sidebar-close { display: block; }
+    #sidebar-overlay.open { display: block; }
+  }
+
+  /* ── Per-chapter accent colors ── */
+  #ch1 .chapter-header { background: linear-gradient(135deg, #002e2e 0%, #004d40 100%); }
+  #ch1 .chapter-header .chapter-num { color: #00cec9; }
+  #ch1 h3 { border-left-color: #00b894; color: #003333; }
+  #ch2 .chapter-header { background: linear-gradient(135deg, #2d1200 0%, #4d2200 100%); }
+  #ch2 .chapter-header .chapter-num { color: #fdcb6e; }
+  #ch2 h3 { border-left-color: #e17055; color: #2d1200; }
+  #ch3 .chapter-header { background: linear-gradient(135deg, #0a2e14 0%, #1a4a2a 100%); }
+  #ch3 .chapter-header .chapter-num { color: #55efc4; }
+  #ch3 h3 { border-left-color: #27ae60; color: #0a2a14; }
+  #ch4 .chapter-header { background: linear-gradient(135deg, #2d0018 0%, #4a0028 100%); }
+  #ch4 .chapter-header .chapter-num { color: #fd79a8; }
+  #ch4 h3 { border-left-color: #e84393; color: #2d0018; }
+  #ch5 .chapter-header { background: linear-gradient(135deg, #0d0a2e 0%, #1e1460 100%); }
+  #ch5 .chapter-header .chapter-num { color: #a29bfe; }
+  #ch5 h3 { border-left-color: #6c5ce7; color: #0d0a30; }
+  #ch6 .chapter-header { background: linear-gradient(135deg, #2d1a00 0%, #4a2e00 100%); }
+  #ch6 .chapter-header .chapter-num { color: #ffeaa7; }
+  #ch6 h3 { border-left-color: #f39c12; color: #2d1a00; }
+
+  /* ── Code block header (badge + copy) ── */
+  .code-wrap { position: relative; margin: 16px 0 24px; }
+  .code-wrap pre { margin: 0; border-radius: 0 0 8px 8px; border-top: none; }
+  .code-header { display: flex; align-items: center; justify-content: space-between; background: #161b22; border-radius: 8px 8px 0 0; padding: 6px 14px; border: 1px solid #21262d; border-bottom: 1px solid #0d1117; }
+  .lang-badge { font-family: 'Courier New', monospace; font-size: 11px; font-weight: 700; color: #79c0ff; letter-spacing: 0.5px; }
+  .copy-btn { font-family: system-ui, sans-serif; font-size: 11px; color: #8b949e; background: none; border: 1px solid #30363d; border-radius: 4px; padding: 2px 9px; cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+  .copy-btn:hover { color: #e6edf3; border-color: #8b949e; }
+  .copy-btn.copied { color: #3fb950; border-color: #3fb950; }
+
+  /* ── Back-to-top ── */
+  #back-to-top { position: fixed; bottom: 28px; right: 28px; width: 40px; height: 40px; border-radius: 50%; background: rgba(10,10,30,0.85); border: 1px solid rgba(255,255,255,0.15); color: #a0a0c0; font-size: 18px; line-height: 40px; text-align: center; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.25s, background 0.2s; z-index: 990; backdrop-filter: blur(6px); }
+  #back-to-top.visible { opacity: 1; pointer-events: auto; }
+  #back-to-top:hover { background: rgba(30,30,60,0.95); color: #fff; }
+
+  /* ── Section number inside h3 ── */
+  .section-num { font-family: 'Courier New', monospace; font-size: 0.68em; font-weight: 400; color: #aaa; letter-spacing: 0; margin-right: 7px; vertical-align: middle; }
+
+  /* ── Key-concept icon ── */
+  .key-concept h5::before { content: "▸ "; color: #9b72ff; }
+
+  /* ── Chapter summary card ── */
+  .chapter-summary { background: #0d1117; color: #e6edf3; border-radius: 10px; padding: 24px 28px; margin: 40px 0 0; }
+  .chapter-summary h5 { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #8b949e; margin-bottom: 16px; font-family: system-ui, sans-serif; }
+  .chapter-summary ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
+  .chapter-summary ul li { font-size: 13px; color: #c9d1d9; padding-left: 16px; position: relative; line-height: 1.5; }
+  .chapter-summary ul li::before { content: "→"; position: absolute; left: 0; color: #00d2ff; font-size: 11px; top: 3px; }
+  #ch1 .chapter-summary ul li::before { color: #00b894; }
+  #ch2 .chapter-summary ul li::before { color: #e17055; }
+  #ch3 .chapter-summary ul li::before { color: #27ae60; }
+  #ch4 .chapter-summary ul li::before { color: #e84393; }
+  #ch5 .chapter-summary ul li::before { color: #6c5ce7; }
+  #ch6 .chapter-summary ul li::before { color: #f39c12; }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+<button id="back-to-top" title="Back to top">↑</button>
+<button id="nav-toggle" title="Open navigation">☰</button>
+<div id="sidebar-overlay"></div>
+
+<nav id="sidebar">
+  <div id="sidebar-logo">
+    <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Resiliency Patterns</a>
+    <button id="sidebar-close" title="Close">×</button>
+  </div>
+  <div id="sidebar-body">
+
+    <div class="nav-ch open" id="nav-ch1">
+      <button class="nav-ch-btn" data-ch="ch1">
+        <span class="nav-ch-num">01</span>
+        <span class="nav-ch-label">Failure &amp; Principles</span>
+        <span class="nav-ch-arrow">›</span>
+      </button>
+      <ul class="nav-sections">
+        <li><a href="#s1-1"><span class="sec-num">1.1</span>Distributed Systems &amp; Partial Failure</a></li>
+        <li><a href="#s1-2"><span class="sec-num">1.2</span>The CAP Theorem &amp; PACELC</a></li>
+        <li><a href="#s1-3"><span class="sec-num">1.3</span>SLA, SLO, SLI &amp; the Nines</a></li>
+        <li><a href="#s1-4"><span class="sec-num">1.4</span>Failures &amp; Data Integrity</a></li>
+        <li><a href="#s1-5"><span class="sec-num">1.5</span>Durability: WAL, Replication, Idempotency</a></li>
+        <li><a href="#s1-6"><span class="sec-num">1.6</span>BigTech Incidents &amp; Lessons</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch2">
+      <button class="nav-ch-btn" data-ch="ch2">
+        <span class="nav-ch-num">02</span>
+        <span class="nav-ch-label">Errors &amp; Transient Faults</span>
+        <span class="nav-ch-arrow">›</span>
+      </button>
+      <ul class="nav-sections">
+        <li><a href="#s2-1"><span class="sec-num">2.1</span>Retries Done Right</a></li>
+        <li><a href="#s2-2"><span class="sec-num">2.2</span>Backoff &amp; Jitter</a></li>
+        <li><a href="#s2-3"><span class="sec-num">2.3</span>Idempotency &amp; Hedging</a></li>
+        <li><a href="#s2-4"><span class="sec-num">2.4</span>Timeouts, Deadlines &amp; Cancellation</a></li>
+        <li><a href="#s2-5"><span class="sec-num">2.5</span>The Circuit Breaker</a></li>
+        <li><a href="#s2-6"><span class="sec-num">2.6</span>Graceful Degradation &amp; Fallback</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch3">
+      <button class="nav-ch-btn" data-ch="ch3">
+        <span class="nav-ch-num">03</span>
+        <span class="nav-ch-label">Load Control &amp; Balancing</span>
+        <span class="nav-ch-arrow">›</span>
+      </button>
+      <ul class="nav-sections">
+        <li><a href="#s3-1"><span class="sec-num">3.1</span>Resource Isolation &amp; Bulkhead</a></li>
+        <li><a href="#s3-2"><span class="sec-num">3.2</span>Rate Limiting In Depth</a></li>
+        <li><a href="#s3-3"><span class="sec-num">3.3</span>Single Flight</a></li>
+        <li><a href="#s3-4"><span class="sec-num">3.4</span>Backpressure &amp; Load Shedding</a></li>
+        <li><a href="#s3-5"><span class="sec-num">3.5</span>Load Balancing &amp; Health Checks</a></li>
+        <li><a href="#s3-6"><span class="sec-num">3.6</span>Deploy Strategies &amp; Rollback</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch4">
+      <button class="nav-ch-btn" data-ch="ch4">
+        <span class="nav-ch-num">04</span>
+        <span class="nav-ch-label">Async &amp; Queues</span>
+        <span class="nav-ch-arrow">›</span>
+      </button>
+      <ul class="nav-sections">
+        <li><a href="#s4-1"><span class="sec-num">4.1</span>Brokers: Kafka vs RabbitMQ</a></li>
+        <li><a href="#s4-2"><span class="sec-num">4.2</span>Delivery Guarantees</a></li>
+        <li><a href="#s4-3"><span class="sec-num">4.3</span>Distributed Transactions: SAGA vs 2PC</a></li>
+        <li><a href="#s4-4"><span class="sec-num">4.4</span>Reliable Producing &amp; Outbox</a></li>
+        <li><a href="#s4-5"><span class="sec-num">4.5</span>Reliable Consuming &amp; Inbox</a></li>
+        <li><a href="#s4-6"><span class="sec-num">4.6</span>Dead Letter Queues</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch5">
+      <button class="nav-ch-btn" data-ch="ch5">
+        <span class="nav-ch-num">05</span>
+        <span class="nav-ch-label">The Caching Layer</span>
+        <span class="nav-ch-arrow">›</span>
+      </button>
+      <ul class="nav-sections">
+        <li><a href="#s5-1"><span class="sec-num">5.1</span>Stale Data, TTL &amp; Invalidation</a></li>
+        <li><a href="#s5-2"><span class="sec-num">5.2</span>Cache Consistency</a></li>
+        <li><a href="#s5-3"><span class="sec-num">5.3</span>Thundering Herd</a></li>
+        <li><a href="#s5-4"><span class="sec-num">5.4</span>Cache Avalanche &amp; Penetration</a></li>
+        <li><a href="#s5-5"><span class="sec-num">5.5</span>Eviction Strategies</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch6">
+      <button class="nav-ch-btn" data-ch="ch6">
+        <span class="nav-ch-num">06</span>
+        <span class="nav-ch-label">Detection &amp; Response</span>
+        <span class="nav-ch-arrow">›</span>
+      </button>
+      <ul class="nav-sections">
+        <li><a href="#s6-1"><span class="sec-num">6.1</span>Incident Management &amp; Observability</a></li>
+        <li><a href="#s6-2"><span class="sec-num">6.2</span>Monitoring Synchronous Calls</a></li>
+        <li><a href="#s6-3"><span class="sec-num">6.3</span>Monitoring Async Pipelines</a></li>
+        <li><a href="#s6-4"><span class="sec-num">6.4</span>Alerting &amp; On-Call</a></li>
+        <li><a href="#s6-5"><span class="sec-num">6.5</span>Manual Recovery</a></li>
+      </ul>
+    </div>
+
+  </div>
+</nav>
+
+<!-- COVER -->
+<div class="cover">
+  <div>
+    <h1>Resiliency Patterns</h1>
+    <h2>Building Fault-Tolerant Microservices</h2>
+    <div style="font-size: 72px; margin: 32px 0;">🛡️</div>
+    <p style="color: #808090; font-size: 15px; max-width: 480px; margin: 0 auto 40px;">
+      From the CAP theorem and the nines of availability to circuit breakers, outbox patterns,
+      cache stampedes, and incident response — everything you need to keep distributed systems
+      standing when the network, the database, and your neighbours all fail at once.
+    </p>
+    <div class="subtitle">
+      6 Chapters · Production Patterns · Real-World Incidents
+    </div>
+  </div>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#ch1">Failure &amp; the Principles of Fault Tolerance</a>
+      <ul>
+        <li>Distributed systems, partial failure, cascading failure</li>
+        <li>CAP theorem, PACELC, choosing two of three</li>
+        <li>SLA / SLO / SLI and what "99.9%" really buys you</li>
+        <li>Data integrity, idempotency, split-brain, quorum</li>
+        <li>WAL, Kafka replication factor, duplicate payments</li>
+        <li>GitHub, AWS us-east-1, Facebook, GitLab post-mortems</li>
+      </ul>
+    </li>
+    <li><a href="#ch2">Handling Errors &amp; Transient Failures</a>
+      <ul>
+        <li>Smart retries: what to retry and what never to</li>
+        <li>Exponential backoff and the four kinds of jitter</li>
+        <li>Idempotent requests and request hedging</li>
+        <li>Timeouts, deadlines, cancellation propagation</li>
+        <li>Circuit breakers: closed / open / half-open</li>
+        <li>Graceful degradation and fallback</li>
+      </ul>
+    </li>
+    <li><a href="#ch3">Load Control &amp; Balancing</a>
+      <ul>
+        <li>Bulkheads, process and physical isolation</li>
+        <li>Rate limiting: token bucket, leaky bucket, sliding window</li>
+        <li>Single flight as a request collapser</li>
+        <li>Backpressure and load shedding</li>
+        <li>Balancing algorithms, active/passive health checks, nginx</li>
+        <li>Deploy strategies: blue-green, canary, rollback</li>
+      </ul>
+    </li>
+    <li><a href="#ch4">Asynchronous Communication &amp; Queues</a>
+      <ul>
+        <li>Kafka vs RabbitMQ, buffering, load levelling</li>
+        <li>At-most / at-least / exactly-once delivery</li>
+        <li>Distributed transactions: SAGA vs 2PC</li>
+        <li>Producer acks, the transactional outbox</li>
+        <li>Offsets, manual commit, the inbox pattern</li>
+        <li>Dead letter queues and poison messages</li>
+      </ul>
+    </li>
+    <li><a href="#ch5">The Caching Layer in High-Availability Systems</a>
+      <ul>
+        <li>Stale data, TTL, active and event-driven invalidation</li>
+        <li>Consistency: write-through, CAS, versioning</li>
+        <li>Thundering herd and single flight</li>
+        <li>Cache avalanche, penetration, random TTL &amp; jitter</li>
+        <li>Eviction: LRU, LFU, MRU, FIFO, Random</li>
+      </ul>
+    </li>
+    <li><a href="#ch6">Failure Detection &amp; Response</a>
+      <ul>
+        <li>Incident management, the coordinator role, business metrics</li>
+        <li>Synchronous: response time, error rates, saturation</li>
+        <li>Asynchronous: consumer lag, partition skew</li>
+        <li>Alerting that shortens time-to-recovery</li>
+        <li>Manual offset and consumer-group surgery</li>
+      </ul>
+    </li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 1 -->
+<!-- ============================================================ -->
+<div class="chapter" id="ch1">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 01</div>
+    <h2>Failure &amp; the Principles of Fault Tolerance</h2>
+  </div>
+
+  <p>A single process running on one machine has a simple failure model: it is either up or down.
+  The moment you split that process into services talking over a network, you inherit a far richer —
+  and far nastier — set of failure modes. This chapter builds the mental model the rest of the course
+  rests on: what <em>partial failure</em> means, what the CAP theorem actually constrains, how to put a
+  number on reliability, and how failures threaten not just availability but the <strong>correctness of
+  your data</strong>.</p>
+
+  <h3 id="s1-1">1.1 Distributed Systems &amp; Partial Failure</h3>
+  <p>Leslie Lamport's definition still lands: <em>"A distributed system is one in which the failure of a
+  computer you didn't even know existed can render your own computer unusable."</em> The defining property
+  is <strong>partial failure</strong> — some components are working while others are not, and crucially
+  <strong>you cannot reliably tell which</strong>.</p>
+  <p>When you call a remote service and the call times out, you genuinely do not know whether:</p>
+  <ul>
+    <li>The request never arrived (network dropped it on the way out).</li>
+    <li>The request arrived, was processed, and the <em>response</em> was lost on the way back.</li>
+    <li>The peer is alive but slow, and the work is still running.</li>
+    <li>The peer crashed mid-operation, leaving partial state behind.</li>
+  </ul>
+  <p>This ambiguity is the root of most resiliency complexity. A retry is safe in case (1) and dangerous in
+  case (2). The <strong>two generals problem</strong> proves that no protocol over an unreliable channel can
+  guarantee both sides agree to act — which is why we reach for idempotency and timeouts rather than perfect
+  coordination.</p>
+
+  <div class="key-concept">
+    <h5>Reliability vs Availability vs Fault Tolerance</h5>
+    <p><strong>Reliability</strong> is the probability the system performs correctly over a time interval (MTBF — mean time between failures). <strong>Availability</strong> is the fraction of time it is usable (a function of MTBF and MTTR — mean time to recovery). <strong>Fault tolerance</strong> is the system's ability to <em>keep operating correctly despite</em> faults. A system can be highly available but unreliable (up, but returning wrong answers), so the three are not interchangeable.</p>
+  </div>
+
+  <h4>The fallacies of distributed computing</h4>
+  <p>Peter Deutsch's eight fallacies are assumptions engineers keep making and keep regretting:</p>
+  <ol>
+    <li>The network is reliable.</li>
+    <li>Latency is zero.</li>
+    <li>Bandwidth is infinite.</li>
+    <li>The network is secure.</li>
+    <li>Topology doesn't change.</li>
+    <li>There is one administrator.</li>
+    <li>Transport cost is zero.</li>
+    <li>The network is homogeneous.</li>
+  </ol>
+
+  <h4>Cascading failures</h4>
+  <p>A <strong>cascading failure</strong> is when the failure of one component overloads the others until the
+  whole system collapses. The classic shape: service B slows down → service A's threads block waiting on B →
+  A's connection pool exhausts → A starts failing requests it could otherwise serve → A's callers retry →
+  the retry storm hits B even harder. The system has crossed from a localized problem into a
+  <strong>metastable failure</strong> that persists even after the original trigger is gone.</p>
+
+<pre><code>// Anatomy of a cascade: an unbounded worker that amplifies a downstream stall.
+// Each slow call to `payments` holds a goroutine AND a DB connection.
+func handleCheckout(w http.ResponseWriter, r *http.Request) {
+    conn := dbPool.Get()          // limited resource (say 100 connections)
+    defer conn.Close()
+
+    // If payments is slow, this blocks for the full client timeout.
+    // 1000 concurrent checkouts -> pool exhausted -> EVERY endpoint fails,
+    // not just checkout. The blast radius is the whole service.
+    resp, err := paymentsClient.Charge(r.Context(), order)
+    if err != nil {
+        http.Error(w, "payment failed", 502)
+        return
+    }
+    _ = conn.Save(resp)
+}</code></pre>
+  <p>The defenses against cascades — timeouts, bulkheads, circuit breakers, load shedding — are exactly the
+  patterns of Chapters 2 and 3. Keep this picture in mind: almost every pattern in this course exists to
+  <strong>contain blast radius</strong>.</p>
+
+  <h3 id="s1-2">1.2 The CAP Theorem &amp; PACELC</h3>
+  <p>Eric Brewer's <strong>CAP theorem</strong> states that a distributed data store can provide at most two
+  of the following three guarantees simultaneously:</p>
+  <table>
+    <tr><th>Property</th><th>Meaning</th></tr>
+    <tr><td><strong>C</strong>onsistency</td><td>Every read sees the most recent write (linearizability) — all nodes agree.</td></tr>
+    <tr><td><strong>A</strong>vailability</td><td>Every request to a non-failing node gets a non-error response.</td></tr>
+    <tr><td><strong>P</strong>artition tolerance</td><td>The system keeps working despite messages being lost between nodes.</td></tr>
+  </table>
+  <p>The common phrasing "pick two" is misleading. In any real network, <strong>partitions happen</strong> —
+  cables get cut, switches reboot, GC pauses make a node unreachable. So <strong>P is not optional</strong>.
+  The real choice CAP forces is: <em>when a partition occurs</em>, do you sacrifice <strong>C</strong> or
+  <strong>A</strong>?</p>
+  <ul>
+    <li><strong>CP system</strong> — refuse writes on the minority side to keep data consistent. Example: a quorum store like etcd/ZooKeeper, or Postgres with synchronous replication. You lose availability for the partitioned clients.</li>
+    <li><strong>AP system</strong> — accept writes on both sides and reconcile later. Example: Cassandra, DynamoDB in eventually-consistent mode. You stay up but readers may see stale or conflicting data.</li>
+  </ul>
+
+  <div class="warning">
+    <strong>Common misconception:</strong> CAP's "consistency" is <em>linearizability</em>, a much stronger guarantee than the "C" in ACID. A system can be CAP-inconsistent yet still enforce ACID transactions locally. Don't conflate the two C's.
+  </div>
+
+  <h4>PACELC — the part CAP forgets</h4>
+  <p>CAP only describes behaviour <em>during a partition</em>. Daniel Abadi's <strong>PACELC</strong> extends
+  it: <em>if there is a <strong>P</strong>artition, choose <strong>A</strong> or <strong>C</strong>;
+  <strong>E</strong>lse (normal operation) choose <strong>L</strong>atency or <strong>C</strong>onsistency.</em>
+  This captures the everyday trade-off: even with no partition, synchronous replication for strong
+  consistency costs you latency. DynamoDB is <strong>PA/EL</strong> (favours availability and latency);
+  a strongly-consistent store like Spanner is <strong>PC/EC</strong>.</p>
+
+  <h3 id="s1-3">1.3 SLA, SLO, SLI &amp; the Nines</h3>
+  <p>These three acronyms are constantly confused. The relationship is a hierarchy:</p>
+  <table>
+    <tr><th>Term</th><th>What it is</th><th>Audience</th></tr>
+    <tr><td><strong>SLI</strong> — Indicator</td><td>A <em>measured</em> number: e.g. "ratio of requests served in &lt;200&nbsp;ms" or "successful requests / total".</td><td>Engineers (the raw signal)</td></tr>
+    <tr><td><strong>SLO</strong> — Objective</td><td>A <em>target</em> for an SLI: "99.9% of requests succeed over 30 days". Internal goal.</td><td>The team</td></tr>
+    <tr><td><strong>SLA</strong> — Agreement</td><td>A <em>contract</em> with consequences (refunds, credits) if the SLO is missed.</td><td>Customers / legal</td></tr>
+  </table>
+  <p>Set your SLO <strong>stricter</strong> than your SLA, so you have a buffer to react before you owe anyone
+  money. The gap between 100% and your SLO is your <strong>error budget</strong> — the amount of unreliability
+  you are <em>allowed</em> to spend on releases, experiments, and risk. If you have budget left, ship faster;
+  if you've burned it, freeze and stabilize.</p>
+
+  <h4>What the nines actually buy you</h4>
+  <table>
+    <tr><th>Availability</th><th>Downtime / year</th><th>Downtime / month</th><th>Downtime / day</th></tr>
+    <tr><td>90% ("one nine")</td><td>36.5 days</td><td>72 hours</td><td>2.4 hours</td></tr>
+    <tr><td>99% ("two nines")</td><td>3.65 days</td><td>7.2 hours</td><td>14.4 min</td></tr>
+    <tr><td>99.9% ("three nines")</td><td>8.76 hours</td><td>43.8 min</td><td>1.44 min</td></tr>
+    <tr><td>99.99% ("four nines")</td><td>52.6 min</td><td>4.38 min</td><td>8.6 sec</td></tr>
+    <tr><td>99.999% ("five nines")</td><td>5.26 min</td><td>26 sec</td><td>0.86 sec</td></tr>
+  </table>
+
+  <div class="tip">
+    <strong>Composition kills nines.</strong> If a request depends on 5 services that are each 99.9% available, and the failures are independent, the end-to-end availability is 0.999⁵ ≈ 99.5% — worse than any single component. This is why fan-out architectures need <em>redundancy</em> and <em>fallbacks</em>, not just individually reliable services.
+  </div>
+
+<pre><code>// Computing an availability SLI from request counts (a "request-based" SLO).
+type Window struct {
+    Total int64
+    Good  int64 // requests that met the latency+success bar
+}
+
+func (w Window) SLI() float64 {
+    if w.Total == 0 {
+        return 1.0
+    }
+    return float64(w.Good) / float64(w.Total)
+}
+
+// Error budget remaining, given a 30-day 99.9% objective.
+func errorBudgetRemaining(w Window, objective float64) float64 {
+    allowedBad := float64(w.Total) * (1 - objective) // budget of failures
+    actualBad := float64(w.Total - w.Good)
+    return (allowedBad - actualBad) / allowedBad // 1.0 = full, &lt;0 = blown
+}</code></pre>
+
+  <h3 id="s1-4">1.4 Failures &amp; Data Integrity</h3>
+  <p>Downtime is recoverable — you restart and serve again. <strong>Corrupted or lost data is often not.</strong>
+  The most dangerous failures are the ones that violate <strong>integrity</strong>: an invariant of your data
+  that must always hold (an account balance never goes negative; an order is never charged twice; a message is
+  never processed out of order in a way that breaks state).</p>
+
+  <h4>Idempotency</h4>
+  <p>An operation is <strong>idempotent</strong> if applying it multiple times has the same effect as applying
+  it once. Idempotency is the single most important tool for surviving the "did my request actually happen?"
+  ambiguity from §1.1 — if retries are safe, the ambiguity stops mattering.</p>
+  <ul>
+    <li><code>GET</code>, <code>PUT</code>, <code>DELETE</code> are idempotent by HTTP semantics; <code>POST</code> is not.</li>
+    <li><code>SET balance = 100</code> is idempotent; <code>balance = balance + 100</code> is not.</li>
+    <li>The usual fix for non-idempotent operations: an <strong>idempotency key</strong> supplied by the client, stored server-side, so a replay returns the original result instead of repeating the effect.</li>
+  </ul>
+
+<pre><code>// Idempotent "charge once" keyed by a client-supplied token.
+func (s *Server) Charge(ctx context.Context, key string, amount int64) (Receipt, error) {
+    // First, atomically claim the key. If it already exists, return the
+    // stored receipt instead of charging again.
+    if r, ok, err := s.store.Get(ctx, key); err != nil {
+        return Receipt{}, err
+    } else if ok {
+        return r, nil // replay -> same result, no double charge
+    }
+
+    receipt, err := s.gateway.Capture(ctx, amount)
+    if err != nil {
+        return Receipt{}, err
+    }
+    // Store under the key. Use INSERT ... ON CONFLICT DO NOTHING to win the race
+    // if two retries arrive concurrently.
+    if err := s.store.PutIfAbsent(ctx, key, receipt); err != nil {
+        return Receipt{}, err
+    }
+    return receipt, nil
+}</code></pre>
+
+  <h4>Split-brain &amp; failover</h4>
+  <p><strong>Failover</strong> is promoting a standby to primary when the primary appears dead.
+  <strong>Split-brain</strong> is the catastrophe that happens when the old primary <em>wasn't actually
+  dead</em> (just partitioned or paused) and you now have <strong>two primaries accepting writes</strong>.
+  Both diverge, and reconciling them later can mean silently dropping someone's data. Defenses:</p>
+  <ul>
+    <li><strong>Fencing tokens</strong> — a monotonically increasing number issued on each leadership change; storage rejects writes carrying a stale token.</li>
+    <li><strong>Quorum / majority</strong> — a node may only act as leader if it can reach a majority, so two leaders are impossible.</li>
+    <li><strong>STONITH</strong> ("shoot the other node in the head") — forcibly power-off the suspected-dead node before promoting.</li>
+  </ul>
+
+  <h4>Quorum reads and writes</h4>
+  <p>In a replicated store with <strong>N</strong> replicas, require <strong>W</strong> acknowledgements to
+  commit a write and <strong>R</strong> replicas to serve a read. If <strong>W + R &gt; N</strong>, every read
+  set overlaps every write set by at least one replica, so a read is guaranteed to see the latest committed
+  write — <em>strong consistency from quorum overlap</em>. Common choice for N=3: W=2, R=2.</p>
+
+  <div class="key-concept">
+    <h5>Tuning W and R</h5>
+    <p>W=N, R=1 makes reads fast but writes fragile (any replica down blocks writes). W=1, R=N is the mirror. W=R=⌈(N+1)/2⌉ (majority quorum) balances both and tolerates ⌊N/2⌋ failures. Lowering W+R below N+1 gives you an <strong>AP</strong> system (eventual consistency) — faster, but reads can be stale.</p>
+  </div>
+
+  <h3 id="s1-5">1.5 Durability: WAL, Replication &amp; Idempotency in Practice</h3>
+
+  <h4>Why Postgres needs a WAL</h4>
+  <p>A <strong>Write-Ahead Log</strong> is the cornerstone of crash-safe durability. The rule is simple and
+  absolute: <em>before any change is applied to the data files, a record describing that change is flushed to
+  the log (and <code>fsync</code>'d to disk).</em> If the database crashes mid-transaction, on restart it
+  <strong>replays</strong> the WAL to redo committed changes and discards uncommitted ones, restoring a
+  consistent state.</p>
+  <p>The WAL is also what makes Postgres replication and point-in-time recovery possible: a replica simply
+  streams and replays the primary's WAL. The trade-off you control is <code>synchronous_commit</code> —
+  whether a <code>COMMIT</code> waits for the WAL to be durably on disk (and on replicas) before returning.
+  Turning it off is faster but means a crash can lose recently "committed" transactions.</p>
+
+  <div class="warning">
+    <strong>WAL is durability, not isolation.</strong> The WAL guarantees a committed transaction survives a crash; it says nothing about concurrent transactions seeing consistent snapshots — that's MVCC's job. Resilient systems need both.
+  </div>
+
+  <h4>Why Kafka needs replication factor &gt; 1</h4>
+  <p>A Kafka topic is split into <strong>partitions</strong>; each partition has one <strong>leader</strong>
+  and zero or more <strong>follower</strong> replicas. The <strong>replication factor</strong> is how many
+  copies exist. With RF=1, the loss of a single broker means <strong>permanent data loss</strong> for every
+  partition it led. With RF=3 and <code>min.insync.replicas=2</code>, a producer using
+  <code>acks=all</code> only gets an acknowledgement once the data is on at least two replicas — so a single
+  broker failure loses nothing.</p>
+  <table>
+    <tr><th>Setting</th><th>Effect</th></tr>
+    <tr><td><code>acks=0</code></td><td>Fire and forget. Fastest, zero durability.</td></tr>
+    <tr><td><code>acks=1</code></td><td>Leader has it. Lost if leader dies before replication.</td></tr>
+    <tr><td><code>acks=all</code> + <code>min.insync.replicas=2</code></td><td>At least 2 replicas have it before ack. Survives 1 broker loss. The durable default.</td></tr>
+  </table>
+
+  <h4>How a payment provider handles duplicate payments</h4>
+  <p>Payment systems like YooKassa, Stripe, or PayPal live or die by idempotency. The flow that prevents a
+  customer being charged twice when the network hiccups:</p>
+  <ol>
+    <li>Client generates an <strong>idempotency key</strong> (a UUID) for the payment <em>before</em> sending.</li>
+    <li>The first request creates the payment and stores it under the key.</li>
+    <li>Any retry with the same key returns the <em>same</em> payment object — the gateway never captures twice.</li>
+    <li>The provider notifies the merchant via an <strong>idempotent webhook</strong>; the merchant deduplicates on payment ID, because webhooks are delivered <em>at least once</em> and can arrive twice.</li>
+  </ol>
+  <p>This is the same idempotency-key pattern from §1.4, applied end to end across an untrusted network — the
+  canonical real-world example of designing for "I don't know if my request went through."</p>
+
+  <h3 id="s1-6">1.6 BigTech Incidents &amp; Lessons</h3>
+  <p>Every pattern in this course was paid for in a real outage. Five worth knowing:</p>
+
+  <h4>GitHub — 24h of degraded service (Oct 2018)</h4>
+  <p>A 43-second network partition between the US East Coast and West Coast data centers triggered an automatic
+  failover of the MySQL cluster. When connectivity returned, the two sides had <strong>divergent writes</strong>
+  — a textbook split-brain. GitHub chose <em>consistency over availability</em>: rather than risk corrupting
+  data by auto-merging, engineers spent ~24 hours manually reconciling. <strong>Lesson:</strong> automated
+  failover without robust fencing and quorum can be worse than the failure it's trying to fix.</p>
+
+  <h4>AWS us-east-1 — the region that takes the internet down</h4>
+  <p>Multiple times (2017 S3, 2020 Kinesis, 2021 networking), failures in AWS's oldest and busiest region have
+  cascaded across hundreds of dependent services worldwide — because so much of the internet, <em>and AWS's own
+  control plane</em>, has hidden dependencies on us-east-1. <strong>Lesson:</strong> a shared dependency is a
+  shared point of failure; "multi-AZ" is not "multi-region," and control planes need to be as redundant as data
+  planes.</p>
+
+  <h4>Facebook / Instagram / WhatsApp — the 6-hour BGP outage (Oct 2021)</h4>
+  <p>A faulty configuration change withdrew Facebook's BGP routes, making their DNS servers unreachable, which
+  made <em>everything</em> unreachable — including the internal tools and badge systems engineers needed to fix
+  it. The outage wiped roughly $6&nbsp;billion off the company's market value in hours. <strong>Lesson:</strong>
+  beware circular dependencies in your recovery path — your tooling must not depend on the system it's meant to
+  repair.</p>
+
+  <h4>GitLab — the database deletion (Jan 2017)</h4>
+  <p>An engineer fighting a replication issue ran <code>rm -rf</code> on what they believed was a stale
+  directory — it was the <em>primary</em> database's data directory. They then discovered that <strong>five
+  separate backup mechanisms had all silently failed</strong>: the recovery ultimately relied on a six-hour-old
+  staging snapshot one engineer happened to have. <strong>Lesson:</strong> an untested backup is not a backup.
+  Restores must be rehearsed, not assumed.</p>
+
+  <div class="key-concept">
+    <h5>The common thread</h5>
+    <p>None of these were caused by exotic bugs. They were caused by <strong>automation behaving correctly but unwisely</strong> (GitHub), <strong>hidden shared dependencies</strong> (AWS, Facebook), and <strong>unverified safety nets</strong> (GitLab). Resilience is less about preventing faults — faults are inevitable — and more about <em>limiting their blast radius and guaranteeing a recovery path</em>.</p>
+  </div>
+
+  <div class="chapter-summary">
+    <h5>Key Takeaways — Chapter 1</h5>
+    <ul>
+      <li>Partial failure means you often can't tell <em>whether</em> a request succeeded — design for that ambiguity</li>
+      <li>Partitions are inevitable, so CAP really asks: during a partition, sacrifice C or A?</li>
+      <li>PACELC adds the everyday trade-off: even without partitions, you trade latency for consistency</li>
+      <li>SLI is measured, SLO is your target, SLA is the contract; the gap to 100% is your error budget</li>
+      <li>Composing N services multiplies their failure probabilities — fan-out erodes the nines</li>
+      <li>Idempotency keys, quorums (W+R&gt;N), fencing tokens, WAL, and RF&gt;1 are the durability primitives</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 2 -->
+<!-- ============================================================ -->
+<div class="chapter" id="ch2">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 02</div>
+    <h2>Handling Errors &amp; Transient Failures</h2>
+  </div>
+
+  <p>The database blips for a second. A third-party API answers in 30 seconds instead of 30 milliseconds. The
+  link between two services drops three packets and recovers. In a distributed system these events are not
+  exceptions — they are the weather. Reacting to them <em>correctly</em> is, as the course material puts it,
+  the barrier between a mid-level and a senior engineer. This chapter covers the full toolbox: retries,
+  backoff, timeouts, cancellation, circuit breakers, and graceful degradation.</p>
+
+  <h3 id="s2-1">2.1 Retries Done Right</h3>
+  <p>A retry is the simplest resiliency pattern and the easiest to get catastrophically wrong. Two questions
+  govern every retry decision:</p>
+  <ol>
+    <li><strong>Is this error transient?</strong> Retry a connection reset, a 503, a timeout. <em>Never</em> retry a 400, a 404, or a validation error — the result will be identical and you're just wasting capacity.</li>
+    <li><strong>Is the operation safe to repeat?</strong> Only retry if it's idempotent (§1.4) or guarded by an idempotency key. Retrying a non-idempotent "create order" can create two orders.</li>
+  </ol>
+
+  <table>
+    <tr><th>Retry</th><th>Do NOT retry</th></tr>
+    <tr><td>Connection refused / reset</td><td>400 Bad Request</td></tr>
+    <tr><td>Timeout (deadline exceeded)</td><td>401 / 403 (auth)</td></tr>
+    <tr><td>503 Service Unavailable</td><td>404 Not Found</td></tr>
+    <tr><td>429 Too Many Requests (with backoff)</td><td>422 Unprocessable Entity</td></tr>
+    <tr><td>Leader election in progress</td><td>Any business-logic rejection</td></tr>
+  </table>
+
+  <div class="warning">
+    <strong>Retry storms.</strong> Naïve retries amplify load exactly when a service is already struggling. If every client retries 3× during a brownout, you've tripled the traffic to a service that's failing <em>because</em> it's overloaded. Always combine retries with backoff (§2.2), a retry budget, and a circuit breaker (§2.5).
+  </div>
+
+  <h4>Retry budgets</h4>
+  <p>Cap retries as a <em>fraction of total traffic</em>, not per-request. A retry budget of 10% means "across
+  all requests, retries may add at most 10% extra load." When the budget is exhausted, stop retrying even if
+  individual calls fail. This converts an exponential retry storm into a bounded, survivable overhead.</p>
+
+  <h3 id="s2-2">2.2 Backoff &amp; Jitter</h3>
+  <p>If you must retry, do not retry immediately, and do not retry on a fixed schedule. <strong>Exponential
+  backoff</strong> increases the wait after each attempt (base, 2×base, 4×base…), giving the struggling
+  dependency room to recover. But pure exponential backoff has a hidden flaw: if 1000 clients all failed at the
+  same instant, they all back off by the same amount and retry <em>in synchronized waves</em> — re-creating the
+  thundering herd.</p>
+  <p>The fix is <strong>jitter</strong>: randomize the delay so retries spread out over time. AWS's well-known
+  analysis compares four strategies:</p>
+  <table>
+    <tr><th>Strategy</th><th>Formula (attempt n)</th><th>Verdict</th></tr>
+    <tr><td>No jitter</td><td><code>base · 2ⁿ</code></td><td>Synchronized retry waves. Avoid.</td></tr>
+    <tr><td>Full jitter</td><td><code>rand(0, base · 2ⁿ)</code></td><td>Best spread; recommended default.</td></tr>
+    <tr><td>Equal jitter</td><td><code>half + rand(0, half)</code></td><td>Guarantees a minimum wait; slightly less spread.</td></tr>
+    <tr><td>Decorrelated</td><td><code>min(cap, rand(base, prev·3))</code></td><td>Great for long retry chains.</td></tr>
+  </table>
+
+<pre><code>// Exponential backoff with full jitter and a deadline.
+func retryWithBackoff(ctx context.Context, op func() error) error {
+    const (
+        base   = 100 * time.Millisecond
+        cap    = 10 * time.Second
+        maxTry = 6
+    )
+    var err error
+    for attempt := 0; attempt &lt; maxTry; attempt++ {
+        if err = op(); err == nil {
+            return nil
+        }
+        if !isRetryable(err) {
+            return err // fail fast on permanent errors
+        }
+        // Full jitter: random point in [0, backoff].
+        backoff := time.Duration(math.Min(float64(cap),
+            float64(base)*math.Pow(2, float64(attempt))))
+        sleep := time.Duration(rand.Int63n(int64(backoff)))
+
+        select {
+        case &lt;-time.After(sleep):
+        case &lt;-ctx.Done(): // respect the caller's deadline
+            return ctx.Err()
+        }
+    }
+    return fmt.Errorf("exhausted retries: %w", err)
+}</code></pre>
+
+  <div class="tip">
+    <strong>Honour <code>Retry-After</code>.</strong> When a server returns 429 or 503 with a <code>Retry-After</code> header, it is telling you exactly how long to wait. Use it instead of your computed backoff — the server knows its own recovery timeline better than you do.
+  </div>
+
+  <h3 id="s2-3">2.3 Idempotency &amp; Hedging</h3>
+  <p>Retries and idempotency are inseparable. §1.4 covered idempotency keys; here's the operational rule:
+  <strong>any code path that can be retried must be idempotent, or the retry must be suppressed.</strong> Make
+  this explicit in your client — a request should carry a flag or key that says "this is safe to replay."</p>
+
+  <h4>Hedging</h4>
+  <p><strong>Hedged requests</strong> attack <em>tail latency</em> rather than failure. The idea: if a request
+  hasn't responded within, say, the 95th-percentile latency, send a <em>second</em> identical request to
+  another replica and take whichever responds first, cancelling the loser. A small fraction of duplicated work
+  buys a dramatic reduction in p99/p99.9 latency, because you route around a single slow node.</p>
+
+<pre><code>// Hedged request: fire a backup after a delay, return the first success.
+func hedge(ctx context.Context, delay time.Duration,
+    call func(context.Context) (Result, error)) (Result, error) {
+
+    ctx, cancel := context.WithCancel(ctx)
+    defer cancel() // cancels the loser as soon as we return
+
+    type out struct {
+        r   Result
+        err error
+    }
+    results := make(chan out, 2)
+    launch := func() { r, err := call(ctx); results &lt;- out{r, err} }
+
+    go launch()                       // primary
+    timer := time.NewTimer(delay)
+    defer timer.Stop()
+
+    for received := 0; received &lt; 2; {
+        select {
+        case &lt;-timer.C:
+            go launch()               // backup after `delay`
+        case o := &lt;-results:
+            received++
+            if o.err == nil {
+                return o.r, nil       // first success wins
+            }
+        case &lt;-ctx.Done():
+            return Result{}, ctx.Err()
+        }
+    }
+    return Result{}, errors.New("all hedged attempts failed")
+}</code></pre>
+  <div class="warning">
+    <strong>Hedging requires idempotency</strong> and a cap on duplication (e.g. hedge at most 1–5% of requests). Hedging non-idempotent writes doubles your side effects. Hedging everything doubles your load.
+  </div>
+
+  <h3 id="s2-4">2.4 Timeouts, Deadlines &amp; Cancellation</h3>
+  <p>A request without a timeout is a resource leak waiting to happen. If you never give up, a single stalled
+  dependency will accumulate blocked goroutines, threads, and connections until you hit the cascade of §1.1.
+  <strong>Every</strong> network call must have a bound.</p>
+
+  <h4>Timeout vs deadline</h4>
+  <p>A <strong>timeout</strong> is a duration ("give up after 2s"). A <strong>deadline</strong> is an absolute
+  point in time ("give up at 12:00:03.0"). Deadlines compose correctly across a call chain: if the user's
+  request has a 3-second deadline and you've already spent 2.5s, the downstream call inherits only the
+  remaining 0.5s. Propagating a <em>deadline</em> rather than re-setting a fresh timeout at each hop is what
+  prevents the total latency budget from being silently multiplied.</p>
+
+<pre><code>// In Go, context.Context carries the deadline and threads cancellation
+// through the entire call tree.
+func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
+    // The incoming request may already carry a deadline; we tighten it.
+    ctx, cancel := context.WithTimeout(r.Context(), 800*time.Millisecond)
+    defer cancel() // ALWAYS cancel to release the timer + signal children
+
+    // Each downstream call sees the SAME shrinking deadline. If the user's
+    // budget is gone, the DB call fails fast instead of doing doomed work.
+    user, err := h.users.Load(ctx, id)
+    if errors.Is(err, context.DeadlineExceeded) {
+        http.Error(w, "upstream timeout", http.StatusGatewayTimeout)
+        return
+    }
+    ...
+}</code></pre>
+
+  <h4>Cancellation propagation</h4>
+  <p>When a client hangs up, or an upstream deadline fires, that cancellation should flow <em>downstream</em> so
+  every service stops working on a result nobody will read. This is <strong>cancel propagation</strong>: a
+  cancelled context aborts the DB query, closes the outbound HTTP call, and frees the connection — turning
+  wasted work into reclaimed capacity. Without it, a user who refreshes an impatient page leaves a trail of
+  zombie work amplifying load on an already-slow system.</p>
+
+  <div class="key-concept">
+    <h5>Choosing timeout values</h5>
+    <p>Set timeouts from your latency distribution, not gut feel. A good starting point is slightly above p99 of healthy latency — high enough that normal slow requests succeed, low enough that a truly stuck call is cut quickly. The total client deadline should be <em>less</em> than the sum of all downstream timeouts, so the client gives up before doing pointless retries against an already-doomed request.</p>
+  </div>
+
+  <h3 id="s2-5">2.5 The Circuit Breaker</h3>
+  <p>Retries and timeouts handle <em>individual</em> failures. A <strong>circuit breaker</strong> handles a
+  dependency that is <em>persistently</em> failing — it stops you from hammering a service that's already down,
+  giving it room to recover and failing your own requests <em>fast</em> instead of slow. The name comes from
+  electrical breakers: when current is dangerous, trip the circuit.</p>
+  <p>A breaker is a state machine with three states:</p>
+  <table>
+    <tr><th>State</th><th>Behaviour</th><th>Transition</th></tr>
+    <tr><td><strong>Closed</strong></td><td>Requests flow through; failures are counted.</td><td>Failure rate exceeds threshold → <strong>Open</strong></td></tr>
+    <tr><td><strong>Open</strong></td><td>Requests fail <em>immediately</em> (no call made). Fast failure protects the dependency and the caller.</td><td>After a cool-down timeout → <strong>Half-Open</strong></td></tr>
+    <tr><td><strong>Half-Open</strong></td><td>A limited number of trial requests are allowed through to probe recovery.</td><td>Trials succeed → <strong>Closed</strong>; any fails → <strong>Open</strong></td></tr>
+  </table>
+
+<pre><code>// A minimal circuit breaker. Production options: sony/gobreaker, resilience4j.
+type Breaker struct {
+    mu          sync.Mutex
+    state       State // Closed, Open, HalfOpen
+    failures    int
+    threshold   int
+    openUntil   time.Time
+    cooldown    time.Duration
+}
+
+var ErrOpen = errors.New("circuit breaker is open")
+
+func (b *Breaker) Do(op func() error) error {
+    b.mu.Lock()
+    switch b.state {
+    case Open:
+        if time.Now().Before(b.openUntil) {
+            b.mu.Unlock()
+            return ErrOpen           // fail fast, no downstream call
+        }
+        b.state = HalfOpen           // cool-down elapsed: probe
+    }
+    b.mu.Unlock()
+
+    err := op()
+
+    b.mu.Lock()
+    defer b.mu.Unlock()
+    if err != nil {
+        b.failures++
+        if b.state == HalfOpen || b.failures &gt;= b.threshold {
+            b.state = Open           // trip (or re-trip)
+            b.openUntil = time.Now().Add(b.cooldown)
+        }
+        return err
+    }
+    b.failures = 0                   // success: reset
+    b.state = Closed
+    return nil
+}</code></pre>
+
+  <div class="tip">
+    <strong>Breaker vs retry — they cooperate.</strong> Retries handle a single blip; the breaker handles a sustained outage by <em>stopping</em> the retries once it's clear the dependency is down. Put the breaker <em>outside</em> the retry loop: trip on the aggregate, retry within a closed circuit.
+  </div>
+
+  <h3 id="s2-6">2.6 Graceful Degradation &amp; Fallback</h3>
+  <p>When a dependency is down and the breaker is open, you have a choice: return an error, or
+  <strong>degrade gracefully</strong> — serve a reduced-but-useful response. Good degradation is invisible or
+  nearly so to the user.</p>
+  <ul>
+    <li><strong>Fallback to cache</strong> — recommendations service down? Serve last-known-good or a generic popular list from cache.</li>
+    <li><strong>Fallback to a default</strong> — pricing/personalization service down? Show the standard price, not an error page.</li>
+    <li><strong>Feature toggle / shedding</strong> — under load, disable the expensive "people also bought" widget but keep checkout working.</li>
+    <li><strong>Stale-while-revalidate</strong> — serve slightly stale data and refresh in the background (Chapter 5).</li>
+  </ul>
+
+<pre><code>// Fallback chain: breaker-protected primary, then cache, then a safe default.
+func (s *Catalog) Recommendations(ctx context.Context, user string) []Item {
+    var items []Item
+    err := s.breaker.Do(func() error {
+        var e error
+        items, e = s.recoService.Get(ctx, user) // primary path
+        return e
+    })
+    if err == nil {
+        s.cache.Set(user, items) // refresh good data for future fallbacks
+        return items
+    }
+
+    if cached, ok := s.cache.Get(user); ok {
+        return cached            // degraded: last-known-good
+    }
+    return s.popularToday        // degraded: generic, but never an error page
+}</code></pre>
+
+  <div class="warning">
+    <strong>Degradation must be a deliberate product decision.</strong> "Show stale prices" might be fine for a catalog and disastrous for a trading platform. Decide <em>per feature</em> whether stale/partial/empty is acceptable, and make the degraded state observable so it doesn't hide a real outage.
+  </div>
+
+  <div class="key-concept">
+    <h5>The layered defense</h5>
+    <p>These patterns compose into a stack. From the inside out: <strong>timeout</strong> bounds each call → <strong>retry + backoff + jitter</strong> handles blips → <strong>circuit breaker</strong> handles sustained outages → <strong>fallback / graceful degradation</strong> keeps the user experience alive → <strong>bulkhead</strong> (Chapter 3) contains the blast radius. No single pattern is sufficient; resilience is the stack.</p>
+  </div>
+
+  <div class="chapter-summary">
+    <h5>Key Takeaways — Chapter 2</h5>
+    <ul>
+      <li>Only retry transient, idempotent operations — never retry a 4xx or a non-idempotent write blindly</li>
+      <li>Exponential backoff <em>with full jitter</em> prevents synchronized retry storms</li>
+      <li>Retry budgets bound the amplification; honour <code>Retry-After</code> when given</li>
+      <li>Hedging cuts tail latency by racing a backup request — but only for idempotent calls</li>
+      <li>Propagate <em>deadlines</em> (not fresh timeouts) and cancellation through the whole call tree</li>
+      <li>Circuit breaker (closed/open/half-open) fails fast during sustained outages; fallback keeps UX alive</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 3 -->
+<!-- ============================================================ -->
+<div class="chapter" id="ch3">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 03</div>
+    <h2>Load Control &amp; Balancing</h2>
+  </div>
+
+  <p>A sudden traffic spike, one slow database query, or a struggling neighbour service can take down a healthy
+  process if it has no defenses. Chapter 2 was about reacting to <em>failures</em>; this chapter is about
+  staying stable under <em>load</em> — isolating resources so one failure can't sink the ship, limiting how
+  much work you accept, collapsing duplicate work, and spreading traffic intelligently.</p>
+
+  <h3 id="s3-1">3.1 Resource Isolation &amp; the Bulkhead</h3>
+  <p>The <strong>bulkhead</strong> pattern is named after the watertight compartments in a ship's hull: if one
+  floods, the others keep the ship afloat. In software, you partition resources so that the exhaustion of one
+  pool cannot starve unrelated work.</p>
+  <p>The canonical failure it prevents: a single shared thread/connection pool. If endpoint A calls a slow
+  dependency and A's traffic consumes <em>all</em> the shared connections, endpoints B and C fail too — even
+  though their dependencies are perfectly healthy. Give each dependency (or each tenant, or each priority
+  class) its <em>own</em> bounded pool, and A's problem stays A's problem.</p>
+
+<pre><code>// Bulkhead via a bounded semaphore per dependency. When a pool is exhausted,
+// callers fail fast instead of piling up and starving other dependencies.
+type Bulkhead struct{ sem chan struct{} }
+
+func NewBulkhead(maxConcurrent int) *Bulkhead {
+    return &amp;Bulkhead{sem: make(chan struct{}, maxConcurrent)}
+}
+
+func (b *Bulkhead) Do(ctx context.Context, op func() error) error {
+    select {
+    case b.sem &lt;- struct{}{}: // acquire a slot
+        defer func() { &lt;-b.sem }()
+        return op()
+    case &lt;-ctx.Done():
+        return ctx.Err()
+    default:
+        return errors.New("bulkhead full: shedding to protect other work")
+    }
+}
+
+// payments and search get independent pools — a payments stall can't
+// consume the slots that search needs.
+var paymentsBulkhead = NewBulkhead(20)
+var searchBulkhead   = NewBulkhead(50)</code></pre>
+
+  <table>
+    <tr><th>Isolation level</th><th>Boundary</th><th>Cost / blast radius</th></tr>
+    <tr><td>Pool isolation</td><td>Separate connection/thread pools in one process</td><td>Cheap; protects against pool exhaustion only</td></tr>
+    <tr><td>Process isolation</td><td>Separate OS processes / containers</td><td>A crash or memory leak in one can't take the other down</td></tr>
+    <tr><td>Physical isolation</td><td>Separate hosts / AZs / regions</td><td>Survives hardware and datacenter failure; highest cost</td></tr>
+  </table>
+  <p>A related idea is the <strong>shuffle-sharding</strong> used by AWS: assign each customer a small random
+  subset of nodes, so a single bad customer (or poisoned request) degrades only the few customers who happen to
+  share its shard, not everyone.</p>
+
+  <h3 id="s3-2">3.2 Rate Limiting In Depth</h3>
+  <p>A <strong>rate limiter</strong> caps how much work a client (or the whole system) may do per unit time. It
+  protects you from spikes, abusive clients, and runaway retries. There are several algorithms with meaningfully
+  different behaviour:</p>
+
+  <h4>Token bucket</h4>
+  <p>A bucket holds up to <em>B</em> tokens and refills at <em>R</em> tokens/second. Each request consumes a
+  token; if the bucket is empty, the request is rejected (or waits). This is the most popular choice because it
+  permits <strong>bursts</strong> up to the bucket size while enforcing an average rate <em>R</em> — matching
+  how real traffic actually arrives.</p>
+
+<pre><code>// Token bucket. The stdlib golang.org/x/time/rate is a production-grade version.
+type TokenBucket struct {
+    mu       sync.Mutex
+    tokens   float64
+    capacity float64
+    rate     float64 // tokens per second
+    last     time.Time
+}
+
+func (tb *TokenBucket) Allow() bool {
+    tb.mu.Lock()
+    defer tb.mu.Unlock()
+
+    now := time.Now()
+    // Refill based on elapsed time, capped at capacity.
+    elapsed := now.Sub(tb.last).Seconds()
+    tb.tokens = math.Min(tb.capacity, tb.tokens+elapsed*tb.rate)
+    tb.last = now
+
+    if tb.tokens &gt;= 1 {
+        tb.tokens--
+        return true
+    }
+    return false // throttled -> return 429 with a Retry-After
+}</code></pre>
+
+  <table>
+    <tr><th>Algorithm</th><th>Bursts?</th><th>Notes</th></tr>
+    <tr><td>Token bucket</td><td>Yes (up to bucket size)</td><td>Smooth average rate, allows bursts. Most common.</td></tr>
+    <tr><td>Leaky bucket</td><td>No (constant outflow)</td><td>Shapes traffic to a steady rate; queues then drops.</td></tr>
+    <tr><td>Fixed window</td><td>Yes, at edges</td><td>Simple counter per window; suffers 2× burst at window boundaries.</td></tr>
+    <tr><td>Sliding window log</td><td>Smoothed</td><td>Accurate but stores a timestamp per request — memory heavy.</td></tr>
+    <tr><td>Sliding window counter</td><td>Smoothed</td><td>Weighted blend of two windows; the practical accurate choice.</td></tr>
+  </table>
+
+  <div class="warning">
+    <strong>The fixed-window boundary bug:</strong> with a limit of 100/minute, a client can send 100 requests at 11:00:59 and 100 more at 11:01:00 — 200 requests in two seconds, double the intended rate. Sliding windows fix this.
+  </div>
+
+  <div class="tip">
+    <strong>Distributed rate limiting</strong> needs shared state. A common implementation stores the counter/bucket in Redis and uses an atomic Lua script so the read-modify-write is a single round trip and races are impossible. Watch the Redis instance itself — it's now a shared dependency (§1.6).
+  </div>
+
+  <h3 id="s3-3">3.3 Single Flight</h3>
+  <p><strong>Single flight</strong> (a.k.a. request collapsing / coalescing) ensures that when many identical
+  requests arrive concurrently, only <strong>one</strong> actually executes and the rest share its result. It's
+  a precise tool against duplicated expensive work — the same idea that defeats the cache "thundering herd" in
+  Chapter 5.</p>
+
+<pre><code>// Go's golang.org/x/sync/singleflight collapses concurrent identical calls.
+var group singleflight.Group
+
+func (s *Service) GetUser(ctx context.Context, id string) (*User, error) {
+    // If 1000 goroutines call GetUser("42") at once, the loader runs ONCE.
+    // The other 999 block and receive the same (*User, error).
+    v, err, shared := group.Do(id, func() (interface{}, error) {
+        return s.loadFromDB(ctx, id) // the single expensive load
+    })
+    if err != nil {
+        return nil, err
+    }
+    _ = shared // true if the result was shared with other callers
+    return v.(*User), nil
+}</code></pre>
+
+  <div class="warning">
+    <strong>Single flight couples callers.</strong> Because they share one execution, they share its failure <em>and</em> its context/deadline. One slow caller's cancellation can affect the shared call. Use <code>DoChan</code> with per-caller selects, or scope keys carefully, when callers have different deadlines.
+  </div>
+
+  <h3 id="s3-4">3.4 Backpressure &amp; Load Shedding</h3>
+  <p>When demand exceeds capacity, you have exactly two honest options: <strong>slow the producers down</strong>
+  (backpressure) or <strong>drop work</strong> (load shedding). The dishonest option — accept everything and
+  queue it unboundedly — leads to memory exhaustion, ballooning latency, and eventual collapse. An unbounded
+  queue is a latency bomb.</p>
+
+  <h4>Backpressure</h4>
+  <p>Backpressure is flow control: the consumer signals the producer to slow down. TCP does it with its receive
+  window; gRPC and HTTP/2 do it with stream-level flow control; a bounded channel does it by blocking the
+  sender. The key is that the signal propagates <em>upstream</em> so the pressure is felt at the source rather
+  than absorbed silently.</p>
+
+  <h4>Load shedding</h4>
+  <p>When you can't slow producers (e.g. public internet traffic), <strong>shed load</strong>: reject excess
+  requests <em>quickly and cheaply</em> before they consume real resources. The goal is to keep serving the
+  requests you accept at full quality rather than serving everyone slowly. Crucially, <strong>shed by
+  priority</strong> — drop the health-check-retry and the speculative prefetch before you drop the paying
+  customer's checkout.</p>
+
+<pre><code>// Adaptive load shedding based on a queue-depth / latency signal.
+func (s *Server) admit(req Request) bool {
+    inflight := s.inflight.Load()
+    if inflight &lt; s.softLimit {
+        return true // healthy: admit everything
+    }
+    if inflight &gt;= s.hardLimit {
+        // Overloaded: shed by priority, cheapest rejection possible.
+        return req.Priority == Critical
+    }
+    // Degraded zone: probabilistically shed low-priority work.
+    return req.Priority >= High || rand.Float64() &gt; s.shedProbability()
+}</code></pre>
+
+  <div class="key-concept">
+    <h5>Little's Law — why queues betray you</h5>
+    <p>Little's Law says <em>L = λ·W</em>: the average number of in-flight requests (L) equals arrival rate (λ) times average latency (W). When a dependency slows (W rises) at constant arrival rate, in-flight count rises proportionally — exhausting threads, memory, and connections. This is the math behind cascading failure, and why <strong>bounding the queue</strong> (shedding) is not optional under overload.</p>
+  </div>
+
+  <h3 id="s3-5">3.5 Load Balancing &amp; Health Checks</h3>
+  <p>A load balancer spreads requests across a pool of <strong>upstream</strong> servers. Balancing can live on
+  the <strong>client</strong> (the caller picks an instance, as in gRPC client-side LB or a service mesh) or on
+  the <strong>server</strong> side (a dedicated LB like nginx, HAProxy, or an L4/L7 cloud balancer). Client-side
+  avoids an extra hop and single choke point; server-side is simpler and centralizes policy.</p>
+
+  <table>
+    <tr><th>Algorithm</th><th>How it picks</th><th>Best for</th></tr>
+    <tr><td>Round robin</td><td>Next server in rotation</td><td>Uniform requests, uniform servers</td></tr>
+    <tr><td>Weighted round robin</td><td>Proportional to capacity weights</td><td>Heterogeneous server sizes</td></tr>
+    <tr><td>Least connections</td><td>Fewest active connections</td><td>Long-lived / variable-cost requests</td></tr>
+    <tr><td>Least response time</td><td>Lowest latency + fewest conns</td><td>Latency-sensitive traffic</td></tr>
+    <tr><td>Consistent hashing</td><td>Hash(key) → server ring</td><td>Cache affinity, sticky sessions</td></tr>
+    <tr><td>Power of two choices</td><td>Pick 2 at random, take the less loaded</td><td>Great load spread with little state</td></tr>
+  </table>
+
+  <div class="tip">
+    <strong>Power of two random choices ("P2C")</strong> is a beautiful result: sampling just two servers at random and choosing the less loaded one yields exponentially better load distribution than pure random, without the herd problem of "always pick the globally least loaded" (which makes everyone pile onto the same momentarily-idle node).
+  </div>
+
+  <h4>Active vs passive health checks</h4>
+  <ul>
+    <li><strong>Active (proactive):</strong> the balancer periodically probes a <code>/health</code> endpoint. Detects dead upstreams even with no traffic, but adds probe load and reacts only as fast as the probe interval.</li>
+    <li><strong>Passive (reactive):</strong> the balancer infers health from <em>real</em> traffic — if an upstream returns errors or times out, eject it from the pool for a cool-down ("outlier detection"). Reacts instantly to real failures, but needs traffic to notice.</li>
+  </ul>
+  <p>Production systems use <strong>both</strong>: passive ejection for fast reaction, active probing to decide
+  when an ejected node is healthy enough to return. A good health check is <em>deep enough</em> to catch real
+  problems (can it reach its own DB?) but not so deep that a downstream blip marks every node unhealthy at once
+  and empties the pool.</p>
+
+<pre><code># nginx upstream with passive (max_fails) + active-style retry behaviour.
+upstream api_backend {
+    least_conn;                       # least-connections balancing
+    server 10.0.0.1:8080 weight=3 max_fails=3 fail_timeout=15s;
+    server 10.0.0.2:8080 weight=1 max_fails=3 fail_timeout=15s;
+    server 10.0.0.3:8080 backup;      # only used if the others are down
+    keepalive 32;                     # reuse upstream connections
+}
+
+server {
+    location /api/ {
+        proxy_pass http://api_backend;
+        proxy_connect_timeout 1s;
+        proxy_read_timeout    2s;
+        # Retry the NEXT upstream on a transient failure (idempotent only!).
+        proxy_next_upstream error timeout http_502 http_503;
+        proxy_next_upstream_tries 2;
+    }
+}</code></pre>
+
+  <h3 id="s3-6">3.6 Deploy Strategies &amp; Rollback</h3>
+  <p>Most outages are triggered by a change. How you <em>roll out</em> that change is itself a resiliency
+  decision — the goal is to limit the blast radius of a bad deploy and make reverting trivial.</p>
+  <table>
+    <tr><th>Strategy</th><th>Mechanism</th><th>Rollback</th></tr>
+    <tr><td><strong>Rolling</strong></td><td>Replace instances a few at a time</td><td>Roll forward/back instance by instance; slow</td></tr>
+    <tr><td><strong>Blue-green</strong></td><td>Stand up a full new fleet, switch traffic at once</td><td>Instant — flip traffic back to blue</td></tr>
+    <tr><td><strong>Canary</strong></td><td>Send 1% → 5% → 25% → 100% of traffic to the new version</td><td>Stop the rollout; only a fraction was exposed</td></tr>
+    <tr><td><strong>Shadow / dark launch</strong></td><td>Mirror real traffic to the new version, discard its responses</td><td>Zero user impact; validates before any exposure</td></tr>
+  </table>
+
+  <div class="key-concept">
+    <h5>Make rollback boring</h5>
+    <p>The single most valuable property of a deploy pipeline is a <strong>fast, automatic rollback</strong> triggered by SLO-burn alerts (Chapter 6). Canaries should be <em>automatically</em> aborted when error rate or latency on the canary exceeds the baseline. Two rules make this safe: keep deploys <strong>backward-compatible</strong> (the new code reads old data and vice-versa) and <strong>decouple schema migrations from code deploys</strong> (expand → migrate → contract), so you can roll back code without a database time-machine.</p>
+  </div>
+
+  <div class="chapter-summary">
+    <h5>Key Takeaways — Chapter 3</h5>
+    <ul>
+      <li>Bulkheads give each dependency its own bounded pool so one stall can't starve the rest</li>
+      <li>Token bucket allows bursts at a steady average; sliding windows fix the fixed-window boundary bug</li>
+      <li>Single flight collapses concurrent identical work into one execution</li>
+      <li>Under overload, apply backpressure or shed by priority — never queue unboundedly (Little's Law)</li>
+      <li>Combine active + passive health checks; P2C balances load with almost no coordination</li>
+      <li>Canary + automatic SLO-driven rollback limits the blast radius of every deploy</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 4 -->
+<!-- ============================================================ -->
+<div class="chapter" id="ch4">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 04</div>
+    <h2>Asynchronous Communication &amp; Queues</h2>
+  </div>
+
+  <p>Synchronous calls couple the availability of caller and callee: if the callee is down, the caller fails.
+  Message queues break that coupling — the producer hands work to a broker and moves on; the consumer processes
+  it when able. But asynchrony introduces its own hard questions: <em>did my message actually get delivered?
+  Will the order be created twice? Can a payment be processed more than once?</em> This chapter builds a
+  reliable async pipeline: guaranteed delivery, deduplication, and seamless scaling.</p>
+
+  <h3 id="s4-1">4.1 Brokers: Kafka vs RabbitMQ</h3>
+  <p>The two dominant models are the <strong>log</strong> (Kafka) and the <strong>queue</strong> (RabbitMQ).
+  They are not interchangeable.</p>
+  <table>
+    <tr><th></th><th>Kafka (log)</th><th>RabbitMQ (queue/broker)</th></tr>
+    <tr><td>Model</td><td>Append-only partitioned log; consumers track an offset</td><td>Messages routed to queues; removed when ack'd</td></tr>
+    <tr><td>Retention</td><td>Time/size based — messages stay after being read (replayable)</td><td>Until consumed and acknowledged</td></tr>
+    <tr><td>Ordering</td><td>Total order <em>within a partition</em></td><td>Per-queue, weakened by redelivery / multiple consumers</td></tr>
+    <tr><td>Consumption</td><td>Pull; consumer groups split partitions</td><td>Push (or pull); competing consumers</td></tr>
+    <tr><td>Throughput</td><td>Very high (sequential disk, batching)</td><td>High, but lower than Kafka</td></tr>
+    <tr><td>Best for</td><td>Event streaming, replay, high fan-out, log of record</td><td>Task queues, complex routing, per-message TTL/priority</td></tr>
+  </table>
+
+  <h4>Buffering &amp; load levelling</h4>
+  <p>The first super-power of a queue is <strong>load levelling</strong>: it absorbs a spike. If a flash sale
+  produces 50,000 orders/second but your fulfilment service handles 5,000/second, the queue buffers the
+  difference and the consumers drain it steadily. The producer never overwhelms the consumer; the spike becomes
+  a slightly longer backlog instead of an outage. The trade-off is <strong>latency</strong> — work is now
+  processed eventually, not immediately — and you must monitor the backlog (consumer lag, Chapter 6).</p>
+
+  <h4>Scaling under load</h4>
+  <p>In Kafka, parallelism is bounded by <strong>partition count</strong>: a consumer group can have at most one
+  consumer per partition actively reading. Add partitions to scale out — but choosing a partition <em>key</em>
+  determines ordering and skew. Hash by <code>order_id</code> and all events for one order stay ordered on one
+  partition; a hot key (one huge customer) creates a <strong>hot partition</strong> that one consumer can't keep
+  up with.</p>
+
+  <h3 id="s4-2">4.2 Delivery Guarantees</h3>
+  <p>There are three possible guarantees, and the names describe exactly what they promise:</p>
+  <table>
+    <tr><th>Guarantee</th><th>Promise</th><th>Failure mode</th></tr>
+    <tr><td><strong>At-most-once</strong></td><td>Never delivered twice</td><td>May be <em>lost</em> (ack before processing)</td></tr>
+    <tr><td><strong>At-least-once</strong></td><td>Never lost</td><td>May be <em>duplicated</em> (ack after processing, crash in between)</td></tr>
+    <tr><td><strong>Exactly-once</strong></td><td>Never lost, never duplicated</td><td>Expensive; only within limited boundaries</td></tr>
+  </table>
+
+  <div class="key-concept">
+    <h5>"Exactly-once" is mostly a lie — and that's fine</h5>
+    <p>True end-to-end exactly-once delivery is impossible over an unreliable network (it reduces to the two generals problem). What systems actually provide is <strong>at-least-once delivery + idempotent processing = effectively-once</strong>. Kafka's "exactly-once semantics" works only <em>within Kafka</em> (transactional reads-process-writes between Kafka topics); the moment you touch an external database or API, you're back to at-least-once + idempotency. <strong>So the real engineering goal is: at-least-once delivery, and make the consumer idempotent.</strong></p>
+  </div>
+
+  <h3 id="s4-3">4.3 Distributed Transactions: SAGA vs 2PC</h3>
+  <p>You can't wrap a database write and a message publish (or two services' databases) in a single ACID
+  transaction across the network. Two patterns address this.</p>
+
+  <h4>Two-Phase Commit (2PC)</h4>
+  <p>A coordinator runs a <em>prepare</em> phase (every participant votes "ready" and locks resources) then a
+  <em>commit</em> phase (everyone commits). It gives strong consistency but is <strong>blocking</strong>: if the
+  coordinator crashes after prepare, participants hold locks indefinitely, and the whole transaction is
+  unavailable. It scales poorly and couples availability of all participants — generally avoided in
+  microservices.</p>
+
+  <h4>The SAGA pattern</h4>
+  <p>A <strong>SAGA</strong> breaks a distributed transaction into a sequence of <em>local</em> transactions,
+  each with a <strong>compensating action</strong> that semantically undoes it. If step 4 fails, you run the
+  compensations for steps 3, 2, 1 in reverse. There is no global lock and no isolation — instead you accept
+  temporary inconsistency and design explicit "undo" logic.</p>
+  <table>
+    <tr><th></th><th>2PC</th><th>SAGA</th></tr>
+    <tr><td>Consistency</td><td>Strong (atomic)</td><td>Eventual</td></tr>
+    <tr><td>Locks</td><td>Held across the whole transaction</td><td>Only within each local step</td></tr>
+    <tr><td>Availability</td><td>Blocks on any participant/coordinator failure</td><td>High; no global blocking</td></tr>
+    <tr><td>Complexity</td><td>In the protocol</td><td>In your compensation logic</td></tr>
+  </table>
+  <p>SAGAs come in two flavours: <strong>orchestration</strong> (a central coordinator tells each service what
+  to do next — easier to reason about and monitor) and <strong>choreography</strong> (each service reacts to
+  events and emits the next — more decoupled but harder to trace).</p>
+
+<pre><code>// Orchestrated SAGA: each step has a forward action and a compensation.
+type Step struct {
+    Do         func(ctx context.Context) error
+    Compensate func(ctx context.Context) error
+}
+
+func RunSaga(ctx context.Context, steps []Step) error {
+    var done []Step
+    for _, s := range steps {
+        if err := s.Do(ctx); err != nil {
+            // Roll back everything already done, in reverse order.
+            for i := len(done) - 1; i &gt;= 0; i-- {
+                // Compensations must be idempotent and retried until they succeed.
+                _ = retryUntilSuccess(ctx, done[i].Compensate)
+            }
+            return fmt.Errorf("saga aborted: %w", err)
+        }
+        done = append(done, s)
+    }
+    return nil
+}
+
+// e.g. reserveInventory ⇄ releaseInventory, chargeCard ⇄ refundCard,
+//      createShipment   ⇄ cancelShipment</code></pre>
+
+  <h3 id="s4-4">4.4 Reliable Producing &amp; the Outbox Pattern</h3>
+  <p>Here is the bug that silently loses events in countless systems: a service commits a row to its database,
+  then publishes a message to the broker as a <em>second, separate</em> step. If it crashes <em>between</em>
+  those two steps, the database has the order but the broker never got the event — the rest of the system never
+  finds out. This is the <strong>dual-write problem</strong>: two systems, no shared transaction.</p>
+
+  <div class="warning">
+    <strong>You cannot fix the dual-write problem by reordering.</strong> Publish-then-commit can publish an event for a transaction that later rolls back (a phantom event). Commit-then-publish can lose the event on a crash. Either ordering is wrong. You need the <em>outbox</em>.
+  </div>
+
+  <h4>The transactional outbox</h4>
+  <p>Write the message into an <code>outbox</code> table <em>in the same local transaction</em> as your
+  business data. Now the order and the intent-to-publish commit atomically — they can't diverge. A separate
+  <strong>relay</strong> process (a poller, or a change-data-capture stream like Debezium reading the WAL —
+  §1.5) reads unpublished outbox rows and ships them to the broker, marking them sent. Delivery is
+  <em>at-least-once</em> (the relay may crash after publishing, before marking), which is exactly why consumers
+  must be idempotent (§4.5).</p>
+
+<pre><code>-- Step 1: business write + outbox row in ONE transaction (atomic).
+BEGIN;
+  INSERT INTO orders (id, user_id, total, status)
+       VALUES ('ord_42', 'u_7', 1999, 'CREATED');
+  INSERT INTO outbox (id, topic, payload, created_at)
+       VALUES ('evt_99', 'orders.created',
+               '{"orderId":"ord_42","total":1999}', now());
+COMMIT;</code></pre>
+
+<pre><code>// Step 2: a relay drains the outbox to the broker, at-least-once.
+func (r *Relay) pump(ctx context.Context) error {
+    rows, err := r.db.Query(ctx,
+        `SELECT id, topic, payload FROM outbox
+           WHERE published_at IS NULL
+           ORDER BY created_at
+           LIMIT 100
+           FOR UPDATE SKIP LOCKED`) // SKIP LOCKED lets relays run in parallel
+    if err != nil {
+        return err
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        var id, topic string
+        var payload []byte
+        _ = rows.Scan(&amp;id, &amp;topic, &amp;payload)
+
+        if err := r.broker.Publish(ctx, topic, id, payload); err != nil {
+            return err // leave it unpublished; retried next tick
+        }
+        _, _ = r.db.Exec(ctx,
+            `UPDATE outbox SET published_at = now() WHERE id = $1`, id)
+    }
+    return nil
+}</code></pre>
+
+  <h3 id="s4-5">4.5 Reliable Consuming &amp; the Inbox Pattern</h3>
+  <p>Because delivery is at-least-once, the consumer is where correctness is enforced. Two concerns: <em>when</em>
+  do you commit your progress, and <em>how</em> do you handle duplicates.</p>
+
+  <h4>Offsets: manual vs auto commit</h4>
+  <p>Kafka tracks consumer progress as an <strong>offset</strong> per partition. With <strong>auto-commit</strong>,
+  the client periodically commits the latest read offset in the background — convenient, but it can commit an
+  offset for a message you haven't finished processing, so a crash <em>loses</em> it (at-most-once). With
+  <strong>manual commit</strong>, you commit only <em>after</em> successfully processing — a crash before commit
+  means redelivery (at-least-once). Manual commit, after processing, is the durable choice.</p>
+
+  <div class="tip">
+    <strong>Process, then commit — never the reverse.</strong> Commit-after-processing gives at-least-once (safe with idempotency). Commit-before-processing gives at-most-once (silent data loss on crash). The ordering of these two lines is one of the most consequential decisions in a consumer.
+  </div>
+
+  <h4>The inbox pattern (idempotent consumer)</h4>
+  <p>To process each message effectively once despite redelivery, record every processed message's ID in an
+  <strong>inbox</strong> table, and check it before acting — atomically, in the same transaction as the side
+  effect. A duplicate finds its ID already present and is skipped.</p>
+
+<pre><code>// Idempotent consumer: dedupe via an inbox table, commit offset after.
+func (c *Consumer) handle(ctx context.Context, msg Message) error {
+    tx, err := c.db.Begin(ctx)
+    if err != nil {
+        return err
+    }
+    defer tx.Rollback(ctx)
+
+    // Claim the message id. If it's already there, this is a duplicate.
+    tag, err := tx.Exec(ctx,
+        `INSERT INTO inbox (message_id, processed_at)
+              VALUES ($1, now())
+         ON CONFLICT (message_id) DO NOTHING`, msg.ID)
+    if err != nil {
+        return err
+    }
+    if tag.RowsAffected() == 0 {
+        return c.commitOffset(ctx, msg) // duplicate: ack and move on
+    }
+
+    // First time: do the side effect in the SAME transaction as the inbox row.
+    if err := c.applyBusinessLogic(ctx, tx, msg); err != nil {
+        return err // rollback drops the inbox row too -> safe to redeliver
+    }
+    if err := tx.Commit(ctx); err != nil {
+        return err
+    }
+    return c.commitOffset(ctx, msg) // only after the work is durable
+}</code></pre>
+
+  <div class="key-concept">
+    <h5>Outbox + Inbox = end-to-end effectively-once</h5>
+    <p>The outbox guarantees the event is <em>never lost</em> on the producer side; the inbox guarantees it is <em>never applied twice</em> on the consumer side. Together, over an at-least-once broker, they deliver the "exactly-once" behaviour the business actually wants — without any distributed transaction. This pairing is the backbone of reliable event-driven systems.</p>
+  </div>
+
+  <h3 id="s4-6">4.6 Dead Letter Queues</h3>
+  <p>Some messages can never be processed: malformed payloads, references to deleted entities, a bug that throws
+  on a specific shape of data. These are <strong>poison messages</strong>. If you simply retry them forever, the
+  consumer is stuck — it redelivers the poison message, fails, redelivers it, and the partition's backlog grows
+  behind it (<em>head-of-line blocking</em>).</p>
+  <p>The solution is a <strong>Dead Letter Queue (DLQ)</strong>: after N failed attempts, move the message to a
+  separate queue and <em>continue</em> with the next message. The DLQ becomes a quarantine you can inspect,
+  alert on, fix, and replay from.</p>
+
+<pre><code>// Route a message to the DLQ after exhausting retries; never block the stream.
+func (c *Consumer) process(ctx context.Context, msg Message) {
+    err := retryWithBackoff(ctx, func() error {
+        return c.handle(ctx, msg)
+    })
+    if err == nil {
+        return
+    }
+    if attempts(msg) >= c.maxAttempts {
+        // Quarantine with full context for the on-call engineer.
+        c.dlq.Publish(ctx, DeadLetter{
+            Original:    msg,
+            Error:       err.Error(),
+            Attempts:    attempts(msg),
+            FailedAt:    time.Now(),
+            ConsumerVer: c.version,
+        })
+        c.commitOffset(ctx, msg) // unblock the partition
+        c.metrics.DLQ.Inc()      // ALERT on this — a rising DLQ is a real incident
+        return
+    }
+    // else: let it be redelivered with an incremented attempt count
+}</code></pre>
+
+  <div class="warning">
+    <strong>A DLQ is not a dustbin.</strong> Messages landing in it represent lost business events — an order not fulfilled, a payment not recorded. The DLQ must be <em>monitored and alerted on</em> (Chapter 6), have a documented replay procedure, and ideally a retention long enough to fix the bug and reprocess. An unwatched DLQ is just slow, silent data loss.
+  </div>
+
+  <div class="chapter-summary">
+    <h5>Key Takeaways — Chapter 4</h5>
+    <ul>
+      <li>Kafka is a replayable log (offsets, partition order); RabbitMQ is a queue (ack-and-remove, rich routing)</li>
+      <li>Queues level load by buffering spikes — at the cost of latency and a backlog to watch</li>
+      <li>Aim for at-least-once delivery + idempotent processing = "effectively once"; true exactly-once is a near-myth</li>
+      <li>Prefer SAGA (local txns + compensations) over blocking 2PC across services</li>
+      <li>The outbox pattern solves the dual-write problem; commit offsets <em>after</em> processing</li>
+      <li>Inbox dedupes duplicates; DLQ quarantines poison messages so they don't block the stream — and you alert on it</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 5 -->
+<!-- ============================================================ -->
+<div class="chapter" id="ch5">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 05</div>
+    <h2>The Caching Layer in High-Availability Systems</h2>
+  </div>
+
+  <p>You add a cache to make the system faster — and accidentally invent a whole new family of outages. The
+  cache expires and a flood of identical requests stampedes your database. Users see data that's minutes stale
+  and file bug reports. A thousand keys expire at the same second and the origin falls over. Caching is a
+  power tool with sharp edges; this chapter is the safety manual.</p>
+
+  <h3 id="s5-1">5.1 Stale Data, TTL &amp; Invalidation</h3>
+  <p>"There are only two hard things in computer science: cache invalidation and naming things." The fundamental
+  tension of a cache is that it holds a <em>copy</em>, and copies drift from the source of truth. Three
+  mechanisms keep them in line:</p>
+  <ul>
+    <li><strong>TTL (time to live)</strong> — every entry expires after a fixed duration. Simple, self-healing, and bounds staleness to at most the TTL. The downside: data can be stale for up to the full TTL, and everything written at once expires at once (see §5.4).</li>
+    <li><strong>Active (write) invalidation</strong> — when the underlying data changes, explicitly delete or update the cache entry. Fresh, but you must find <em>every</em> write path, and it's racy (§5.2).</li>
+    <li><strong>Event-driven invalidation</strong> — the source of truth emits a change event (e.g. via the outbox / CDC of §4.4) and cache nodes invalidate on it. Scales to many cache instances and decouples writers from caches.</li>
+  </ul>
+
+  <table>
+    <tr><th>Pattern</th><th>Read path</th><th>Write path</th><th>Note</th></tr>
+    <tr><td>Cache-aside (lazy)</td><td>Miss → load DB → fill cache</td><td>Write DB, invalidate cache</td><td>Most common; cache only holds read data</td></tr>
+    <tr><td>Read-through</td><td>Cache loads from DB on miss itself</td><td>—</td><td>Cache library owns the load logic</td></tr>
+    <tr><td>Write-through</td><td>—</td><td>Write cache <em>and</em> DB synchronously</td><td>Cache always fresh; slower writes</td></tr>
+    <tr><td>Write-behind</td><td>—</td><td>Write cache now, flush to DB async</td><td>Fast writes; risk of loss before flush</td></tr>
+  </table>
+
+  <h3 id="s5-2">5.2 Cache Consistency</h3>
+  <p>The naïve cache-aside write — "update the DB, then delete the cache key" — has a famous race. Consider a
+  concurrent reader and writer:</p>
+<pre><code>// The classic cache-aside race (read fills a STALE value):
+//   T1 (read):  cache miss for key K
+//   T1 (read):  SELECT from DB -> gets OLD value v0
+//   T2 (write): UPDATE DB -> v1
+//   T2 (write): DELETE cache key K        (nothing there yet)
+//   T1 (read):  SET cache K = v0          (writes the STALE value!)
+//   => cache now serves v0 until TTL, even though DB holds v1.</code></pre>
+  <p>Mitigations, roughly in order of strength:</p>
+  <ul>
+    <li><strong>Delete, don't update</strong> the cache on writes — next read repopulates from the DB. Updating in place invites lost-update races.</li>
+    <li><strong>Delayed double delete</strong> — delete the key, write the DB, then delete again after a short delay to evict any stale value a concurrent read slipped in.</li>
+    <li><strong>Versioning / CAS</strong> — store a version with each value and only overwrite if the version is newer.</li>
+    <li><strong>Short TTL as a backstop</strong> — even if invalidation races, the TTL bounds how long a stale value can survive.</li>
+  </ul>
+
+  <h4>Compare-and-swap (check-and-set)</h4>
+  <p><strong>CAS</strong> lets you update a value only if it hasn't changed since you read it — the atomic
+  primitive behind optimistic concurrency. Redis exposes it via <code>WATCH</code>/<code>MULTI</code>/<code>EXEC</code>
+  (and memcached via <code>gets</code>/<code>cas</code>). It turns "read-modify-write" into a safe operation
+  even with concurrent writers: if someone changed the key under you, the transaction aborts and you retry.</p>
+
+<pre><code>// Optimistic update with Redis WATCH (compare-and-swap).
+func incrementCounter(ctx context.Context, rdb *redis.Client, key string) error {
+    return rdb.Watch(ctx, func(tx *redis.Tx) error {
+        n, err := tx.Get(ctx, key).Int()
+        if err != nil &amp;&amp; err != redis.Nil {
+            return err
+        }
+        // EXEC fails (and Watch retries) if `key` changed since WATCH.
+        _, err = tx.TxPipelined(ctx, func(p redis.Pipeliner) error {
+            p.Set(ctx, key, n+1, 0)
+            return nil
+        })
+        return err
+    }, key)
+}</code></pre>
+
+  <div class="key-concept">
+    <h5>Replication in the cache tier</h5>
+    <p>Redis can replicate to read replicas and fail over via Sentinel or Cluster, but replication is <strong>asynchronous</strong>: a read replica may lag the primary, so a read-after-write against a replica can return the old value. And on failover, writes acknowledged by the primary but not yet replicated are <em>lost</em>. Treat the cache as best-effort, never as the source of truth — the database (Chapter 1) is.</p>
+  </div>
+
+  <h3 id="s5-3">5.3 Thundering Herd</h3>
+  <p>A popular key expires. In the same millisecond, a thousand concurrent requests miss the cache and
+  <em>all</em> rush to the database to recompute the same value. The database, sized for cache-hit traffic,
+  buckles. This is the <strong>thundering herd</strong> (or cache stampede), and it's the most common
+  cache-induced outage.</p>
+  <p>Defenses:</p>
+  <ul>
+    <li><strong>Single flight (request coalescing)</strong> — §3.3 applied to cache fills: let exactly one request recompute the value while the rest wait for and share its result.</li>
+    <li><strong>Soft TTL + background refresh</strong> — store a "soft" expiry before the hard one. When a read finds the value past its soft TTL, it serves the still-valid value <em>and</em> triggers an async refresh — readers never block on a recompute.</li>
+    <li><strong>Distributed lock</strong> — the first miss takes a short-lived lock (e.g. Redis <code>SET key val NX PX</code>); others briefly serve stale or wait. Simpler across many app instances than in-process single flight, but watch lock expiry.</li>
+  </ul>
+
+<pre><code>// Stampede protection with single flight + soft-TTL background refresh.
+func (c *Cache) Get(ctx context.Context, key string) ([]byte, error) {
+    v, ok := c.store.Get(key)
+    if ok &amp;&amp; time.Now().Before(v.softExpiry) {
+        return v.data, nil // fresh enough
+    }
+    if ok {
+        // Past SOFT ttl but still within HARD ttl: serve stale, refresh async.
+        go c.refresh(context.WithoutCancel(ctx), key)
+        return v.data, nil // nobody blocks; no herd
+    }
+    // Hard miss: collapse all concurrent misses into ONE origin call.
+    data, err, _ := c.sf.Do(key, func() (interface{}, error) {
+        return c.loadFromOrigin(ctx, key)
+    })
+    if err != nil {
+        return nil, err
+    }
+    return data.([]byte), nil
+}</code></pre>
+
+  <h3 id="s5-4">5.4 Cache Avalanche &amp; Penetration</h3>
+  <h4>Cache avalanche</h4>
+  <p>A <strong>cache avalanche</strong> is the thundering herd at scale: a <em>large set</em> of keys expires
+  simultaneously (e.g. you warmed 100k keys at deploy with the same TTL), or the cache layer itself restarts and
+  comes up empty. The origin is hit by a wall of misses across many keys at once. Defenses:</p>
+  <ul>
+    <li><strong>Random TTL / jitter</strong> — add a random spread to each TTL (<code>ttl ± rand(0, 10%)</code>) so keys expire at different times instead of in lockstep. This is the single most important avalanche defense, and it's one line of code.</li>
+    <li><strong>Multi-level caching</strong> — a small in-process L1 cache in front of the shared L2 (Redis) absorbs hot keys and survives an L2 restart.</li>
+    <li><strong>Proactive refresh</strong> — warm/refresh hot keys before they expire, on a schedule.</li>
+    <li><strong>Origin rate limiting</strong> — cap concurrent origin loads (bulkhead, §3.1) so even a full avalanche can't overwhelm the database — excess requests serve stale or fail fast.</li>
+  </ul>
+
+  <h4>Cache penetration</h4>
+  <p><strong>Cache penetration</strong> is the inverse: requests for keys that <em>don't exist</em> (often
+  malicious — random non-existent IDs). They always miss the cache and always hit the database, since there's
+  nothing to cache. Defenses: <strong>cache the negative result</strong> (store a short-TTL "not found"
+  sentinel) and/or front the cache with a <strong>Bloom filter</strong> of existing keys to reject impossible
+  lookups in O(1) before they touch the DB.</p>
+
+  <div class="tip">
+    <strong>Three "cache disasters", three fixes.</strong> <em>Penetration</em> = key never exists → cache negatives + Bloom filter. <em>Thundering herd</em> = one hot key expires → single flight + soft TTL. <em>Avalanche</em> = many keys expire together → random TTL jitter + multi-level cache. Knowing which is which under fire is half the battle.
+  </div>
+
+  <h3 id="s5-5">5.5 Eviction Strategies</h3>
+  <p>A cache has finite memory; when it's full, it must <strong>evict</strong> something to admit a new entry.
+  The policy determines your hit rate.</p>
+  <table>
+    <tr><th>Policy</th><th>Evicts</th><th>Good when</th></tr>
+    <tr><td><strong>LRU</strong> — Least Recently Used</td><td>The entry untouched longest</td><td>Recency predicts reuse (most workloads). The default.</td></tr>
+    <tr><td><strong>LFU</strong> — Least Frequently Used</td><td>The entry accessed fewest times</td><td>A stable hot set; resists one-off scans polluting the cache</td></tr>
+    <tr><td><strong>FIFO</strong> — First In First Out</td><td>The oldest inserted entry</td><td>Rarely ideal; ignores access pattern</td></tr>
+    <tr><td><strong>MRU</strong> — Most Recently Used</td><td>The entry touched most recently</td><td>Looping scans over a dataset larger than the cache</td></tr>
+    <tr><td><strong>Random</strong></td><td>A random entry</td><td>Cheap, no metadata; surprisingly decent, used by Redis (approx-LRU/LFU)</td></tr>
+  </table>
+
+  <div class="warning">
+    <strong>LRU's blind spot:</strong> a large sequential scan (a batch job touching millions of rows once) evicts your entire hot set even though those scanned entries will never be read again. LFU and "scan-resistant" variants (like the W-TinyLFU used in Caffeine) defend against this. Modern caches often blend recency and frequency rather than picking one.
+  </div>
+
+<pre><code>// O(1) LRU: a hash map for lookup + a doubly linked list for recency order.
+type LRU struct {
+    cap   int
+    items map[string]*list.Element // key -> node
+    order *list.List               // front = most recent, back = least
+}
+
+func (c *LRU) Get(key string) (any, bool) {
+    if el, ok := c.items[key]; ok {
+        c.order.MoveToFront(el)    // mark as most-recently-used
+        return el.Value.(*entry).val, true
+    }
+    return nil, false
+}
+
+func (c *LRU) Put(key string, val any) {
+    if el, ok := c.items[key]; ok {
+        el.Value.(*entry).val = val
+        c.order.MoveToFront(el)
+        return
+    }
+    if c.order.Len() &gt;= c.cap {    // full: evict the least-recently-used
+        back := c.order.Back()
+        c.order.Remove(back)
+        delete(c.items, back.Value.(*entry).key)
+    }
+    c.items[key] = c.order.PushFront(&amp;entry{key, val})
+}</code></pre>
+
+  <div class="key-concept">
+    <h5>Metrics that tell you the cache is healthy</h5>
+    <p>Watch <strong>hit ratio</strong> (a sudden drop signals an invalidation storm or avalanche), <strong>eviction rate</strong> (high → cache too small for the working set), <strong>origin load / miss latency</strong> (the thing the cache is supposed to protect), and <strong>key TTL distribution</strong> (clustered expiries → avalanche risk). A cache you can't observe is a cache that will surprise you (Chapter 6).</p>
+  </div>
+
+  <div class="chapter-summary">
+    <h5>Key Takeaways — Chapter 5</h5>
+    <ul>
+      <li>TTL bounds staleness automatically; active/event invalidation is fresher but racy and must cover every write path</li>
+      <li>On writes, <em>delete</em> the key rather than update it; use CAS/versioning for safe concurrent updates</li>
+      <li>The cache is best-effort and async-replicated — never the source of truth</li>
+      <li>Thundering herd (one hot key) → single flight + soft-TTL background refresh</li>
+      <li>Avalanche (many keys at once) → random TTL jitter + multi-level cache; penetration → cache negatives + Bloom filter</li>
+      <li>LRU is the sensible default; LFU/scan-resistant policies defend against scan pollution</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 6 -->
+<!-- ============================================================ -->
+<div class="chapter" id="ch6">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 06</div>
+    <h2>Failure Detection &amp; Response</h2>
+  </div>
+
+  <p>You put out one fire and the next is already burning. Users hit errors before your alerts fire. That's the
+  default state of a system without good observability and a practiced response process. This final chapter is
+  about <em>seeing</em> failure before it reaches the user, <em>localizing</em> it fast across synchronous and
+  asynchronous paths, and <em>responding</em> when automation has run out of answers.</p>
+
+  <h3 id="s6-1">6.1 Incident Management &amp; Observability</h3>
+  <p>Detection rests on the <strong>three pillars of observability</strong>, and resilient teams use them in a
+  deliberate order:</p>
+  <table>
+    <tr><th>Pillar</th><th>Answers</th><th>Use for</th></tr>
+    <tr><td><strong>Metrics</strong></td><td>"Is something wrong, and how bad?"</td><td>Dashboards, alerting, SLOs — cheap, aggregate</td></tr>
+    <tr><td><strong>Traces</strong></td><td>"Where in the call graph is the latency/error?"</td><td>Localizing across services (distributed tracing)</td></tr>
+    <tr><td><strong>Logs</strong></td><td>"What exactly happened to this request?"</td><td>Root-cause detail once you've localized</td></tr>
+  </table>
+  <p>Metrics tell you <em>that</em> something broke; traces tell you <em>where</em>; logs tell you <em>why</em>.
+  Alerting on metrics, drilling with traces, and confirming with logs is the fast path from page to fix.</p>
+
+  <h4>The coordinator (incident commander)</h4>
+  <p>When an incident spans teams, someone must own the response. The <strong>coordinator</strong> (or incident
+  commander) does <em>not</em> personally fix everything — they <strong>centralize</strong> the response:
+  maintain the single source of truth on status, delegate investigation, decide on mitigations (roll back? shed
+  load? fail over?), and shield the responders from the flood of "is it fixed yet?" The role exists so that
+  five engineers don't independently make five conflicting changes during an outage.</p>
+
+  <div class="key-concept">
+    <h5>Business metrics are the real SLO</h5>
+    <p>CPU and memory can look perfectly healthy while the business is on fire. The metrics that matter most are <strong>business-level</strong>: orders per minute, successful payments, login success rate, messages delivered. A drop in "checkouts per minute" detects a broken checkout that no infrastructure metric would reveal. Alert on the <em>symptom the user feels</em> (orders falling), then use technical metrics to find the cause.</p>
+  </div>
+
+  <h4>Planned work &amp; communication</h4>
+  <p>A surprising share of incidents are self-inflicted: maintenance windows, migrations, certificate
+  rotations, dependency upgrades. The discipline that prevents these from becoming outages is
+  <strong>communication</strong> — announce planned work, its blast radius, and its rollback plan <em>before</em>
+  it happens, so that when latency blips, on-call knows it's the migration and not a new fire. And when
+  automation (auto-scaling, auto-failover, circuit breakers) <em>doesn't</em> save you, you need a documented
+  manual runbook (§6.5) and the authority to execute it.</p>
+
+  <h3 id="s6-2">6.2 Monitoring Synchronous Calls</h3>
+  <p>For request/response services, Google's <strong>Four Golden Signals</strong> are the canonical starting
+  set:</p>
+  <table>
+    <tr><th>Signal</th><th>What to watch</th><th>Why</th></tr>
+    <tr><td><strong>Latency</strong></td><td>p50 / p95 / p99 / p99.9 — split success vs error latency</td><td>Tail latency is where users hurt; averages hide it</td></tr>
+    <tr><td><strong>Traffic</strong></td><td>Requests/sec, by endpoint</td><td>Context for the other signals; detects spikes/drops</td></tr>
+    <tr><td><strong>Errors</strong></td><td>Rate of 5xx, timeouts, by code</td><td>The most direct symptom; powers SLO burn alerts</td></tr>
+    <tr><td><strong>Saturation</strong></td><td>CPU, memory, connection pools, queue depth</td><td>How close to the limit — predicts imminent failure</td></tr>
+  </table>
+
+  <div class="tip">
+    <strong>Always measure percentiles, never just the average.</strong> A mean latency of 50&nbsp;ms can hide a p99 of 5&nbsp;s — meaning 1% of users (often your biggest, most active ones) are having a terrible time. And <em>never average percentiles across instances</em> — p99 of p99s is mathematically meaningless. Aggregate the raw histograms.
+  </div>
+
+  <p>Beyond the golden signals: watch <strong>resource utilization</strong> against limits (a connection pool at
+  95% is a cascade waiting to happen — §3.1), and the <strong>health of your dependencies</strong> — your
+  database, the third-party APIs you call, the cache. Their saturation becomes your latency. Rich, structured,
+  <strong>correlatable logs</strong> (a trace/request ID on every line) are what turn "the service is slow" into
+  "this specific query against this shard is slow." And alerts must be <em>actionable</em>: an alert that fires
+  without a clear response just trains people to ignore alerts (§6.4).</p>
+
+  <h3 id="s6-3">6.3 Monitoring Asynchronous Pipelines</h3>
+  <p>Async systems fail differently. There's no failed HTTP response to count — a broken consumer manifests as
+  <strong>work silently not getting done</strong>. The master signal is <strong>consumer lag</strong>.</p>
+
+  <h4>Consumer lag</h4>
+  <p><strong>Lag</strong> = (latest offset produced) − (latest offset committed by the consumer group), per
+  partition. It's the number of messages waiting to be processed. A small, stable lag is healthy. A
+  <em>steadily growing</em> lag means consumers can't keep up with producers — the backlog will grow without
+  bound and processing latency with it. This is the async equivalent of saturation.</p>
+  <table>
+    <tr><th>Async metric</th><th>Signals</th></tr>
+    <tr><td>Consumer lag (per partition)</td><td>Are we keeping up? Growing lag = under-provisioned or stuck</td></tr>
+    <tr><td>Processing rate &amp; time</td><td>Throughput and per-message cost; a spike in time → a slow dependency</td></tr>
+    <tr><td>Partition skew</td><td>One partition lagging while others are fine → a hot key (§4.1) or a poison message (§4.6)</td></tr>
+    <tr><td>Consumer group state</td><td>Frequent <strong>rebalances</strong> stop all consumption; a stuck member blocks its partitions</td></tr>
+    <tr><td>DLQ size / rate</td><td>Messages being abandoned — direct business-event loss</td></tr>
+    <tr><td>End-to-end latency</td><td>produce-time → process-time; what the downstream actually experiences</td></tr>
+  </table>
+
+  <div class="warning">
+    <strong>Rebalancing storms.</strong> When a consumer joins, leaves, or is presumed dead (missed heartbeat), the group <em>rebalances</em> — and during the stop-the-world phase of a rebalance, the whole group pauses consumption. A consumer that's slow to process can miss its <code>max.poll.interval</code>, get kicked, trigger a rebalance, and make the lag worse — a feedback loop. Tune poll intervals and session timeouts to the real processing time.
+  </div>
+
+  <h3 id="s6-4">6.4 Alerting &amp; On-Call</h3>
+  <p>Alerts are the bridge between detection and response. Bad alerting is worse than none: it causes
+  <strong>alert fatigue</strong>, where so many false or non-actionable alerts fire that responders start
+  ignoring them — and miss the real one. Principles for alerts that shorten time-to-recovery rather than
+  lengthen it:</p>
+  <ul>
+    <li><strong>Alert on symptoms, not causes.</strong> Page on "checkout error rate &gt; 1%" (what the user feels), not on "CPU &gt; 80%" (which may be fine). One symptom alert replaces dozens of noisy cause alerts.</li>
+    <li><strong>Every page must be actionable.</strong> If there's nothing to do, it shouldn't page — make it a ticket or a dashboard. A page means "a human must act now."</li>
+    <li><strong>Use SLO burn-rate alerts.</strong> Page fast when you're burning the error budget quickly (a sharp outage), and more gently for slow burns. This ties alerting directly to user impact (§1.3).</li>
+    <li><strong>Multi-window, multi-burn-rate</strong> reduces false positives: require both a short window (fast detection) and a longer one (confirmation) to fire.</li>
+  </ul>
+
+<pre><code># Prometheus-style multi-burn-rate SLO alert (99.9% objective).
+# Fast burn: 2% of the 30-day budget in 1h -> page immediately.
+- alert: CheckoutErrorBudgetFastBurn
+  expr: |
+    (
+      sum(rate(http_requests_total{job="checkout",code=~"5.."}[5m]))
+      / sum(rate(http_requests_total{job="checkout"}[5m]))
+    ) > (14.4 * 0.001)        # 14.4x burn rate vs the 0.1% budget
+    and
+    (
+      sum(rate(http_requests_total{job="checkout",code=~"5.."}[1h]))
+      / sum(rate(http_requests_total{job="checkout"}[1h]))
+    ) > (14.4 * 0.001)        # confirm over a longer window
+  for: 2m
+  labels: { severity: page }
+  annotations:
+    summary: "Checkout burning error budget 14.4x — user-facing outage"
+    runbook: "https://runbooks/checkout-5xx"</code></pre>
+
+  <div class="tip">
+    <strong>Every alert links to a runbook.</strong> A page at 3&nbsp;a.m. is not the time to reverse-engineer the system. The runbook says: what this alert means, how to confirm it's real, the first three mitigations to try (roll back? shed load? fail over?), and who to escalate to. Runbooks turn heroics into procedure.
+  </div>
+
+  <h3 id="s6-5">6.5 Manual Recovery</h3>
+  <p>Sometimes automation isn't enough and you have to operate on the system by hand. For async systems, the
+  most common manual interventions involve <strong>offsets and consumer groups</strong> — powerful, and
+  dangerous if done carelessly.</p>
+  <table>
+    <tr><th>Situation</th><th>Manual intervention</th><th>Risk</th></tr>
+    <tr><td>Poison message wedged a consumer (no DLQ)</td><td>Skip it: commit offset past the bad message</td><td>Skips a real event — record what you skipped</td></tr>
+    <tr><td>A bug processed messages wrongly</td><td>Reset offsets back and reprocess</td><td>Re-delivers — <em>only safe if consumers are idempotent</em> (§4.5)</td></tr>
+    <tr><td>Unrecoverable backlog after an outage</td><td>Scale consumers / add partitions; or skip to latest if data is disposable</td><td>Skipping to latest abandons the backlog</td></tr>
+    <tr><td>Stuck/zombie consumer holding partitions</td><td>Force it out of the group; let rebalance reassign</td><td>Triggers a rebalance (brief pause, §6.3)</td></tr>
+  </table>
+
+<pre><code># Reset a consumer group to reprocess the last hour (idempotent consumers only!).
+# 1. STOP the consumer group first — you cannot reset offsets while it's active.
+kafka-consumer-groups.sh --bootstrap-server kafka:9092 \
+  --group orders-processor \
+  --topic orders.created \
+  --reset-offsets --to-datetime 2026-06-14T09:00:00.000 \
+  --dry-run            # ALWAYS dry-run first to see the planned moves
+
+# 2. Inspect, then re-run with --execute when satisfied.
+kafka-consumer-groups.sh --bootstrap-server kafka:9092 \
+  --group orders-processor --topic orders.created \
+  --reset-offsets --to-datetime 2026-06-14T09:00:00.000 --execute
+
+# Check current lag at any time:
+kafka-consumer-groups.sh --bootstrap-server kafka:9092 \
+  --group orders-processor --describe   # shows LAG per partition</code></pre>
+
+  <div class="warning">
+    <strong>Resetting offsets without idempotent consumers means reprocessing side effects</strong> — re-charging cards, re-sending emails, double-creating orders. This is precisely why Chapter 4 insisted on the inbox pattern: it makes manual replay <em>safe</em>. The resilience you build in calm times is what gives you safe options during an incident.
+  </div>
+
+  <h4>After the incident: the blameless post-mortem</h4>
+  <p>The course material asks, half-jokingly, "how do we punish the guilty?" The mature answer is: <strong>we
+  don't</strong>. The goal of a post-mortem is to fix the <em>system</em>, not the person — because a system
+  where one human's mistake causes an outage is a system with a missing safeguard (recall GitLab, §1.6: the
+  problem wasn't the engineer who ran <code>rm -rf</code>, it was the five backups that had silently failed). A
+  <strong>blameless post-mortem</strong> documents the timeline, the contributing factors, what went well, and
+  concrete action items — so the same failure can't recur. Blame makes people hide mistakes; blamelessness makes
+  them surface the weak spots you most need to know about.</p>
+
+  <div class="key-concept">
+    <h5>Closing the loop</h5>
+    <p>Resilience is a cycle, not a checklist. You <strong>design</strong> for failure (Chapters 1–5), you <strong>detect</strong> it fast (this chapter), you <strong>respond</strong> with practiced procedures, and you <strong>learn</strong> via blameless post-mortems that feed new safeguards back into the design. The systems that stay up aren't the ones that never fail — they're the ones that fail in small, contained, well-understood ways, and get a little harder to break after every incident.</p>
+  </div>
+
+  <div class="chapter-summary">
+    <h5>Key Takeaways — Chapter 6</h5>
+    <ul>
+      <li>Metrics say <em>that</em> it broke, traces say <em>where</em>, logs say <em>why</em> — alert, drill, confirm</li>
+      <li>Alert on business symptoms (orders/min), not just infra causes (CPU); a coordinator centralizes the response</li>
+      <li>Synchronous health = the Four Golden Signals (latency, traffic, errors, saturation) at percentiles</li>
+      <li>Asynchronous health = consumer lag, partition skew, rebalances, and DLQ rate</li>
+      <li>SLO burn-rate, multi-window alerts cut false positives; every page links to a runbook</li>
+      <li>Manual offset/consumer-group surgery is only safe atop idempotent consumers; post-mortems stay blameless</li>
+    </ul>
+  </div>
+</div>
+<script>
+(function () {
+
+  // ── Progress bar ──
+  var bar = document.getElementById('progress-bar');
+  function updateBar() {
+    var scrolled = window.scrollY;
+    var total = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (total > 0 ? (scrolled / total) * 100 : 0) + '%';
+  }
+  window.addEventListener('scroll', updateBar, { passive: true });
+  updateBar();
+
+  // ── Back-to-top button ──
+  var btt = document.getElementById('back-to-top');
+  window.addEventListener('scroll', function () {
+    btt.classList.toggle('visible', window.scrollY > 400);
+  }, { passive: true });
+  btt.addEventListener('click', function () {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ── Mobile sidebar toggle ──
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('sidebar-overlay');
+  var toggle = document.getElementById('nav-toggle');
+  var closeBtn = document.getElementById('sidebar-close');
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    overlay.classList.add('open');
+  }
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+  }
+  if (toggle)   toggle.addEventListener('click', openSidebar);
+  if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+  if (overlay)  overlay.addEventListener('click', closeSidebar);
+
+  // Close sidebar when a section link is clicked on mobile
+  sidebar.querySelectorAll('.nav-sections a').forEach(function(a) {
+    a.addEventListener('click', function() {
+      if (window.innerWidth <= 768) closeSidebar();
+    });
+  });
+
+  // ── Chapter group expand/collapse ──
+  document.querySelectorAll('.nav-ch-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var ch = btn.closest('.nav-ch');
+      ch.classList.toggle('open');
+    });
+  });
+
+  // ── Section number prominence in headings ──
+  var numRe = /^(\d+\.\d+)\s+/;
+  document.querySelectorAll('h3').forEach(function (h) {
+    var m = h.textContent.match(numRe);
+    if (!m) return;
+    var rest = h.innerHTML.replace(numRe, '');
+    h.innerHTML = '<span class="section-num">' + m[1] + '</span>' + rest;
+  });
+
+  // ── Active nav tracking via IntersectionObserver on sections ──
+  // Map section id → nav link
+  var sectionLinks = {};
+  sidebar.querySelectorAll('.nav-sections a[href^="#s"]').forEach(function(a) {
+    var id = a.getAttribute('href').slice(1);
+    sectionLinks[id] = a;
+  });
+
+  // Map chapter nav buttons
+  var chapterBtns = {};
+  document.querySelectorAll('.nav-ch').forEach(function(el) {
+    var btn = el.querySelector('.nav-ch-btn');
+    var chId = btn.getAttribute('data-ch');
+    if (chId) chapterBtns[chId] = { el: el, btn: btn };
+  });
+
+  var activeSection = null;
+  var activeChapter = null;
+
+  function setActive(sectionId) {
+    if (sectionId === activeSection) return;
+
+    // Deactivate old section
+    if (activeSection && sectionLinks[activeSection]) {
+      sectionLinks[activeSection].classList.remove('active');
+    }
+
+    // Activate new section
+    activeSection = sectionId;
+    if (activeSection && sectionLinks[activeSection]) {
+      sectionLinks[activeSection].classList.add('active');
+      // Scroll the link into view within sidebar
+      var link = sectionLinks[activeSection];
+      var sb = document.getElementById('sidebar');
+      var linkTop = link.offsetTop;
+      var sbScrollTop = sb.scrollTop;
+      var sbH = sb.clientHeight;
+      if (linkTop < sbScrollTop + 60 || linkTop > sbScrollTop + sbH - 80) {
+        sb.scrollTo({ top: linkTop - sbH / 2, behavior: 'smooth' });
+      }
+    }
+
+    // Determine chapter from section id (e.g. s3-4 → ch3)
+    var chNum = sectionId ? sectionId.match(/^s(\d+)-/) : null;
+    var newChapter = chNum ? 'ch' + chNum[1] : null;
+
+    if (newChapter !== activeChapter) {
+      // Deactivate old chapter
+      if (activeChapter && chapterBtns[activeChapter]) {
+        chapterBtns[activeChapter].btn.classList.remove('active');
+        chapterBtns[activeChapter].el.classList.remove('open');
+      }
+      activeChapter = newChapter;
+      if (activeChapter && chapterBtns[activeChapter]) {
+        chapterBtns[activeChapter].btn.classList.add('active');
+        chapterBtns[activeChapter].el.classList.add('open');
+      }
+    }
+  }
+
+  // Observe all h3 sections
+  var sectionIds = Object.keys(sectionLinks);
+  var sectionObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        setActive(entry.target.id);
+      }
+    });
+  }, { rootMargin: '-3px 0px -60% 0px', threshold: 0 });
+
+  sectionIds.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) sectionObserver.observe(el);
+  });
+
+  // ── Wrap pre blocks: code header with lang badge + copy button ──
+  document.querySelectorAll('pre').forEach(function (pre) {
+    var wrap = document.createElement('div');
+    wrap.className = 'code-wrap';
+    var header = document.createElement('div');
+    header.className = 'code-header';
+    var badge = document.createElement('span');
+    badge.className = 'lang-badge';
+    badge.textContent = 'Go';
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var code = pre.querySelector('code');
+      var text = code ? code.innerText : pre.innerText;
+      navigator.clipboard.writeText(text).then(function () {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+      });
+    });
+    header.appendChild(badge);
+    header.appendChild(btn);
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(header);
+    wrap.appendChild(pre);
+  });
+
+  // ── Go syntax highlighting ──
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function applyToPlain(html, re, cls) {
+    var parts = html.split(/(<span[^>]*>[\s\S]*?<\/span>)/);
+    return parts.map(function(part, i) {
+      if (i % 2 === 1) return part;
+      return part.replace(re, '<span class="' + cls + '">$1</span>');
+    }).join('');
+  }
+
+  document.querySelectorAll('pre code').forEach(function (block) {
+    var text = escHtml(block.innerText);
+    text = text.replace(/(`[^`]*`|"(?:[^"\\]|\\.)*")/g, '<span class="go-string">$1</span>');
+    text = applyToPlain(text, /\b(break|case|chan|const|continue|default|defer|else|fallthrough|for|func|go|goto|if|import|interface|map|package|range|return|select|struct|switch|type|var|make|new|append|len|cap|copy|delete|close|panic|recover|nil|true|false|iota)\b/g, 'go-keyword');
+    text = applyToPlain(text, /\b(int|int8|int16|int32|int64|uint|uint8|uint16|uint32|uint64|uintptr|float32|float64|complex64|complex128|byte|rune|string|bool|error|any)\b/g, 'go-type');
+    block.innerHTML = text;
+  });
+
+}());
+</script>
+</body>
+</html>

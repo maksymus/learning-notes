@@ -1,0 +1,3920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concurrency in Go — Deep Dive Course</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.7; color: #1a1a1a; background: #fff; }
+  .cover { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #040810 0%, #0d1b2a 50%, #1a2540 100%); color: white; text-align: center; padding: 60px; }
+  .cover h1 { font-size: 64px; font-weight: 900; letter-spacing: -2px; margin-bottom: 16px; background: linear-gradient(90deg, #00cec9, #6c5ce7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .cover h2 { font-size: 24px; font-weight: 300; color: #a0a0b0; margin-bottom: 40px; }
+  .cover .subtitle { font-size: 16px; color: #606080; border-top: 1px solid #333; padding-top: 24px; }
+  .toc { padding: 60px; max-width: 900px; margin: 0 auto; }
+  .toc h2 { font-size: 32px; margin-bottom: 32px; color: #0a0a2e; border-bottom: 3px solid #00cec9; padding-bottom: 12px; }
+  .toc ol { list-style: none; counter-reset: toc-counter; }
+  .toc > ol > li { counter-increment: toc-counter; margin-bottom: 12px; }
+  .toc > ol > li::before { content: counter(toc-counter) ". "; font-weight: bold; color: #6c5ce7; }
+  .toc a { text-decoration: none; color: #1a1a1a; font-size: 15px; }
+  .toc a:hover { color: #6c5ce7; text-decoration: underline; }
+  .toc ul { margin-left: 28px; margin-top: 6px; }
+  .toc ul li { margin-bottom: 4px; list-style: disc; font-size: 13px; color: #555; }
+  .chapter { padding: 60px; max-width: 900px; margin: 0 auto; }
+  .chapter-header { background: linear-gradient(135deg, #0a0a2e, #1a1a4e); color: white; padding: 40px; margin: -60px -60px 40px -60px; }
+  .chapter-header .chapter-num { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: #00cec9; margin-bottom: 8px; }
+  .chapter-header h2 { font-size: 36px; font-weight: 800; }
+  h3 { font-size: 22px; margin: 36px 0 14px; color: #0a0a2e; border-left: 4px solid #6c5ce7; padding-left: 12px; }
+  h4 { font-size: 17px; margin: 24px 0 10px; color: #1a1a4e; }
+  p { margin-bottom: 14px; color: #2a2a2a; }
+  pre { background: #0d1117; color: #e6edf3; padding: 20px 24px; border-radius: 8px; overflow-x: auto; margin: 16px 0 24px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; border-left: 4px solid #00cec9; }
+  code { font-family: 'Courier New', monospace; font-size: 13px; }
+  .inline-code { background: #f0f0f8; padding: 2px 6px; border-radius: 3px; color: #6c5ce7; font-family: 'Courier New', monospace; font-size: 12px; }
+  .tip { background: #e8f4fd; border-left: 4px solid #0077cc; padding: 14px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; }
+  .tip strong { color: #0077cc; }
+  .warning { background: #fff8e1; border-left: 4px solid #f59e0b; padding: 14px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; }
+  .warning strong { color: #d97706; }
+  .key-concept { background: #f5f0ff; border: 1px solid #c4b5fd; padding: 16px 20px; margin: 16px 0; border-radius: 8px; }
+  .key-concept h5 { color: #6c5ce7; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  ul, ol { margin: 10px 0 16px 28px; }
+  li { margin-bottom: 5px; }
+  .go-keyword { color: #ff7b72; }
+  .go-string { color: #a5d6ff; }
+  .go-type { color: #ffa657; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; }
+  th { background: #1a1a2e; color: #fff; padding: 10px 14px; text-align: left; }
+  td { padding: 9px 14px; border-bottom: 1px solid #e0e0f0; }
+  tr:nth-child(even) { background: #f8f8ff; }
+  tbody tr:hover { background: #ededff !important; }
+  .section-break { border: none; border-top: 2px dashed #e0e0f0; margin: 32px 0; }
+
+  /* ── Progress bar ── */
+  #progress-bar { position: fixed; top: 0; left: 0; height: 3px; width: 0%; background: linear-gradient(90deg, #00cec9, #6c5ce7); z-index: 2000; pointer-events: none; }
+
+  /* ── Sidebar ── */
+  #sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 256px; background: #080818; border-right: 1px solid rgba(255,255,255,0.07); overflow-y: auto; z-index: 1000; display: flex; flex-direction: column; scrollbar-width: thin; scrollbar-color: #333355 transparent; }
+  #sidebar::-webkit-scrollbar { width: 4px; }
+  #sidebar::-webkit-scrollbar-track { background: transparent; }
+  #sidebar::-webkit-scrollbar-thumb { background: #333355; border-radius: 2px; }
+  #sidebar-logo { padding: 18px 16px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; }
+  #sidebar-logo a { text-decoration: none; font-size: 14px; font-weight: 800; letter-spacing: -0.3px; background: linear-gradient(90deg, #00cec9, #6c5ce7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  #sidebar-close { display: none; background: none; border: none; color: #666; font-size: 20px; cursor: pointer; padding: 0 4px; line-height: 1; }
+  #sidebar-body { padding: 8px 0 32px; flex: 1; }
+  .nav-ch { margin-bottom: 2px; }
+  .nav-ch-btn { width: 100%; background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 7px 14px 7px 12px; color: #8888aa; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; transition: color 0.15s, background 0.15s; border-left: 3px solid transparent; text-align: left; }
+  .nav-ch-btn:hover { color: #ccd0e0; background: rgba(255,255,255,0.04); }
+  .nav-ch-btn.active { color: #fff; border-left-color: #00cec9; background: rgba(0,206,201,0.06); }
+  .nav-ch-num { font-size: 10px; color: #00cec9; min-width: 18px; }
+  .nav-ch-label { flex: 1; }
+  .nav-ch-arrow { font-size: 10px; color: #555577; transition: transform 0.2s; }
+  .nav-ch.open .nav-ch-arrow { transform: rotate(90deg); }
+  .nav-sections { list-style: none; margin: 0; padding: 0 0 4px 0; max-height: 0; overflow: hidden; transition: max-height 0.25s ease; }
+  .nav-ch.open .nav-sections { max-height: 700px; }
+  .nav-sections li a { display: block; text-decoration: none; padding: 5px 14px 5px 38px; color: #60607a; font-size: 12px; line-height: 1.4; transition: color 0.15s, background 0.15s; border-left: 2px solid transparent; margin-left: 10px; }
+  .nav-sections li a:hover { color: #b0b0cc; background: rgba(255,255,255,0.04); }
+  .nav-sections li a.active { color: #e0e0ff; background: rgba(255,255,255,0.06); border-left-color: currentColor; }
+  .nav-sections li a .sec-num { color: #555577; font-size: 10px; margin-right: 5px; font-family: 'Courier New', monospace; }
+  .nav-sections li a.active .sec-num { color: #00cec9; }
+
+  /* Per-chapter active accent colors */
+  #nav-ch1  .nav-ch-btn.active { border-left-color: #00cec9; background: rgba(0,206,201,0.06); }
+  #nav-ch2  .nav-ch-btn.active { border-left-color: #74b9ff; background: rgba(116,185,255,0.06); }
+  #nav-ch3  .nav-ch-btn.active { border-left-color: #a29bfe; background: rgba(162,155,254,0.06); }
+  #nav-ch4  .nav-ch-btn.active { border-left-color: #fd79a8; background: rgba(253,121,168,0.06); }
+  #nav-ch5  .nav-ch-btn.active { border-left-color: #e17055; background: rgba(225,112,85,0.06); }
+  #nav-ch6  .nav-ch-btn.active { border-left-color: #55efc4; background: rgba(85,239,196,0.06); }
+  #nav-ch7  .nav-ch-btn.active { border-left-color: #6c5ce7; background: rgba(108,92,231,0.06); }
+  #nav-ch8  .nav-ch-btn.active { border-left-color: #e84393; background: rgba(232,67,147,0.06); }
+  #nav-ch9  .nav-ch-btn.active { border-left-color: #f39c12; background: rgba(243,156,18,0.06); }
+  #nav-ch10 .nav-ch-btn.active { border-left-color: #00d2ff; background: rgba(0,210,255,0.06); }
+  #nav-ch1  .nav-sections li a.active { border-left-color: #00cec9; }
+  #nav-ch2  .nav-sections li a.active { border-left-color: #74b9ff; }
+  #nav-ch3  .nav-sections li a.active { border-left-color: #a29bfe; }
+  #nav-ch4  .nav-sections li a.active { border-left-color: #fd79a8; }
+  #nav-ch5  .nav-sections li a.active { border-left-color: #e17055; }
+  #nav-ch6  .nav-sections li a.active { border-left-color: #55efc4; }
+  #nav-ch7  .nav-sections li a.active { border-left-color: #6c5ce7; }
+  #nav-ch8  .nav-sections li a.active { border-left-color: #e84393; }
+  #nav-ch9  .nav-sections li a.active { border-left-color: #f39c12; }
+  #nav-ch10 .nav-sections li a.active { border-left-color: #00d2ff; }
+
+  /* Per-chapter chapter header & h3 accent */
+  #ch1  .chapter-header { background: linear-gradient(135deg, #002e2e 0%, #004d40 100%); }
+  #ch1  .chapter-header .chapter-num { color: #00cec9; }
+  #ch1  h3 { border-left-color: #00cec9; color: #002e2e; }
+  #ch2  .chapter-header { background: linear-gradient(135deg, #001228 0%, #002856 100%); }
+  #ch2  .chapter-header .chapter-num { color: #74b9ff; }
+  #ch2  h3 { border-left-color: #0984e3; color: #001228; }
+  #ch3  .chapter-header { background: linear-gradient(135deg, #0d0a30 0%, #1a1050 100%); }
+  #ch3  .chapter-header .chapter-num { color: #a29bfe; }
+  #ch3  h3 { border-left-color: #a29bfe; color: #0d0a2e; }
+  #ch4  .chapter-header { background: linear-gradient(135deg, #2d0018 0%, #4a0028 100%); }
+  #ch4  .chapter-header .chapter-num { color: #fd79a8; }
+  #ch4  h3 { border-left-color: #fd79a8; color: #2d0018; }
+  #ch5  .chapter-header { background: linear-gradient(135deg, #2d1200 0%, #4d2200 100%); }
+  #ch5  .chapter-header .chapter-num { color: #fab1a0; }
+  #ch5  h3 { border-left-color: #e17055; color: #2d1200; }
+  #ch6  .chapter-header { background: linear-gradient(135deg, #0a2e14 0%, #1a4a2a 100%); }
+  #ch6  .chapter-header .chapter-num { color: #55efc4; }
+  #ch6  h3 { border-left-color: #00b894; color: #0a2e14; }
+  #ch7  .chapter-header { background: linear-gradient(135deg, #0d0a2e 0%, #1e1460 100%); }
+  #ch7  .chapter-header .chapter-num { color: #a29bfe; }
+  #ch7  h3 { border-left-color: #6c5ce7; color: #0d0a30; }
+  #ch8  .chapter-header { background: linear-gradient(135deg, #2d001a 0%, #4a0030 100%); }
+  #ch8  .chapter-header .chapter-num { color: #ff7fc2; }
+  #ch8  h3 { border-left-color: #e84393; color: #2d001a; }
+  #ch9  .chapter-header { background: linear-gradient(135deg, #2d1a00 0%, #4a2e00 100%); }
+  #ch9  .chapter-header .chapter-num { color: #ffeaa7; }
+  #ch9  h3 { border-left-color: #f39c12; color: #2d1a00; }
+  #ch10 .chapter-header { background: linear-gradient(135deg, #001a28 0%, #003040 100%); }
+  #ch10 .chapter-header .chapter-num { color: #00d2ff; }
+  #ch10 h3 { border-left-color: #00d2ff; color: #001a28; }
+
+  /* Chapter summary card */
+  .chapter-summary { background: #0d1117; color: #e6edf3; border-radius: 10px; padding: 24px 28px; margin: 40px 0 0; }
+  .chapter-summary h5 { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #8b949e; margin-bottom: 16px; font-family: system-ui, sans-serif; }
+  .chapter-summary ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
+  .chapter-summary ul li { font-size: 13px; color: #c9d1d9; padding-left: 16px; position: relative; line-height: 1.5; }
+  .chapter-summary ul li::before { content: "→"; position: absolute; left: 0; color: #00cec9; font-size: 11px; top: 3px; }
+  #ch1  .chapter-summary ul li::before { color: #00cec9; }
+  #ch2  .chapter-summary ul li::before { color: #74b9ff; }
+  #ch3  .chapter-summary ul li::before { color: #a29bfe; }
+  #ch4  .chapter-summary ul li::before { color: #fd79a8; }
+  #ch5  .chapter-summary ul li::before { color: #e17055; }
+  #ch6  .chapter-summary ul li::before { color: #55efc4; }
+  #ch7  .chapter-summary ul li::before { color: #6c5ce7; }
+  #ch8  .chapter-summary ul li::before { color: #e84393; }
+  #ch9  .chapter-summary ul li::before { color: #f39c12; }
+  #ch10 .chapter-summary ul li::before { color: #00d2ff; }
+
+  /* Code block header */
+  .code-wrap { position: relative; margin: 16px 0 24px; }
+  .code-wrap pre { margin: 0; border-radius: 0 0 8px 8px; border-top: none; }
+  .code-header { display: flex; align-items: center; justify-content: space-between; background: #161b22; border-radius: 8px 8px 0 0; padding: 6px 14px; border: 1px solid #21262d; border-bottom: 1px solid #0d1117; }
+  .lang-badge { font-family: 'Courier New', monospace; font-size: 11px; font-weight: 700; color: #79c0ff; letter-spacing: 0.5px; }
+  .copy-btn { font-family: system-ui, sans-serif; font-size: 11px; color: #8b949e; background: none; border: 1px solid #30363d; border-radius: 4px; padding: 2px 9px; cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+  .copy-btn:hover { color: #e6edf3; border-color: #8b949e; }
+  .copy-btn.copied { color: #3fb950; border-color: #3fb950; }
+
+  /* Back-to-top */
+  #back-to-top { position: fixed; bottom: 28px; right: 28px; width: 40px; height: 40px; border-radius: 50%; background: rgba(10,10,30,0.85); border: 1px solid rgba(255,255,255,0.15); color: #a0a0c0; font-size: 18px; line-height: 40px; text-align: center; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.25s, background 0.2s; z-index: 990; backdrop-filter: blur(6px); }
+  #back-to-top.visible { opacity: 1; pointer-events: auto; }
+  #back-to-top:hover { background: rgba(30,30,60,0.95); color: #fff; }
+
+  /* Section number */
+  .section-num { font-family: 'Courier New', monospace; font-size: 0.68em; font-weight: 400; color: #aaa; margin-right: 7px; vertical-align: middle; }
+
+  /* Key concept icon */
+  .key-concept h5::before { content: "▸ "; color: #6c5ce7; }
+
+  /* Layout */
+  body { padding-left: 256px; padding-top: 3px; }
+
+  /* Mobile */
+  #nav-toggle { display: none; position: fixed; top: 10px; left: 10px; z-index: 1100; background: rgba(8,8,24,0.92); border: 1px solid rgba(255,255,255,0.15); color: #a0a0c0; font-size: 16px; width: 36px; height: 36px; border-radius: 6px; cursor: pointer; backdrop-filter: blur(6px); }
+  #sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; backdrop-filter: blur(2px); }
+  @media (max-width: 768px) {
+    body { padding-left: 0; padding-top: 0; }
+    #sidebar { transform: translateX(-100%); transition: transform 0.25s ease; box-shadow: 4px 0 24px rgba(0,0,0,0.5); }
+    #sidebar.open { transform: translateX(0); }
+    #nav-toggle { display: flex; align-items: center; justify-content: center; }
+    #sidebar-close { display: block; }
+    #sidebar-overlay.open { display: block; }
+  }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+<button id="back-to-top" title="Back to top">↑</button>
+<button id="nav-toggle" title="Open navigation">☰</button>
+<div id="sidebar-overlay"></div>
+
+<nav id="sidebar">
+  <div id="sidebar-logo">
+    <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Concurrency in Go</a>
+    <button id="sidebar-close" title="Close">×</button>
+  </div>
+  <div id="sidebar-body">
+
+    <div class="nav-ch open" id="nav-ch1">
+      <button class="nav-ch-btn" data-ch="ch1"><span class="nav-ch-num">01</span><span class="nav-ch-label">Program Execution</span><span class="nav-ch-arrow">›</span></button>
+      <ul class="nav-sections">
+        <li><a href="#s1-1"><span class="sec-num">1.1</span>Virtual Memory, MMU &amp; TLB</a></li>
+        <li><a href="#s1-2"><span class="sec-num">1.2</span>CPU Pipeline &amp; Data Path</a></li>
+        <li><a href="#s1-3"><span class="sec-num">1.3</span>Interrupts &amp; Vectorization</a></li>
+        <li><a href="#s1-4"><span class="sec-num">1.4</span>Hyper-threading &amp; Context Switching</a></li>
+        <li><a href="#s1-5"><span class="sec-num">1.5</span>Processes &amp; Threads</a></li>
+        <li><a href="#s1-6"><span class="sec-num">1.6</span>Cache Coherence (MESI)</a></li>
+        <li><a href="#s1-7"><span class="sec-num">1.7</span>Concurrency vs Parallelism</a></li>
+        <li><a href="#s1-8"><span class="sec-num">1.8</span>Coroutines, Fibers &amp; Green Threads</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch2">
+      <button class="nav-ch-btn" data-ch="ch2"><span class="nav-ch-num">02</span><span class="nav-ch-label">Goroutines &amp; Scheduler</span><span class="nav-ch-arrow">›</span></button>
+      <ul class="nav-sections">
+        <li><a href="#s2-1"><span class="sec-num">2.1</span>Goroutine Internals</a></li>
+        <li><a href="#s2-2"><span class="sec-num">2.2</span>Stack Growth</a></li>
+        <li><a href="#s2-3"><span class="sec-num">2.3</span>GMP Model</a></li>
+        <li><a href="#s2-4"><span class="sec-num">2.4</span>Run Queues (LRQ &amp; GRQ)</a></li>
+        <li><a href="#s2-5"><span class="sec-num">2.5</span>Work Stealing &amp; Sharing</a></li>
+        <li><a href="#s2-6"><span class="sec-num">2.6</span>Sysmon, Handoff &amp; Preemption</a></li>
+        <li><a href="#s2-7"><span class="sec-num">2.7</span>Netpoller</a></li>
+        <li><a href="#s2-8"><span class="sec-num">2.8</span>runtime Package</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch3">
+      <button class="nav-ch-btn" data-ch="ch3"><span class="nav-ch-num">03</span><span class="nav-ch-label">Sync Primitives I</span><span class="nav-ch-arrow">›</span></button>
+      <ul class="nav-sections">
+        <li><a href="#s3-1"><span class="sec-num">3.1</span>sync.WaitGroup</a></li>
+        <li><a href="#s3-2"><span class="sec-num">3.2</span>sync.Mutex Internals</a></li>
+        <li><a href="#s3-3"><span class="sec-num">3.3</span>sync.Once</a></li>
+        <li><a href="#s3-4"><span class="sec-num">3.4</span>Deadlock, Livelock &amp; Starvation</a></li>
+        <li><a href="#s3-5"><span class="sec-num">3.5</span>Data Races &amp; Race Detector</a></li>
+        <li><a href="#s3-6"><span class="sec-num">3.6</span>Common Mutex Mistakes</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch4">
+      <button class="nav-ch-btn" data-ch="ch4"><span class="nav-ch-num">04</span><span class="nav-ch-label">Sync Primitives II</span><span class="nav-ch-arrow">›</span></button>
+      <ul class="nav-sections">
+        <li><a href="#s4-1"><span class="sec-num">4.1</span>sync.RWMutex</a></li>
+        <li><a href="#s4-2"><span class="sec-num">4.2</span>sync.Map</a></li>
+        <li><a href="#s4-3"><span class="sec-num">4.3</span>sync.Cond</a></li>
+        <li><a href="#s4-4"><span class="sec-num">4.4</span>sync.Pool</a></li>
+        <li><a href="#s4-5"><span class="sec-num">4.5</span>Atomic Operations</a></li>
+        <li><a href="#s4-6"><span class="sec-num">4.6</span>Custom Sync Primitives</a></li>
+        <li><a href="#s4-7"><span class="sec-num">4.7</span>False Sharing &amp; Cache Contention</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch5">
+      <button class="nav-ch-btn" data-ch="ch5"><span class="nav-ch-num">05</span><span class="nav-ch-label">Channels &amp; Internals</span><span class="nav-ch-arrow">›</span></button>
+      <ul class="nav-sections">
+        <li><a href="#s5-1"><span class="sec-num">5.1</span>hchan Struct Internals</a></li>
+        <li><a href="#s5-2"><span class="sec-num">5.2</span>Buffered vs Unbuffered</a></li>
+        <li><a href="#s5-3"><span class="sec-num">5.3</span>Select Internals &amp; Priority</a></li>
+        <li><a href="#s5-4"><span class="sec-num">5.4</span>Goroutine Leaks &amp; Nil Channels</a></li>
+        <li><a href="#s5-5"><span class="sec-num">5.5</span>Closing Channels Safely</a></li>
+        <li><a href="#s5-6"><span class="sec-num">5.6</span>Producer &amp; Consumer</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch6">
+      <button class="nav-ch-btn" data-ch="ch6"><span class="nav-ch-num">06</span><span class="nav-ch-label">Channel Patterns</span><span class="nav-ch-arrow">›</span></button>
+      <ul class="nav-sections">
+        <li><a href="#s6-1"><span class="sec-num">6.1</span>Pipeline &amp; Generator</a></li>
+        <li><a href="#s6-2"><span class="sec-num">6.2</span>Fan-In, Fan-Out &amp; Tee</a></li>
+        <li><a href="#s6-3"><span class="sec-num">6.3</span>Done &amp; Or-Done Channels</a></li>
+        <li><a href="#s6-4"><span class="sec-num">6.4</span>Bridge &amp; Or-Channel</a></li>
+        <li><a href="#s6-5"><span class="sec-num">6.5</span>Rate Limiter &amp; Semaphore</a></li>
+        <li><a href="#s6-6"><span class="sec-num">6.6</span>time.Timer &amp; time.Ticker</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch7">
+      <button class="nav-ch-btn" data-ch="ch7"><span class="nav-ch-num">07</span><span class="nav-ch-label">Contexts &amp; Memory</span><span class="nav-ch-arrow">›</span></button>
+      <ul class="nav-sections">
+        <li><a href="#s7-1"><span class="sec-num">7.1</span>Context Tree &amp; Internals</a></li>
+        <li><a href="#s7-2"><span class="sec-num">7.2</span>WithCancel, WithTimeout, WithDeadline</a></li>
+        <li><a href="#s7-3"><span class="sec-num">7.3</span>WithValue &amp; Typed Keys</a></li>
+        <li><a href="#s7-4"><span class="sec-num">7.4</span>Graceful Shutdown</a></li>
+        <li><a href="#s7-5"><span class="sec-num">7.5</span>Memory Barriers</a></li>
+        <li><a href="#s7-6"><span class="sec-num">7.6</span>Memory Reordering</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch8">
+      <button class="nav-ch-btn" data-ch="ch8"><span class="nav-ch-num">08</span><span class="nav-ch-label">Lock-free Algorithms</span><span class="nav-ch-arrow">›</span></button>
+      <ul class="nav-sections">
+        <li><a href="#s8-1"><span class="sec-num">8.1</span>Data Structure Sharding</a></li>
+        <li><a href="#s8-2"><span class="sec-num">8.2</span>RCU (Read-Copy-Update)</a></li>
+        <li><a href="#s8-3"><span class="sec-num">8.3</span>Sync Granularity Strategies</a></li>
+        <li><a href="#s8-4"><span class="sec-num">8.4</span>Treiber Stack (lock-free)</a></li>
+        <li><a href="#s8-5"><span class="sec-num">8.5</span>Michael-Scott Queue</a></li>
+        <li><a href="#s8-6"><span class="sec-num">8.6</span>ABA Problem &amp; Solutions</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch9">
+      <button class="nav-ch-btn" data-ch="ch9"><span class="nav-ch-num">09</span><span class="nav-ch-label">Concurrent Patterns</span><span class="nav-ch-arrow">›</span></button>
+      <ul class="nav-sections">
+        <li><a href="#s9-1"><span class="sec-num">9.1</span>Amdahl's Law</a></li>
+        <li><a href="#s9-2"><span class="sec-num">9.2</span>2PL Transaction Isolation</a></li>
+        <li><a href="#s9-3"><span class="sec-num">9.3</span>MVCC</a></li>
+        <li><a href="#s9-4"><span class="sec-num">9.4</span>Actor Model</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch10">
+      <button class="nav-ch-btn" data-ch="ch10"><span class="nav-ch-num">10</span><span class="nav-ch-label">Practical Concurrency</span><span class="nav-ch-arrow">›</span></button>
+      <ul class="nav-sections">
+        <li><a href="#s10-1"><span class="sec-num">10.1</span>Worker Pool</a></li>
+        <li><a href="#s10-2"><span class="sec-num">10.2</span>Cache Synchronizer</a></li>
+        <li><a href="#s10-3"><span class="sec-num">10.3</span>Task Scheduler</a></li>
+        <li><a href="#s10-4"><span class="sec-num">10.4</span>Batcher</a></li>
+      </ul>
+    </div>
+
+  </div>
+</nav>
+
+<!-- COVER -->
+<div class="cover">
+  <div>
+    <h1>Concurrency in Go</h1>
+    <h2>Goroutines, Channels, Sync Primitives &amp; Scheduler Internals</h2>
+    <div style="font-size: 72px; margin: 32px 0;">⚙️</div>
+    <p style="color: #808090; font-size: 15px; max-width: 520px; margin: 0 auto 40px;">
+      From CPU architecture and virtual memory to lock-free algorithms, the GMP scheduler,
+      and battle-tested concurrency patterns — everything you need to write correct, high-performance concurrent Go.
+    </p>
+    <div class="subtitle">10 Chapters · Code Examples · Internals Deep Dive</div>
+  </div>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#ch1">Program Execution Fundamentals</a>
+      <ul>
+        <li>Virtual memory, MMU, TLB, swapping</li>
+        <li>CPU pipeline, interrupts, vectorization, hyper-threading</li>
+        <li>Context switching, processes &amp; threads, process memory layout</li>
+        <li>Cache coherence (MESI), concurrency vs parallelism</li>
+        <li>Cooperative vs preemptive scheduling, green threads</li>
+      </ul>
+    </li>
+    <li><a href="#ch2">Goroutines &amp; the Go Scheduler</a>
+      <ul>
+        <li>Goroutine internals, stack growth, panics</li>
+        <li>GMP model, LRQ &amp; GRQ, work stealing, netpoller</li>
+        <li>Sysmon, handoff, asynchronous preemption</li>
+        <li>runtime.Gosched, runtime.Goexit, LockOSThread</li>
+      </ul>
+    </li>
+    <li><a href="#ch3">Sync Primitives I — WaitGroup, Mutex, Once</a>
+      <ul>
+        <li>sync.WaitGroup, sync.Mutex, sync.Once</li>
+        <li>Deadlock, livelock, starvation, priority inversion</li>
+        <li>Data race, race detector, Holt diagrams</li>
+        <li>Common mutex pitfalls</li>
+      </ul>
+    </li>
+    <li><a href="#ch4">Sync Primitives II — RWMutex, Map, Cond, Pool</a>
+      <ul>
+        <li>sync.RWMutex, sync.Map, sync.Cond, sync.Pool, atomics</li>
+        <li>Custom: spin lock, ticket lock, Peterson's mutex</li>
+        <li>False sharing, cache contention, CAS patterns</li>
+      </ul>
+    </li>
+    <li><a href="#ch5">Channels &amp; Their Internals</a>
+      <ul>
+        <li>hchan struct, send/recv queues, lock-free fast path</li>
+        <li>Buffered vs unbuffered, select internals</li>
+        <li>Goroutine leaks, nil channels, safe closing</li>
+      </ul>
+    </li>
+    <li><a href="#ch6">Channel Patterns</a>
+      <ul>
+        <li>Pipeline, generator, fan-in, fan-out, tee</li>
+        <li>Done channel, or-done, bridge, or-channel</li>
+        <li>Rate limiter, semaphore, promise, future</li>
+        <li>time.Timer, time.Ticker</li>
+      </ul>
+    </li>
+    <li><a href="#ch7">Contexts &amp; Memory Barriers</a>
+      <ul>
+        <li>Context tree, WithCancel, WithTimeout, WithDeadline</li>
+        <li>WithValue, anti-patterns, graceful shutdown</li>
+        <li>Memory barriers: full, read, write, acquire, release</li>
+        <li>Memory reordering, errgroup</li>
+      </ul>
+    </li>
+    <li><a href="#ch8">Lock-free Algorithms &amp; Data Structures</a>
+      <ul>
+        <li>Sharding, RCU, sync granularity</li>
+        <li>Treiber stack, Michael-Scott queue</li>
+        <li>ABA problem, hazard pointers, tagged pointers</li>
+      </ul>
+    </li>
+    <li><a href="#ch9">Concurrent Computation Patterns</a>
+      <ul>
+        <li>Amdahl's law, actor model</li>
+        <li>Transaction isolation: 2PL, MVCC</li>
+      </ul>
+    </li>
+    <li><a href="#ch10">Practical Concurrency</a>
+      <ul>
+        <li>Worker pool, cache synchronizer, scheduler, batcher</li>
+      </ul>
+    </li>
+  </ol>
+</div>
+
+<!-- ================================================================ -->
+<!-- CHAPTER 1 -->
+<!-- ================================================================ -->
+<div class="chapter" id="ch1">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 01</div>
+    <h2>Program Execution Fundamentals</h2>
+  </div>
+
+  <h3 id="s1-1">1.1 Virtual Memory, MMU &amp; TLB</h3>
+  <p>Every process runs in its own <strong>virtual address space</strong> — a contiguous range of addresses (e.g., 0 to 2⁴⁸−1 on 64-bit Linux) that the OS maps to physical RAM pages on demand. The <strong>Memory Management Unit (MMU)</strong> performs this translation on every memory access using page tables maintained by the kernel.</p>
+  <p>Because page-table walks are expensive (multiple memory accesses), the CPU caches recent translations in the <strong>Translation Lookaside Buffer (TLB)</strong> — a tiny, fully associative cache. A TLB miss forces a hardware page-table walk and costs 50–200 cycles. Context switches and process creation flush or tag TLB entries, which is one reason they are costly.</p>
+
+  <table>
+    <tr><th>Concept</th><th>Description</th><th>Cost on miss</th></tr>
+    <tr><td>L1 cache</td><td>On-chip, ~32KB per core</td><td>~4 cycles</td></tr>
+    <tr><td>L2 cache</td><td>On-chip, ~256KB per core</td><td>~12 cycles</td></tr>
+    <tr><td>L3 cache</td><td>Shared, 8–64MB</td><td>~40 cycles</td></tr>
+    <tr><td>TLB</td><td>Address translation cache</td><td>~100 cycles</td></tr>
+    <tr><td>RAM</td><td>Main memory</td><td>~200 cycles</td></tr>
+    <tr><td>Swap / disk</td><td>Page-fault, kernel re-maps</td><td>millions of cycles</td></tr>
+  </table>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "unsafe"
+)
+
+// Process memory layout (64-bit Linux)
+//
+//  High address  ┌──────────────────┐
+//                │   kernel space   │  (not accessible from user space)
+//  0x7FFF...     ├──────────────────┤
+//                │      stack       │  grows ↓  (goroutine stacks are separate)
+//                │        ↓        │
+//                │   (unmapped)     │
+//                │        ↑        │
+//                │       heap       │  grows ↑  (runtime-managed)
+//                ├──────────────────┤
+//                │   BSS segment    │  zero-initialized globals
+//                │   data segment   │  initialized globals
+//                │   text segment   │  executable code (read-only)
+//  Low address   └──────────────────┘
+
+func main() {
+    x := 42
+    fmt.Printf("stack var address:  %p\n", &x)
+
+    h := make([]byte, 1024)
+    fmt.Printf("heap slice address: %p\n", &h[0])
+
+    // unsafe.Sizeof does NOT dereference; safe to inspect sizes
+    fmt.Printf("pointer size: %d bytes\n", unsafe.Sizeof(uintptr(0)))
+}
+</code></pre>
+
+  <div class="key-concept">
+    <h5>Key Insight — Virtual Memory</h5>
+    <p>Each Go process sees a flat virtual address space. The runtime carves goroutine stacks from OS-allocated memory segments. On Linux, <strong>swapping</strong> moves cold pages to disk; Go's GC tries to return unused spans to the OS via <code>madvise(MADV_FREE)</code> to reduce RSS.</p>
+  </div>
+
+  <h3 id="s1-2">1.2 CPU Pipeline &amp; Data Path</h3>
+  <p>Modern CPUs execute instructions in a multi-stage <strong>pipeline</strong>: Fetch → Decode → Execute → Memory → Writeback. This allows multiple instructions to be in-flight simultaneously. A typical superscalar core can retire 4+ instructions per clock cycle through <strong>out-of-order execution</strong> and <strong>speculative execution</strong>.</p>
+  <p>The <strong>data path</strong> connects functional units (ALU, FPU, load/store units) via internal buses. Understanding this matters for concurrency: CPU stores may be buffered in store buffers before reaching the L1 cache, which is the root cause of the relaxed memory ordering we deal with in concurrent programs.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "runtime"
+)
+
+// Demonstrate GOMAXPROCS — how many OS threads can run Go code in parallel
+func main() {
+    // Default: GOMAXPROCS == number of logical CPUs (includes hyper-thread siblings)
+    fmt.Println("Logical CPUs:", runtime.NumCPU())
+    fmt.Println("GOMAXPROCS:  ", runtime.GOMAXPROCS(0)) // 0 = query, don't set
+
+    // Pin to single-threaded execution to simulate non-parallel concurrency
+    runtime.GOMAXPROCS(1)
+    fmt.Println("After override:", runtime.GOMAXPROCS(0))
+
+    // Restore
+    runtime.GOMAXPROCS(runtime.NumCPU())
+}
+</code></pre>
+
+  <h3 id="s1-3">1.3 Interrupts &amp; Vectorization</h3>
+  <p><strong>Interrupts</strong> are asynchronous signals from hardware (timer, NIC, disk) that preempt the running thread and transfer control to a kernel interrupt handler. They are the foundation of preemptive scheduling: the OS timer interrupt fires every ~1ms, allowing the scheduler to switch processes.</p>
+  <p><strong>Vectorization</strong> (SIMD — Single Instruction Multiple Data) lets a single instruction operate on multiple data elements in parallel. The Go compiler can auto-vectorize tight loops. The <code>bytes</code> and <code>strings</code> packages use SIMD intrinsics (e.g., AVX2) for operations like search and comparison, achieving throughput of dozens of bytes per cycle.</p>
+
+  <div class="tip">
+    <strong>Go &amp; Vectorization:</strong> You can inspect generated assembly with <code>go build -gcflags="-S"</code>. Look for <code>VMOVDQU</code>, <code>VPCMPEQB</code> (AVX2) instructions in hot loops over byte slices.
+  </div>
+
+  <h3 id="s1-4">1.4 Hyper-threading &amp; Context Switching</h3>
+  <p><strong>Hyper-threading</strong> (Intel SMT) exposes two logical cores per physical core, each with its own register file and program counter but sharing execution units. When one logical core stalls on a cache miss, the other can execute. This improves throughput but not single-threaded latency, and can increase cache pressure.</p>
+  <p>An OS <strong>context switch</strong> between threads costs 1–10µs: the kernel saves all CPU registers to the thread's kernel stack, selects the next thread, restores its registers, and returns to user space. Go goroutine context switches are far cheaper (~100ns) because they happen in user space with smaller register sets (only callee-saved registers).</p>
+
+  <table>
+    <tr><th>Switch type</th><th>Cost</th><th>Who triggers</th></tr>
+    <tr><td>OS thread context switch</td><td>1–10µs</td><td>Kernel (timer interrupt, syscall)</td></tr>
+    <tr><td>Go goroutine switch (same thread)</td><td>~100–300ns</td><td>Go scheduler (cooperative + async preempt)</td></tr>
+    <tr><td>Function call</td><td>~1ns</td><td>Compiler (stack frame push/pop)</td></tr>
+  </table>
+
+  <h3 id="s1-5">1.5 Processes &amp; Threads</h3>
+  <p>A <strong>process</strong> is an OS-managed execution unit with its own virtual address space, file descriptors, and signal handlers. <strong>Threads</strong> share the address space of their parent process but have independent stack and register state. Creating a process (fork) is expensive; creating a thread (~clone syscall on Linux) is cheaper but still requires a kernel context switch to schedule.</p>
+  <p>Go runs all goroutines inside a small, fixed pool of OS threads (controlled by <code>GOMAXPROCS</code>). This M:N threading model is what makes it possible to have millions of goroutines with sub-millisecond scheduling latency.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "os"
+    "runtime"
+    "sync"
+)
+
+func main() {
+    fmt.Printf("PID: %d\n", os.Getpid())
+    fmt.Printf("Goroutines: %d\n", runtime.NumGoroutine())
+
+    var wg sync.WaitGroup
+    for i := 0; i < 10_000; i++ {
+        wg.Add(1)
+        go func(n int) {
+            defer wg.Done()
+            // Each goroutine starts with an 8KB stack; no OS thread per goroutine
+        }(i)
+    }
+    wg.Wait()
+    fmt.Printf("Goroutines after: %d\n", runtime.NumGoroutine())
+    fmt.Printf("OS threads used:  %d\n", runtime.GOMAXPROCS(0)) // upper bound
+}
+</code></pre>
+
+  <h3 id="s1-6">1.6 Cache Coherence (MESI)</h3>
+  <p>In multi-core systems each core has its own L1/L2 caches. When core A writes to a memory location that core B has cached, something must happen to keep the view consistent. The <strong>MESI protocol</strong> (Modified, Exclusive, Shared, Invalid) coordinates this via cache-line state machines on the inter-core bus (or ring/mesh).</p>
+  <p>A cache line is typically 64 bytes. When two goroutines running on different cores write to different fields that happen to share a cache line, each write forces the other core's line into <em>Invalid</em> state, causing expensive coherence traffic — this is <strong>false sharing</strong>.</p>
+
+<pre><code>package main
+
+import (
+    "sync"
+    "testing"
+)
+
+// Bad: counters[0] and counters[1] share the same 64-byte cache line
+type BadCounters struct {
+    a, b int64
+}
+
+// Good: each counter on its own cache line via padding
+type PaddedCounter struct {
+    value int64
+    _     [56]byte // pad to 64 bytes
+}
+
+var (
+    bad    BadCounters
+    goodA  PaddedCounter
+    goodB  PaddedCounter
+)
+
+func BenchmarkFalseSharing(b *testing.B) {
+    var wg sync.WaitGroup
+    wg.Add(2)
+    go func() { defer wg.Done(); for i := 0; i < b.N; i++ { bad.a++ } }()
+    go func() { defer wg.Done(); for i := 0; i < b.N; i++ { bad.b++ } }()
+    wg.Wait()
+}
+
+func BenchmarkNoPadding(b *testing.B) {
+    var wg sync.WaitGroup
+    wg.Add(2)
+    go func() { defer wg.Done(); for i := 0; i < b.N; i++ { goodA.value++ } }()
+    go func() { defer wg.Done(); for i := 0; i < b.N; i++ { goodB.value++ } }()
+    wg.Wait()
+}
+</code></pre>
+
+  <h3 id="s1-7">1.7 Concurrency vs Parallelism</h3>
+  <p><strong>Concurrency</strong> is the <em>composition</em> of independently executing computations — a design concern. <strong>Parallelism</strong> is their <em>simultaneous</em> execution on multiple hardware threads — a runtime property. A concurrent program can run on a single core (interleaved via scheduling) while a parallel program requires multiple cores.</p>
+  <p>Rob Pike's maxim: <em>"Concurrency is about dealing with lots of things at once. Parallelism is about doing lots of things at once."</em> Goroutines provide concurrency; <code>GOMAXPROCS &gt; 1</code> enables parallelism.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "runtime"
+    "sync"
+    "time"
+)
+
+func cpuBound(n int) int {
+    sum := 0
+    for i := 0; i < n; i++ { sum += i }
+    return sum
+}
+
+func main() {
+    const N = 1_000_000
+
+    // Sequential
+    start := time.Now()
+    for i := 0; i < 8; i++ { cpuBound(N) }
+    fmt.Println("sequential:", time.Since(start))
+
+    // Concurrent (parallel if GOMAXPROCS > 1)
+    fmt.Println("GOMAXPROCS:", runtime.GOMAXPROCS(0))
+    start = time.Now()
+    var wg sync.WaitGroup
+    for i := 0; i < 8; i++ {
+        wg.Add(1)
+        go func() { defer wg.Done(); cpuBound(N) }()
+    }
+    wg.Wait()
+    fmt.Println("parallel:  ", time.Since(start))
+}
+</code></pre>
+
+  <h3 id="s1-8">1.8 Coroutines, Fibers &amp; Green Threads</h3>
+  <p><strong>Coroutines</strong> are functions that can suspend and resume execution at defined points. <strong>Fibers</strong> (user-space threads) are cooperatively scheduled threads managed entirely in user space, often used in game engines. <strong>Green threads</strong> are threads scheduled by a runtime library rather than the OS.</p>
+  <p>Go <strong>goroutines</strong> are a form of green thread with asynchronous preemption added in Go 1.14. Unlike pure coroutines, goroutines can be preempted at safe points (function calls, memory allocations) without explicit <code>yield</code> calls. This makes them safe for CPU-bound code that never calls into the runtime.</p>
+
+  <table>
+    <tr><th>Primitive</th><th>Scheduling</th><th>Stack</th><th>Preemption</th></tr>
+    <tr><td>OS Thread</td><td>Kernel</td><td>8MB fixed</td><td>Timer interrupt</td></tr>
+    <tr><td>Fiber</td><td>User (manual yield)</td><td>User-defined</td><td>None (cooperative)</td></tr>
+    <tr><td>Green Thread</td><td>Runtime (cooperative)</td><td>Fixed or growable</td><td>Cooperative</td></tr>
+    <tr><td>Goroutine</td><td>Go runtime (M:N)</td><td>8KB, growable to 1GB</td><td>Async + cooperative</td></tr>
+  </table>
+
+  <div class="chapter-summary">
+    <h5>Chapter 1 — Key Takeaways</h5>
+    <ul>
+      <li>Virtual memory isolates processes; MMU + TLB translate addresses</li>
+      <li>Cache line = 64 bytes; false sharing kills parallel performance</li>
+      <li>MESI coherence protocol keeps multi-core caches consistent</li>
+      <li>OS context switch: ~1–10µs; goroutine switch: ~100ns</li>
+      <li>Goroutines = M:N green threads with async preemption since Go 1.14</li>
+      <li>GOMAXPROCS controls the degree of parallelism</li>
+      <li>Concurrency ≠ parallelism; goroutines are the unit of concurrency</li>
+      <li>TLB flushes on context switch add hidden overhead to OS threads</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- CHAPTER 2 -->
+<!-- ================================================================ -->
+<div class="chapter" id="ch2">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 02</div>
+    <h2>Goroutines &amp; the Go Scheduler</h2>
+  </div>
+
+  <h3 id="s2-1">2.1 Goroutine Internals</h3>
+  <p>A goroutine is represented by a <strong><code>runtime.g</code></strong> struct (~400 bytes). Key fields include: <code>stack</code> (lo/hi pointers), <code>sched</code> (saved registers: SP, PC, BP), <code>_panic</code>/<code>_defer</code> linked lists, <code>m</code> (the OS thread it's running on), <code>waiting</code> (wait reason for profiling), and <code>status</code> (Gidle, Grunnable, Grunning, Gsyscall, Gwaiting, Gdead).</p>
+  <p>Goroutines are created by the <code>go</code> statement. The runtime maintains a free-list of dead goroutine structs to avoid allocation overhead. A new goroutine starts with an 8KB stack (configurable via <code>runtime/debug.SetMaxStack</code>).</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "runtime"
+    "time"
+)
+
+func showGoroutineInfo() {
+    // runtime.Stack captures stack trace of all goroutines
+    buf := make([]byte, 64*1024)
+    n := runtime.Stack(buf, false) // false = current goroutine only
+    fmt.Printf("Stack (%d bytes):\n%s\n", n, buf[:n])
+}
+
+func leaked() {
+    // This goroutine blocks forever — a goroutine leak
+    ch := make(chan struct{})
+    <-ch // blocks; never receives
+}
+
+func main() {
+    fmt.Println("goroutines at start:", runtime.NumGoroutine())
+
+    // Spawn a goroutine that will be garbage collected when done
+    done := make(chan struct{})
+    go func() {
+        defer close(done)
+        fmt.Println("hello from goroutine")
+    }()
+    <-done
+
+    // Spawn leaked goroutine
+    go leaked()
+    time.Sleep(10 * time.Millisecond)
+    fmt.Println("goroutines (leaked):", runtime.NumGoroutine()) // will be 2
+}
+</code></pre>
+
+  <h3 id="s2-2">2.2 Stack Growth</h3>
+  <p>Go uses <strong>contiguous stacks</strong> (since Go 1.4). A goroutine starts with an 8KB stack. When it overflows, the runtime allocates a new stack (typically 2× the old size), copies all stack frames, and updates all pointers. This is transparent to user code but means stack pointers are not stable across function calls that trigger growth.</p>
+  <p>The old <strong>segmented stack</strong> model (Go 1.0–1.3) used a linked list of fixed segments and suffered from the <em>hot split</em> problem: a function at a segment boundary caused repeated alloc/dealloc cycles on tight loops, degrading performance by 10×.</p>
+
+<pre><code>package main
+
+import "fmt"
+
+// Deep recursion forces stack growth — safe in Go
+func recurse(n int) int {
+    if n == 0 {
+        return 0
+    }
+    // Each stack frame is ~a few hundred bytes; Go will grow the stack transparently
+    var buf [256]byte
+    _ = buf
+    return recurse(n-1) + n
+}
+
+func main() {
+    // 100,000 levels of recursion — Go handles this without stack overflow
+    result := recurse(100_000)
+    fmt.Println("result:", result)
+}
+</code></pre>
+
+  <div class="key-concept">
+    <h5>Stack Scanning During GC</h5>
+    <p>Because stacks may contain pointers to heap objects, the GC must scan every goroutine stack. With contiguous stacks, the GC can scan the single contiguous region. Goroutine stacks are also scanned during the mark phase, which is why reducing live goroutine count reduces GC pause time.</p>
+  </div>
+
+  <h3 id="s2-3">2.3 GMP Model</h3>
+  <p>The Go scheduler uses three abstractions: <strong>G</strong> (goroutine), <strong>M</strong> (machine / OS thread), and <strong>P</strong> (processor — a scheduling context). There are at most <code>GOMAXPROCS</code> P's. Each P has a <strong>local run queue</strong> (LRQ) of up to 256 goroutines and access to the global run queue (GRQ).</p>
+  <p>M's execute goroutines by acquiring a P. If M blocks (syscall, cgo), the runtime <em>detaches</em> it from P so another M can pick up P and continue running goroutines — this is <strong>handoff</strong>.</p>
+
+<pre><code>// GMP relationship (conceptual):
+//
+//   P0 [LRQ: G3 G7 G9]          P1 [LRQ: G4 G5]
+//    |                            |
+//    M0 (running G1)              M1 (running G6)
+//
+//   GRQ: [G2 G8 G10]             M2 (blocked in syscall, no P)
+//
+// When P0's LRQ is empty, P0 will:
+//   1. Steal half of P1's LRQ (work stealing), OR
+//   2. Take a batch from GRQ, OR
+//   3. Check the netpoller for ready goroutines
+
+package main
+
+import (
+    "fmt"
+    "runtime"
+)
+
+func main() {
+    // Force single-P scheduling to observe GRQ usage
+    runtime.GOMAXPROCS(1)
+
+    ready := make(chan int, 10)
+    for i := 0; i < 5; i++ {
+        n := i
+        go func() { ready <- n }() // all go to GRQ initially
+    }
+    for i := 0; i < 5; i++ {
+        fmt.Println(<-ready)
+    }
+}
+</code></pre>
+
+  <h3 id="s2-4">2.4 Run Queues (LRQ &amp; GRQ)</h3>
+  <p>Each P maintains a <strong>local run queue</strong> implemented as a fixed-size ring buffer of 256 <code>*g</code> pointers. Access to LRQ is lock-free using atomic operations. When LRQ is full, goroutines are moved to the <strong>global run queue</strong> (GRQ), which is protected by a mutex.</p>
+  <p>P's check the GRQ periodically (every 61st scheduling tick) to ensure globally-queued goroutines make progress even when all P's are busy with their local queues. This prevents starvation of goroutines that ended up in the GRQ.</p>
+
+  <h3 id="s2-5">2.5 Work Stealing &amp; Sharing</h3>
+  <p>When a P's LRQ is empty, it attempts to steal work from other P's — taking half of the victim's LRQ. This <strong>work stealing</strong> algorithm (inspired by Cilk) keeps all P's busy without central coordination and achieves near-optimal load balancing in practice.</p>
+  <p><strong>Work sharing</strong> is the push-based complement: when a goroutine is created, it may be pushed to an idle P's queue rather than staying local. Go primarily uses work stealing (pull) because it reduces synchronization overhead — idle P's actively seek work.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "runtime"
+    "sync"
+    "sync/atomic"
+)
+
+func main() {
+    runtime.GOMAXPROCS(4) // 4 Ps
+
+    var counter int64
+    var wg sync.WaitGroup
+
+    // 1000 goroutines distributed across 4 Ps via work stealing
+    for i := 0; i < 1000; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            atomic.AddInt64(&counter, 1)
+        }()
+    }
+    wg.Wait()
+    fmt.Println("counter:", counter) // always 1000
+}
+</code></pre>
+
+  <h3 id="s2-6">2.6 Sysmon, Handoff &amp; Asynchronous Preemption</h3>
+  <p><strong>Sysmon</strong> is a special OS thread (not bound to a P) that runs every 20µs–10ms monitoring the scheduler. It handles: retaking P's from goroutines stuck in long syscalls, polling the netpoller, triggering forced GC, and injecting preemption signals into goroutines running for more than 10ms.</p>
+  <p><strong>Asynchronous preemption</strong> (Go 1.14+): sysmon sends SIGURG to an M. The signal handler sets a preemption flag in the goroutine's stack guard. On the next function call (or via a signal-based mechanism), the goroutine yields. Before 1.14, a tight loop without function calls could monopolize a P forever.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "runtime"
+    "time"
+)
+
+func tightLoop(stop chan struct{}) {
+    n := 0
+    for {
+        select {
+        case <-stop:
+            fmt.Println("tight loop stopped, iterations:", n)
+            return
+        default:
+            n++ // CPU-bound: async preemption required to yield
+        }
+    }
+}
+
+func main() {
+    runtime.GOMAXPROCS(2) // 2 Ps
+    stop := make(chan struct{})
+
+    go tightLoop(stop) // will be preempted by sysmon after ~10ms
+
+    time.Sleep(50 * time.Millisecond)
+    close(stop)
+    time.Sleep(10 * time.Millisecond)
+}
+</code></pre>
+
+  <h3 id="s2-7">2.7 Netpoller</h3>
+  <p>Go wraps all network I/O (and many file operations) through a platform-specific <strong>netpoller</strong> (epoll on Linux, kqueue on macOS/BSD). When a goroutine performs a network operation that would block, the runtime registers the file descriptor with the netpoller and parks the goroutine as <em>Gwaiting</em>. When the FD becomes ready, the netpoller wakes the goroutine.</p>
+  <p>This is how Go achieves <em>millions of concurrent connections</em> with a small thread pool: no goroutine is pinned to an OS thread while waiting for I/O. Each blocked goroutine costs only ~8KB stack + a few hundred bytes of runtime state.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "net"
+    "sync"
+    "time"
+)
+
+func echoServer(ln net.Listener) {
+    for {
+        conn, err := ln.Accept()
+        if err != nil { return }
+        go func(c net.Conn) {
+            defer c.Close()
+            buf := make([]byte, 1024)
+            // This read parks the goroutine in netpoller — no OS thread held
+            n, _ := c.Read(buf)
+            c.Write(buf[:n])
+        }(conn)
+    }
+}
+
+func main() {
+    ln, _ := net.Listen("tcp", "127.0.0.1:0")
+    defer ln.Close()
+    go echoServer(ln)
+
+    var wg sync.WaitGroup
+    for i := 0; i < 100; i++ {
+        wg.Add(1)
+        go func(i int) {
+            defer wg.Done()
+            conn, _ := net.Dial("tcp", ln.Addr().String())
+            defer conn.Close()
+            msg := fmt.Sprintf("hello %d", i)
+            conn.Write([]byte(msg))
+            conn.SetReadDeadline(time.Now().Add(time.Second))
+            buf := make([]byte, len(msg))
+            conn.Read(buf)
+        }(i)
+    }
+    wg.Wait()
+    fmt.Println("done")
+}
+</code></pre>
+
+  <h3 id="s2-8">2.8 runtime Package</h3>
+  <p>The <code>runtime</code> package exposes scheduler control functions that are occasionally useful in production code and essential for testing concurrency behavior.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "runtime"
+)
+
+func main() {
+    // Voluntarily yield the processor — allows other goroutines to run
+    runtime.Gosched()
+
+    // Exit current goroutine, running deferred functions
+    // (cannot be called from main goroutine to exit the program)
+    go func() {
+        defer fmt.Println("deferred in exiting goroutine")
+        runtime.Goexit() // runs defers, then terminates goroutine
+        fmt.Println("unreachable")
+    }()
+    runtime.Gosched() // give the goroutine a chance to run
+
+    // LockOSThread: pin this goroutine to its current OS thread.
+    // Required for: OpenGL, thread-local storage, CGO state.
+    go func() {
+        runtime.LockOSThread()
+        defer runtime.UnlockOSThread()
+        // All system calls from here use the same OS thread
+        fmt.Println("pinned to OS thread")
+    }()
+    runtime.Gosched()
+
+    fmt.Println("goroutines:", runtime.NumGoroutine())
+}
+</code></pre>
+
+  <div class="chapter-summary">
+    <h5>Chapter 2 — Key Takeaways</h5>
+    <ul>
+      <li>G=goroutine (~400B struct), M=OS thread, P=processor (scheduling context)</li>
+      <li>Goroutine stacks start at 8KB and grow contiguously (copy-on-grow)</li>
+      <li>LRQ is lock-free ring buffer of 256; GRQ is mutex-protected</li>
+      <li>Work stealing: idle P steals half of busiest P's LRQ</li>
+      <li>Sysmon monitors for stalled P's, triggers preemption via SIGURG</li>
+      <li>Async preemption (Go 1.14) lets tight CPU loops yield safely</li>
+      <li>Netpoller parks blocked-I/O goroutines without holding an OS thread</li>
+      <li>LockOSThread pins goroutine to OS thread (needed for CGO/GL state)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- CHAPTER 3 -->
+<!-- ================================================================ -->
+<div class="chapter" id="ch3">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 03</div>
+    <h2>Sync Primitives I — WaitGroup, Mutex, Once</h2>
+  </div>
+
+  <h3 id="s3-1">3.1 sync.WaitGroup</h3>
+  <p><code>sync.WaitGroup</code> is the idiomatic way to wait for a collection of goroutines to finish. It wraps an atomic 64-bit counter: <code>Add</code> increments it, <code>Done</code> decrements it (equivalent to <code>Add(-1)</code>), and <code>Wait</code> blocks until the counter reaches zero.</p>
+  <p>Critical rule: <strong>Add must be called before the goroutine starts</strong>, not inside the goroutine. Otherwise there's a race between Wait and Add, and Wait might return before all goroutines are even started.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+func process(id int, wg *sync.WaitGroup) {
+    defer wg.Done() // always use defer to avoid leaking on panic
+    fmt.Printf("worker %d done\n", id)
+}
+
+func main() {
+    var wg sync.WaitGroup
+
+    // CORRECT: Add before go
+    for i := 0; i < 5; i++ {
+        wg.Add(1) // must be before go func
+        go process(i, &wg)
+    }
+    wg.Wait()
+    fmt.Println("all workers done")
+
+    // WRONG (do not do this):
+    // for i := 0; i < 5; i++ {
+    //     go func() {
+    //         wg.Add(1) // race: Wait may complete before Add
+    //         defer wg.Done()
+    //     }()
+    // }
+}
+</code></pre>
+
+  <h3 id="s3-2">3.2 sync.Mutex Internals</h3>
+  <p>Go's <code>sync.Mutex</code> is a two-mode adaptive mutex. In <strong>normal mode</strong>, it tries a CAS (compare-and-swap) to acquire the lock. If that fails, it enqueues the goroutine in a <em>wait queue</em> (a FIFO implemented with a semaphore). Waiting goroutines spin briefly before parking to avoid syscall overhead on short critical sections.</p>
+  <p>After 1ms of waiting, the mutex enters <strong>starvation mode</strong>: the lock is handed directly to the next waiter in order, bypassing spinning. This prevents priority inversion and ensures bounded wait time. When the queue empties or the waiter was waiting less than 1ms, normal mode resumes.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+type SafeCounter struct {
+    mu    sync.Mutex
+    count int
+}
+
+func (c *SafeCounter) Inc() {
+    c.mu.Lock()
+    defer c.mu.Unlock() // always defer — protects against panics
+    c.count++
+}
+
+func (c *SafeCounter) Value() int {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    return c.count
+}
+
+func main() {
+    var wg sync.WaitGroup
+    c := &SafeCounter{}
+
+    for i := 0; i < 10_000; i++ {
+        wg.Add(1)
+        go func() { defer wg.Done(); c.Inc() }()
+    }
+    wg.Wait()
+    fmt.Println("count:", c.Value()) // always 10000
+}
+</code></pre>
+
+  <h3 id="s3-3">3.3 sync.Once</h3>
+  <p><code>sync.Once</code> guarantees that a function is executed exactly once, regardless of how many goroutines call <code>Do</code>. It is the correct way to implement lazy, thread-safe initialization. Internally it uses an atomic flag plus a mutex for the slow path.</p>
+  <p>A common pitfall: if the function passed to <code>Do</code> panics, the Once is still "done" — subsequent calls will not retry. Use a sentinel value and manual error handling if you need retry-on-failure semantics.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+type DB struct{ name string }
+
+var (
+    instance *DB
+    once     sync.Once
+)
+
+func GetDB() *DB {
+    once.Do(func() {
+        fmt.Println("initializing DB connection")
+        instance = &DB{name: "primary"}
+    })
+    return instance
+}
+
+func main() {
+    var wg sync.WaitGroup
+    for i := 0; i < 10; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            db := GetDB()
+            _ = db // use db
+        }()
+    }
+    wg.Wait()
+    fmt.Println("DB:", GetDB().name)
+    // "initializing DB connection" prints exactly once
+}
+</code></pre>
+
+  <h3 id="s3-4">3.4 Deadlock, Livelock &amp; Starvation</h3>
+  <p>A <strong>deadlock</strong> occurs when two or more goroutines wait for each other indefinitely, forming a circular dependency. Go detects all-goroutines-blocked deadlocks and panics with "all goroutines are asleep - deadlock!". Partial deadlocks (some goroutines still running) are not detected automatically.</p>
+  <p>A <strong>livelock</strong> occurs when goroutines continuously respond to each other but make no progress (like two polite people in a hallway). <strong>Starvation</strong> happens when one goroutine cannot acquire a resource because others monopolize it. <strong>Priority inversion</strong>: a low-priority task holds a lock needed by a high-priority task, effectively raising the low-priority task's priority.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+// Classic deadlock: A waits for B, B waits for A
+func deadlockDemo() {
+    var mu1, mu2 sync.Mutex
+
+    go func() {
+        mu1.Lock()
+        time.Sleep(time.Millisecond) // give mu2.Lock() a chance to run
+        mu2.Lock() // waits for mu2 — but mu2 is held by goroutine below
+        defer mu2.Unlock()
+        defer mu1.Unlock()
+    }()
+
+    mu2.Lock()
+    time.Sleep(time.Millisecond)
+    mu1.Lock() // waits for mu1 — but mu1 is held by goroutine above
+    defer mu1.Unlock()
+    defer mu2.Unlock()
+}
+
+// Fix: always acquire locks in the same order
+func safeOrder() {
+    var mu1, mu2 sync.Mutex
+    acquire := func() {
+        mu1.Lock() // always mu1 first
+        mu2.Lock() // then mu2
+    }
+    release := func() {
+        mu2.Unlock()
+        mu1.Unlock()
+    }
+    acquire(); fmt.Println("locks acquired"); release()
+    acquire(); fmt.Println("locks acquired again"); release()
+}
+
+func main() {
+    safeOrder()
+    fmt.Println("no deadlock")
+}
+</code></pre>
+
+  <div class="warning">
+    <strong>Priority Inversion:</strong> Go's mutex is not priority-aware. If a low-priority goroutine holds a mutex needed by many high-priority goroutines, all high-priority work stalls. Design critical sections to be short, and avoid long I/O inside a locked section.
+  </div>
+
+  <h3 id="s3-5">3.5 Data Races &amp; Race Detector</h3>
+  <p>A <strong>data race</strong> occurs when two goroutines access the same memory location concurrently and at least one access is a write, without synchronization. Data races are undefined behavior in Go's memory model — the program may produce garbled output, crash, or behave correctly by accident.</p>
+  <p>Run <code>go test -race</code> or <code>go run -race</code> to enable the race detector (ThreadSanitizer). It instruments all memory accesses at compile time and detects races at runtime with ~5–10× overhead. Always run tests with <code>-race</code> in CI.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+// DATA RACE: both goroutines read/write `count` without synchronization
+func raceExample() {
+    count := 0
+    var wg sync.WaitGroup
+    for i := 0; i < 1000; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            count++ // READ-MODIFY-WRITE: not atomic!
+        }()
+    }
+    wg.Wait()
+    fmt.Println("count:", count) // undefined: could be anything < 1000
+}
+
+// FIX: use atomic or mutex
+func fixedExample() {
+    var mu sync.Mutex
+    count := 0
+    var wg sync.WaitGroup
+    for i := 0; i < 1000; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            mu.Lock()
+            count++
+            mu.Unlock()
+        }()
+    }
+    wg.Wait()
+    fmt.Println("count:", count) // always 1000
+}
+
+func main() {
+    // raceExample() // run with -race to detect
+    fixedExample()
+}
+</code></pre>
+
+  <h3 id="s3-6">3.6 Common Mutex Mistakes</h3>
+  <p>Several common patterns lead to subtle bugs with mutexes in Go.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+// MISTAKE 1: Local mutex — each call gets a fresh, unlocked mutex
+type BadCounter struct {
+    mu    sync.Mutex // BUG: if BadCounter is passed by value, mu is copied
+    value int
+}
+
+func (c BadCounter) Inc() { // receiver is by value — copies the mutex!
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    c.value++ // modifies the copy, not the original
+}
+
+// FIX: always use pointer receiver with mutex
+type GoodCounter struct {
+    mu    sync.Mutex
+    value int
+}
+
+func (c *GoodCounter) Inc() {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    c.value++
+}
+
+// MISTAKE 2: Recursive locking (Go's mutex is NOT reentrant)
+func recursiveLock() {
+    var mu sync.Mutex
+    mu.Lock()
+    // mu.Lock() // DEADLOCK: this goroutine blocks on itself
+    mu.Unlock()
+}
+
+// MISTAKE 3: Unlock in goroutine different from Lock
+func wrongGoroutine() {
+    var mu sync.Mutex
+    mu.Lock()
+    go func() {
+        mu.Unlock() // valid in Go but extremely confusing — avoid
+    }()
+}
+
+// MISTAKE 4: defer mu.Unlock() inside a long function with early returns
+func longFunc(mu *sync.Mutex) int {
+    mu.Lock()
+    defer mu.Unlock() // CORRECT: deferred unlock always runs
+    // ... long computation ...
+    return 42
+}
+
+func main() {
+    c := &GoodCounter{}
+    var wg sync.WaitGroup
+    for i := 0; i < 100; i++ {
+        wg.Add(1)
+        go func() { defer wg.Done(); c.Inc() }()
+    }
+    wg.Wait()
+    fmt.Println("value:", c.value) // 100
+}
+</code></pre>
+
+  <div class="chapter-summary">
+    <h5>Chapter 3 — Key Takeaways</h5>
+    <ul>
+      <li>WaitGroup.Add must happen before the goroutine is spawned</li>
+      <li>Go mutex has two modes: normal (CAS+spin) and starvation (&gt;1ms wait)</li>
+      <li>sync.Once: exactly-one execution; panicking function leaves Once "done"</li>
+      <li>Deadlock = circular wait; livelock = active but no progress</li>
+      <li>Always run tests with <code>-race</code> to detect data races early</li>
+      <li>Never copy a sync.Mutex — always use pointer receivers</li>
+      <li>Go mutex is not reentrant; recursive locking deadlocks</li>
+      <li>Holt diagrams visualize resource dependency graphs to find deadlock cycles</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- CHAPTER 4 -->
+<!-- ================================================================ -->
+<div class="chapter" id="ch4">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 04</div>
+    <h2>Sync Primitives II — RWMutex, Map, Cond, Pool &amp; Atomics</h2>
+  </div>
+
+  <h3 id="s4-1">4.1 sync.RWMutex</h3>
+  <p><code>sync.RWMutex</code> allows multiple concurrent readers or one exclusive writer. It is implemented with a reader count (atomic int32) and a writer semaphore. <code>RLock</code> increments the reader count (lock-free when no writer is waiting); <code>Lock</code> sets a writer-pending flag and waits for all readers to finish.</p>
+  <p>A common pitfall: if writers are frequent, RWMutex performs worse than a plain Mutex due to the extra coordination. Use RWMutex only when reads dominate (95%+ reads) and the critical section is non-trivial.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+type Cache struct {
+    mu   sync.RWMutex
+    data map[string]string
+}
+
+func (c *Cache) Get(key string) (string, bool) {
+    c.mu.RLock()         // multiple goroutines can hold RLock simultaneously
+    defer c.mu.RUnlock()
+    v, ok := c.data[key]
+    return v, ok
+}
+
+func (c *Cache) Set(key, value string) {
+    c.mu.Lock()         // exclusive: blocks all readers and writers
+    defer c.mu.Unlock()
+    c.data[key] = value
+}
+
+func main() {
+    cache := &Cache{data: make(map[string]string)}
+    cache.Set("hello", "world")
+
+    var wg sync.WaitGroup
+    // Simulate 10 concurrent readers
+    for i := 0; i < 10; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            for j := 0; j < 100; j++ {
+                v, _ := cache.Get("hello")
+                _ = v
+            }
+        }()
+    }
+    // One writer
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+        time.Sleep(10 * time.Millisecond)
+        cache.Set("hello", "updated")
+    }()
+    wg.Wait()
+    v, _ := cache.Get("hello")
+    fmt.Println("final:", v)
+}
+</code></pre>
+
+  <h3 id="s4-2">4.2 sync.Map</h3>
+  <p><code>sync.Map</code> is an optimized concurrent map for two specific use cases: (1) a key is written once and read many times, (2) goroutines read/write disjoint key sets. It uses a two-layer design: a read-only map (atomic pointer, no locking) and a dirty map (mutex-protected). A key in the read map can be read without any lock.</p>
+  <p>For general-purpose concurrent maps (mixed read/write by same goroutines on same keys), a sharded map of <code>sync.Mutex</code>-protected <code>map[K]V</code> often outperforms <code>sync.Map</code>.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+func main() {
+    var m sync.Map
+
+    // Store
+    m.Store("key1", "value1")
+    m.Store("key2", 42)
+
+    // Load
+    if v, ok := m.Load("key1"); ok {
+        fmt.Println("key1:", v)
+    }
+
+    // LoadOrStore — atomic check-then-set
+    actual, loaded := m.LoadOrStore("key3", "new")
+    fmt.Printf("key3: %v (was already stored: %v)\n", actual, loaded)
+
+    // Range — iterate (snapshot, but no consistent ordering)
+    m.Range(func(key, value any) bool {
+        fmt.Printf("  %v: %v\n", key, value)
+        return true // return false to stop iteration
+    })
+
+    // Delete
+    m.Delete("key1")
+
+    // LoadAndDelete — atomic read + delete
+    if v, ok := m.LoadAndDelete("key2"); ok {
+        fmt.Println("deleted key2:", v)
+    }
+}
+</code></pre>
+
+  <h3 id="s4-3">4.3 sync.Cond</h3>
+  <p><code>sync.Cond</code> implements a condition variable: a rendezvous point for goroutines to wait until a condition is true. It must be paired with a <code>Locker</code> (usually a mutex). <code>Wait()</code> atomically unlocks the mutex and suspends the goroutine; <code>Signal()</code> wakes one waiter; <code>Broadcast()</code> wakes all waiters.</p>
+  <p>Always check the condition in a <strong>loop</strong>, not an <code>if</code>, because of <em>spurious wakeups</em> — a goroutine may wake up even when the condition is not yet true.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+type Queue struct {
+    mu    sync.Mutex
+    cond  *sync.Cond
+    items []int
+}
+
+func NewQueue() *Queue {
+    q := &Queue{}
+    q.cond = sync.NewCond(&q.mu)
+    return q
+}
+
+func (q *Queue) Push(v int) {
+    q.mu.Lock()
+    q.items = append(q.items, v)
+    q.cond.Signal() // wake one waiting consumer
+    q.mu.Unlock()
+}
+
+func (q *Queue) Pop() int {
+    q.mu.Lock()
+    defer q.mu.Unlock()
+    for len(q.items) == 0 { // LOOP: spurious wakeup protection
+        q.cond.Wait() // releases mu, parks; re-acquires mu on wake
+    }
+    v := q.items[0]
+    q.items = q.items[1:]
+    return v
+}
+
+func main() {
+    q := NewQueue()
+
+    go func() {
+        time.Sleep(100 * time.Millisecond)
+        q.Push(42)
+    }()
+
+    fmt.Println("waiting for item...")
+    fmt.Println("got:", q.Pop()) // blocks until Push is called
+}
+</code></pre>
+
+  <h3 id="s4-4">4.4 sync.Pool</h3>
+  <p><code>sync.Pool</code> is a thread-safe pool of temporary objects, intended to reduce GC pressure by reusing allocations. Each P has its own local pool victim and cache. <code>Get</code> first checks the local pool, then the victim (from the previous GC cycle), then calls the <code>New</code> function. Objects in the pool may be collected at any GC cycle.</p>
+  <p>Pools are ideal for short-lived, frequently-allocated objects: buffers, scratch space, connection objects. Never store state that must persist across GC cycles in a pool.</p>
+
+<pre><code>package main
+
+import (
+    "bytes"
+    "fmt"
+    "sync"
+)
+
+var bufPool = sync.Pool{
+    New: func() any { return new(bytes.Buffer) },
+}
+
+func processRequest(data string) string {
+    buf := bufPool.Get().(*bytes.Buffer)
+    defer func() {
+        buf.Reset() // clear before returning to pool
+        bufPool.Put(buf)
+    }()
+
+    buf.WriteString("processed: ")
+    buf.WriteString(data)
+    return buf.String()
+}
+
+func main() {
+    var wg sync.WaitGroup
+    results := make(chan string, 100)
+
+    for i := 0; i < 100; i++ {
+        wg.Add(1)
+        go func(n int) {
+            defer wg.Done()
+            results <- processRequest(fmt.Sprintf("req-%d", n))
+        }(i)
+    }
+
+    go func() { wg.Wait(); close(results) }()
+    count := 0
+    for range results { count++ }
+    fmt.Println("processed:", count, "requests")
+}
+</code></pre>
+
+  <h3 id="s4-5">4.5 Atomic Operations</h3>
+  <p>The <code>sync/atomic</code> package provides low-level atomic primitives that map to single hardware instructions (LOCK XADD, CMPXCHG, MFENCE, etc.). These are <strong>stronger than volatile</strong> — they establish happens-before relationships and are immune to compiler reordering.</p>
+  <p>Use atomics when: (1) you need a simple counter/flag with no other state, (2) you are building a higher-level primitive, (3) performance is critical and mutex overhead is measurable. For anything involving multiple fields that must be updated together, use a mutex.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+    "sync/atomic"
+)
+
+func main() {
+    var counter int64
+
+    var wg sync.WaitGroup
+    for i := 0; i < 10_000; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            atomic.AddInt64(&counter, 1) // atomic read-modify-write
+        }()
+    }
+    wg.Wait()
+    fmt.Println("counter:", atomic.LoadInt64(&counter)) // atomic read
+
+    // Compare-And-Swap: foundational for lock-free algorithms
+    var val int32 = 10
+    swapped := atomic.CompareAndSwapInt32(&val, 10, 20)
+    fmt.Printf("CAS(10→20): swapped=%v, val=%d\n", swapped, val) // true, 20
+
+    // atomic.Value: store/load any type atomically
+    var config atomic.Value
+    config.Store(map[string]string{"timeout": "5s"})
+    cfg := config.Load().(map[string]string)
+    fmt.Println("config:", cfg)
+}
+</code></pre>
+
+  <h3 id="s4-6">4.6 Custom Sync Primitives</h3>
+  <p>Understanding how to build synchronization primitives from atomics and semaphores is essential for advanced concurrent programming. Go's runtime exposes low-level semaphore operations (<code>runtime_SemacquireMutex</code>, <code>runtime_Semrelease</code>) that are used internally but not exported — we simulate them with channels or <code>sync.Mutex</code>.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+    "sync/atomic"
+)
+
+// SpinLock: busy-waits for the lock — only suitable for very short critical sections
+type SpinLock struct{ state int32 }
+
+func (s *SpinLock) Lock() {
+    for !atomic.CompareAndSwapInt32(&s.state, 0, 1) {
+        // spin — yields CPU via PAUSE instruction on x86 (compiler hint)
+    }
+}
+
+func (s *SpinLock) Unlock() { atomic.StoreInt32(&s.state, 0) }
+
+// TicketLock: FIFO ordering (no starvation)
+type TicketLock struct {
+    ticket  int64
+    serving int64
+}
+
+func (t *TicketLock) Lock() int64 {
+    my := atomic.AddInt64(&t.ticket, 1) - 1
+    for atomic.LoadInt64(&t.serving) != my {
+        // spin
+    }
+    return my
+}
+
+func (t *TicketLock) Unlock() { atomic.AddInt64(&t.serving, 1) }
+
+// Semaphore using buffered channel
+type Semaphore chan struct{}
+
+func NewSemaphore(n int) Semaphore { return make(Semaphore, n) }
+func (s Semaphore) Acquire() { s <- struct{}{} }
+func (s Semaphore) Release() { <-s }
+
+func main() {
+    // SpinLock example
+    var sl SpinLock
+    var counter int
+    var wg sync.WaitGroup
+    for i := 0; i < 1000; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            sl.Lock()
+            counter++
+            sl.Unlock()
+        }()
+    }
+    wg.Wait()
+    fmt.Println("spin counter:", counter)
+
+    // Semaphore limiting concurrency
+    sem := NewSemaphore(3) // max 3 concurrent
+    for i := 0; i < 10; i++ {
+        wg.Add(1)
+        go func(n int) {
+            defer wg.Done()
+            sem.Acquire()
+            defer sem.Release()
+            fmt.Printf("worker %d running\n", n)
+        }(i)
+    }
+    wg.Wait()
+}
+</code></pre>
+
+  <h3 id="s4-7">4.7 False Sharing &amp; Cache Contention</h3>
+  <p>Two goroutines on different cores writing to <em>different variables</em> that share a 64-byte cache line cause <strong>false sharing</strong>: every write invalidates the other core's cache line, generating expensive coherence traffic. The fix is to pad each variable to occupy its own cache line.</p>
+  <p><strong>True sharing</strong> (multiple goroutines accessing the same variable) is unavoidable but can be reduced with sharding — partitioning data into N independent copies (shards), each protected by its own lock. Goroutines hash their key to a shard, reducing contention by N×.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "hash/fnv"
+    "sync"
+)
+
+// Sharded counter: reduces lock contention
+type ShardedCounter struct {
+    shards [256]struct {
+        mu    sync.Mutex
+        count int64
+        _     [48]byte // pad to 64 bytes
+    }
+}
+
+func (sc *ShardedCounter) shard(goroutineID int) int {
+    h := fnv.New32a()
+    fmt.Fprintf(h, "%d", goroutineID)
+    return int(h.Sum32()) % 256
+}
+
+func (sc *ShardedCounter) Inc(id int) {
+    s := &sc.shards[sc.shard(id)]
+    s.mu.Lock()
+    s.count++
+    s.mu.Unlock()
+}
+
+func (sc *ShardedCounter) Total() int64 {
+    var total int64
+    for i := range sc.shards {
+        sc.shards[i].mu.Lock()
+        total += sc.shards[i].count
+        sc.shards[i].mu.Unlock()
+    }
+    return total
+}
+
+func main() {
+    sc := &ShardedCounter{}
+    var wg sync.WaitGroup
+    for i := 0; i < 10_000; i++ {
+        wg.Add(1)
+        n := i
+        go func() { defer wg.Done(); sc.Inc(n) }()
+    }
+    wg.Wait()
+    fmt.Println("total:", sc.Total())
+}
+</code></pre>
+
+  <div class="chapter-summary">
+    <h5>Chapter 4 — Key Takeaways</h5>
+    <ul>
+      <li>RWMutex: multiple readers OR one writer; use only when reads dominate</li>
+      <li>sync.Map: optimized for write-once / read-many or disjoint key sets</li>
+      <li>sync.Cond.Wait: always loop on the condition, never use if</li>
+      <li>sync.Pool: reuse objects across GC cycles to reduce allocation pressure</li>
+      <li>Atomics: single-instruction, establishes happens-before; not a full lock</li>
+      <li>SpinLock: efficient for sub-microsecond critical sections only</li>
+      <li>TicketLock: ensures FIFO ordering, prevents starvation</li>
+      <li>False sharing: pad shared variables to 64-byte cache line boundaries</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- CHAPTER 5 -->
+<!-- ================================================================ -->
+<div class="chapter" id="ch5">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 05</div>
+    <h2>Channels &amp; Their Internals</h2>
+  </div>
+
+  <h3 id="s5-1">5.1 hchan Struct Internals</h3>
+  <p>A Go channel is a <code>runtime.hchan</code> struct containing: a circular ring buffer (<code>buf</code>) for buffered channels, two goroutine wait queues (<code>sendq</code> and <code>recvq</code>), a mutex protecting all fields, <code>qcount</code> (elements in buffer), <code>dataqsiz</code> (buffer capacity), <code>elemsize</code>, and <code>closed</code> flag.</p>
+  <p>Sends and receives follow this priority: (1) if a waiting goroutine exists in the opposite queue, transfer directly (bypassing the buffer), (2) if the buffer has space (send) or data (receive), use the buffer, (3) otherwise block and enqueue in <code>sendq</code>/<code>recvq</code>.</p>
+
+<pre><code>// Conceptual hchan layout:
+//
+//  hchan {
+//    qcount   uint          // current items in buf
+//    dataqsiz uint          // capacity of buf
+//    buf      unsafe.Pointer // ring buffer
+//    elemsize uint16
+//    closed   uint32
+//    sendx    uint          // send index in buf
+//    recvx    uint          // receive index in buf
+//    recvq    waitq         // goroutines waiting to receive
+//    sendq    waitq         // goroutines waiting to send
+//    lock     mutex         // protects all fields
+//  }
+
+package main
+
+import (
+    "fmt"
+    "unsafe"
+)
+
+func main() {
+    ch := make(chan int, 3)
+
+    // Demonstrates buffer path: no goroutine blocking
+    ch <- 1
+    ch <- 2
+    ch <- 3
+    // ch <- 4 would block (sendq) until a receive occurs
+
+    fmt.Println(<-ch) // 1 (FIFO)
+    fmt.Println(<-ch) // 2
+    fmt.Println(<-ch) // 3
+
+    // Channel is a pointer under the hood
+    fmt.Printf("channel size: %d bytes\n", unsafe.Sizeof(ch)) // 8 (pointer)
+}
+</code></pre>
+
+  <h3 id="s5-2">5.2 Buffered vs Unbuffered Channels</h3>
+  <p>An <strong>unbuffered</strong> channel (capacity 0) requires both sender and receiver to be ready simultaneously — it acts as a synchronization point (rendezvous). A <strong>buffered</strong> channel decouples send and receive: sends succeed until the buffer is full; receives succeed until the buffer is empty.</p>
+  <p>Use unbuffered channels for synchronization (signaling, handshakes). Use buffered channels to smooth out bursts or when you want the sender to proceed without waiting for the receiver. Buffered channels with capacity 1 are useful for mutex-like ownership passing.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "time"
+)
+
+func main() {
+    // Unbuffered: sender blocks until receiver is ready
+    sync := make(chan struct{})
+    go func() {
+        time.Sleep(100 * time.Millisecond)
+        fmt.Println("receiver ready")
+        <-sync
+    }()
+    sync <- struct{}{} // blocks until goroutine receives
+    fmt.Println("handshake complete")
+
+    // Buffered: sender does not block while space available
+    jobs := make(chan int, 5)
+    for i := 0; i < 5; i++ {
+        jobs <- i // does not block
+    }
+    close(jobs)
+    for j := range jobs {
+        fmt.Println("job:", j)
+    }
+
+    // Capacity-1 as a mutex (ownership token)
+    mu := make(chan struct{}, 1)
+    mu <- struct{}{} // "lock"
+    // critical section
+    <-mu             // "unlock"
+    fmt.Println("mutex via channel done")
+}
+</code></pre>
+
+  <h3 id="s5-3">5.3 Select Internals &amp; Priority</h3>
+  <p><code>select</code> waits on multiple channel operations simultaneously. Internally, the runtime shuffles the cases in random order and tries each one. If multiple cases are ready simultaneously, <strong>one is chosen uniformly at random</strong> — there is no implicit priority. A <code>default</code> case makes the select non-blocking.</p>
+  <p>To implement a priority select (always prefer case A over case B), use a nested select or a separate goroutine for the high-priority case.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "time"
+)
+
+func main() {
+    ch1 := make(chan string, 1)
+    ch2 := make(chan string, 1)
+
+    go func() {
+        time.Sleep(50 * time.Millisecond)
+        ch1 <- "one"
+        ch2 <- "two"
+    }()
+
+    time.Sleep(100 * time.Millisecond)
+
+    // Both channels ready: select chooses at random
+    for i := 0; i < 2; i++ {
+        select {
+        case msg := <-ch1:
+            fmt.Println("received from ch1:", msg)
+        case msg := <-ch2:
+            fmt.Println("received from ch2:", msg)
+        }
+    }
+
+    // Priority select: always drain high-priority first
+    high := make(chan int, 10)
+    low  := make(chan int, 10)
+    for i := 0; i < 3; i++ { high <- i; low <- i }
+
+    for len(high) > 0 || len(low) > 0 {
+        select {
+        case v := <-high:
+            fmt.Println("HIGH:", v)
+        default:
+            select {
+            case v := <-low:
+                fmt.Println("low:", v)
+            default:
+                return
+            }
+        }
+    }
+}
+</code></pre>
+
+  <h3 id="s5-4">5.4 Goroutine Leaks &amp; Nil Channels</h3>
+  <p>A <strong>goroutine leak</strong> occurs when a goroutine is blocked forever — on a channel send/receive that never completes, a mutex that is never released, or an infinite loop. Leaked goroutines accumulate memory and may hold resources. Always provide a cancellation mechanism (done channel or context) for long-lived goroutines.</p>
+  <p>Sending to or receiving from a <strong>nil channel</strong> blocks forever. This is occasionally useful: in a select, a nil channel case is never selected, allowing you to disable a case dynamically.</p>
+
+<pre><code>package main
+
+import (
+    "context"
+    "fmt"
+    "runtime"
+    "time"
+)
+
+// Goroutine leak: nothing to wake it up
+func leakyWorker(jobs <-chan int) {
+    for j := range jobs { // blocks forever if jobs is never closed
+        _ = j
+    }
+}
+
+// Fixed: use context for cancellation
+func safeWorker(ctx context.Context, jobs <-chan int) {
+    for {
+        select {
+        case <-ctx.Done():
+            fmt.Println("worker cancelled")
+            return
+        case j, ok := <-jobs:
+            if !ok { return }
+            _ = j
+        }
+    }
+}
+
+// Nil channel: disables a select case
+func nilChannelDemo() {
+    ch1 := make(chan int, 1)
+    var ch2 chan int // nil
+
+    ch1 <- 42
+
+    select {
+    case v := <-ch1:
+        fmt.Println("ch1:", v)
+    case v := <-ch2: // never selected — nil channel blocks forever
+        fmt.Println("ch2:", v)
+    }
+}
+
+func main() {
+    before := runtime.NumGoroutine()
+
+    ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+    defer cancel()
+
+    jobs := make(chan int)
+    go safeWorker(ctx, jobs)
+
+    time.Sleep(150 * time.Millisecond)
+    fmt.Printf("goroutines: before=%d, after=%d\n", before, runtime.NumGoroutine())
+    nilChannelDemo()
+}
+</code></pre>
+
+  <h3 id="s5-5">5.5 Closing Channels Safely</h3>
+  <p>Closing a channel signals all receivers that no more values will be sent. Receiving from a closed channel returns the zero value immediately (non-blocking). Sending to a closed channel panics. The "comma ok" idiom and <code>for range</code> detect closed channels.</p>
+  <p>The <strong>channel ownership principle</strong>: only the goroutine that owns the channel (the sender) should close it. Closing from a non-owner (e.g., a receiver) risks panicking if another sender is concurrently active.</p>
+
+<pre><code>package main
+
+import "fmt"
+
+func producer(n int) <-chan int {
+    ch := make(chan int)
+    go func() {
+        defer close(ch) // owner closes the channel
+        for i := 0; i < n; i++ {
+            ch <- i
+        }
+    }()
+    return ch
+}
+
+func main() {
+    ch := producer(5)
+
+    // for-range: automatically stops when channel is closed
+    for v := range ch {
+        fmt.Println(v)
+    }
+
+    // Closed channel reads return zero value
+    v, ok := <-ch
+    fmt.Printf("after close: v=%d, ok=%v\n", v, ok) // 0, false
+
+    // Multi-sender: use a separate done signal, not close
+    jobs := make(chan int, 10)
+    done := make(chan struct{})
+
+    for i := 0; i < 3; i++ { // 3 senders
+        go func(id int) {
+            for j := 0; j < 3; j++ {
+                jobs <- id*10 + j
+            }
+        }(i)
+    }
+
+    // Coordinator closes when done
+    go func() {
+        // (in real code: wait for all senders via WaitGroup)
+        close(done)
+    }()
+
+    close(jobs) // only safe here because senders are done (simplified)
+    for j := range jobs {
+        fmt.Println("job:", j)
+    }
+}
+</code></pre>
+
+  <h3 id="s5-6">5.6 Producer &amp; Consumer</h3>
+  <p>The producer-consumer pattern decouples work generation from work processing using a channel as the queue. Multiple producers and consumers can coexist; the channel serializes access. When producers finish, they close the channel so consumers can drain and exit cleanly.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+func producer(ids []int) <-chan int {
+    out := make(chan int, len(ids))
+    go func() {
+        defer close(out)
+        for _, id := range ids { out <- id }
+    }()
+    return out
+}
+
+func consumer(id int, in <-chan int, results chan<- string, wg *sync.WaitGroup) {
+    defer wg.Done()
+    for job := range in {
+        results <- fmt.Sprintf("worker-%d processed job-%d", id, job)
+    }
+}
+
+func main() {
+    jobs := producer([]int{1, 2, 3, 4, 5, 6, 7, 8})
+
+    results := make(chan string, 10)
+    var wg sync.WaitGroup
+
+    for i := 0; i < 3; i++ { // 3 consumers
+        wg.Add(1)
+        go consumer(i, jobs, results, &wg)
+    }
+
+    go func() { wg.Wait(); close(results) }()
+
+    for r := range results {
+        fmt.Println(r)
+    }
+}
+</code></pre>
+
+  <div class="chapter-summary">
+    <h5>Chapter 5 — Key Takeaways</h5>
+    <ul>
+      <li>hchan: ring buffer + sendq/recvq + mutex; direct transfer skips buffer</li>
+      <li>Unbuffered = synchronization point; buffered = decoupling</li>
+      <li>Select chooses randomly among ready cases; no built-in priority</li>
+      <li>Nil channel in select is never selected — useful for disabling cases</li>
+      <li>Goroutine leaks: always provide a cancellation signal (done/context)</li>
+      <li>Channel ownership: only the sender (owner) should close</li>
+      <li>for-range on a channel exits when the channel is closed</li>
+      <li>Buffered channel as semaphore: capacity = max concurrency</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- CHAPTER 6 -->
+<!-- ================================================================ -->
+<div class="chapter" id="ch6">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 06</div>
+    <h2>Channel Patterns</h2>
+  </div>
+
+  <h3 id="s6-1">6.1 Pipeline &amp; Generator</h3>
+  <p>A <strong>pipeline</strong> is a series of processing stages connected by channels, where each stage receives values from the upstream channel, transforms them, and sends to the downstream channel. Pipelines enable clean composition, cancellation, and back-pressure.</p>
+  <p>A <strong>generator</strong> is a function that returns a channel and starts a goroutine that produces values into it. Generators are the entry point of pipelines and should always close the channel when done.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "math"
+)
+
+func generate(nums ...int) <-chan int {
+    out := make(chan int)
+    go func() {
+        defer close(out)
+        for _, n := range nums { out <- n }
+    }()
+    return out
+}
+
+func square(in <-chan int) <-chan int {
+    out := make(chan int)
+    go func() {
+        defer close(out)
+        for n := range in { out <- n * n }
+    }()
+    return out
+}
+
+func filter(in <-chan int, pred func(int) bool) <-chan int {
+    out := make(chan int)
+    go func() {
+        defer close(out)
+        for n := range in {
+            if pred(n) { out <- n }
+        }
+    }()
+    return out
+}
+
+func main() {
+    // Pipeline: generate → square → filter (only perfect squares > 10)
+    src := generate(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+    squared := square(src)
+    large := filter(squared, func(n int) bool { return n > 10 })
+
+    for v := range large {
+        fmt.Printf("%d (sqrt=%.0f)\n", v, math.Sqrt(float64(v)))
+    }
+}
+</code></pre>
+
+  <h3 id="s6-2">6.2 Fan-In, Fan-Out &amp; Tee</h3>
+  <p><strong>Fan-Out</strong>: one input channel distributes work to multiple goroutines (each with its own output channel), enabling parallel processing. <strong>Fan-In</strong>: multiple input channels are merged into one output channel. Together they form a parallel pipeline stage.</p>
+  <p><strong>Tee</strong>: one input is duplicated to two output channels, allowing two consumers to process the same stream independently (like Unix <code>tee</code>).</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+// FanOut: distribute one channel to N workers
+func fanOut(in <-chan int, n int) []<-chan int {
+    outs := make([]<-chan int, n)
+    for i := 0; i < n; i++ {
+        out := make(chan int)
+        outs[i] = out
+        go func(ch chan int) {
+            defer close(ch)
+            for v := range in { ch <- v * 2 }
+        }(out)
+    }
+    return outs
+    // Note: this naive version doesn't distribute — use a shared in channel
+}
+
+// FanIn: merge N channels into one
+func fanIn(inputs ...<-chan int) <-chan int {
+    out := make(chan int)
+    var wg sync.WaitGroup
+    for _, ch := range inputs {
+        wg.Add(1)
+        go func(c <-chan int) {
+            defer wg.Done()
+            for v := range c { out <- v }
+        }(ch)
+    }
+    go func() { wg.Wait(); close(out) }()
+    return out
+}
+
+// Tee: split one channel into two
+func tee(in <-chan int) (<-chan int, <-chan int) {
+    out1, out2 := make(chan int), make(chan int)
+    go func() {
+        defer close(out1); defer close(out2)
+        for v := range in {
+            out1 <- v
+            out2 <- v
+        }
+    }()
+    return out1, out2
+}
+
+func main() {
+    src := func() <-chan int {
+        ch := make(chan int)
+        go func() { defer close(ch); for i := 1; i <= 6; i++ { ch <- i } }()
+        return ch
+    }()
+
+    a, b := tee(src)
+    go func() { for v := range a { fmt.Println("consumer A:", v) } }()
+    for v := range b { fmt.Println("consumer B:", v) }
+}
+</code></pre>
+
+  <h3 id="s6-3">6.3 Done &amp; Or-Done Channels</h3>
+  <p>The <strong>done channel</strong> pattern provides a cancellation signal: a closed channel that any goroutine can listen for. When the done channel is closed, all goroutines in the pipeline should stop work and return. This is the predecessor to <code>context.Context</code> — contexts wrap this pattern with additional metadata.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "time"
+)
+
+// orDone wraps a channel read to respect cancellation
+func orDone(done, in <-chan int) <-chan int {
+    out := make(chan int)
+    go func() {
+        defer close(out)
+        for {
+            select {
+            case <-done:
+                return
+            case v, ok := <-in:
+                if !ok { return }
+                select {
+                case out <- v:
+                case <-done:
+                    return
+                }
+            }
+        }
+    }()
+    return out
+}
+
+// or: returns a channel that closes when ANY input closes (useful for cancellation)
+func or(channels ...<-chan struct{}) <-chan struct{} {
+    switch len(channels) {
+    case 0: return nil
+    case 1: return channels[0]
+    }
+    out := make(chan struct{})
+    go func() {
+        defer close(out)
+        switch len(channels) {
+        case 2:
+            select { case <-channels[0]: case <-channels[1]: }
+        default:
+            select {
+            case <-channels[0]:
+            case <-channels[1]:
+            case <-channels[2]:
+            case <-or(append(channels[3:], out)...):
+            }
+        }
+    }()
+    return out
+}
+
+func main() {
+    done := make(chan struct{})
+    nums := make(chan int, 100)
+    for i := 0; i < 100; i++ { nums <- i }
+
+    // Cancel after 1ms
+    go func() {
+        time.Sleep(time.Millisecond)
+        close(done)
+    }()
+
+    numDone := make(chan int) // dummy conversion
+    go func() { defer close(numDone); for v := range nums { numDone <- v } }()
+
+    count := 0
+    for range orDone(done, numDone) { count++ }
+    fmt.Println("processed before cancel:", count)
+}
+</code></pre>
+
+  <h3 id="s6-4">6.4 Bridge &amp; Or-Channel</h3>
+  <p>A <strong>bridge</strong> flattens a channel of channels (<code>&lt;-chan &lt;-chan T</code>) into a single channel of T values. It is useful when the number of sub-channels is not known ahead of time (e.g., dynamically generated work streams).</p>
+  <p>A <strong>moving-later</strong> (postpone) pattern delays processing until a condition is met by holding a value until the consumer signals readiness.</p>
+
+<pre><code>package main
+
+import "fmt"
+
+// Bridge: channel of channels → flat channel
+func bridge(done <-chan struct{}, chanOfChans <-chan <-chan int) <-chan int {
+    out := make(chan int)
+    go func() {
+        defer close(out)
+        for {
+            var stream <-chan int
+            select {
+            case maybeStream, ok := <-chanOfChans:
+                if !ok { return }
+                stream = maybeStream
+            case <-done:
+                return
+            }
+            for v := range stream {
+                select {
+                case out <- v:
+                case <-done:
+                    return
+                }
+            }
+        }
+    }()
+    return out
+}
+
+func genChans(done <-chan struct{}) <-chan (<-chan int) {
+    chanStream := make(chan (<-chan int))
+    go func() {
+        defer close(chanStream)
+        for i := 0; i < 3; i++ {
+            stream := make(chan int, 2)
+            stream <- i * 10
+            stream <- i*10 + 1
+            close(stream)
+            select {
+            case chanStream <- stream:
+            case <-done:
+                return
+            }
+        }
+    }()
+    return chanStream
+}
+
+func main() {
+    done := make(chan struct{})
+    defer close(done)
+    for v := range bridge(done, genChans(done)) {
+        fmt.Println(v)
+    }
+}
+</code></pre>
+
+  <h3 id="s6-5">6.5 Rate Limiter &amp; Semaphore</h3>
+  <p>A <strong>rate limiter</strong> using <code>time.Tick</code> restricts how often operations execute. For token-bucket style limiting, use a buffered channel pre-filled with tokens. The <code>golang.org/x/time/rate</code> package provides a production-ready implementation.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "time"
+)
+
+// Semaphore: limit concurrent operations
+type Semaphore struct{ ch chan struct{} }
+
+func NewSem(n int) *Semaphore {
+    return &Semaphore{ch: make(chan struct{}, n)}
+}
+func (s *Semaphore) Acquire() { s.ch <- struct{}{} }
+func (s *Semaphore) Release() { <-s.ch }
+
+// Token bucket rate limiter
+func tokenBucket(rate int, burst int) <-chan struct{} {
+    tokens := make(chan struct{}, burst)
+    // Pre-fill burst
+    for i := 0; i < burst; i++ { tokens <- struct{}{} }
+    // Refill at rate tokens/second
+    go func() {
+        ticker := time.NewTicker(time.Second / time.Duration(rate))
+        defer ticker.Stop()
+        for range ticker.C {
+            select {
+            case tokens <- struct{}{}:
+            default: // bucket full
+            }
+        }
+    }()
+    return tokens
+}
+
+func main() {
+    // Rate limit to 5 requests/second with burst of 3
+    limiter := tokenBucket(5, 3)
+    sem := NewSem(2) // max 2 concurrent
+
+    for i := 0; i < 8; i++ {
+        <-limiter   // wait for token
+        sem.Acquire()
+        go func(n int) {
+            defer sem.Release()
+            fmt.Printf("request %d at %v\n", n, time.Now().Format("15:04:05.000"))
+            time.Sleep(100 * time.Millisecond)
+        }(i)
+    }
+    time.Sleep(time.Second * 2)
+    fmt.Println("done")
+}
+</code></pre>
+
+  <h3 id="s6-6">6.6 time.Timer &amp; time.Ticker</h3>
+  <p><code>time.Timer</code> fires once after a duration. <code>time.Ticker</code> fires repeatedly at a fixed interval. Both use channels to deliver ticks, making them composable with select. Always call <code>Stop()</code> to release resources, and drain the channel after Stop to avoid spurious fires.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "time"
+)
+
+func withTimeout(work func(), timeout time.Duration) bool {
+    done := make(chan struct{})
+    go func() { defer close(done); work() }()
+    timer := time.NewTimer(timeout)
+    defer timer.Stop()
+    select {
+    case <-done:
+        return true // completed in time
+    case <-timer.C:
+        return false // timed out
+    }
+}
+
+func periodicTask(stop <-chan struct{}) {
+    ticker := time.NewTicker(200 * time.Millisecond)
+    defer ticker.Stop()
+    for {
+        select {
+        case t := <-ticker.C:
+            fmt.Println("tick at", t.Format("15:04:05.000"))
+        case <-stop:
+            fmt.Println("periodic task stopped")
+            return
+        }
+    }
+}
+
+func main() {
+    // timeout demo
+    ok := withTimeout(func() { time.Sleep(50 * time.Millisecond) }, time.Second)
+    fmt.Println("completed:", ok)
+
+    ok = withTimeout(func() { time.Sleep(2 * time.Second) }, 100*time.Millisecond)
+    fmt.Println("completed:", ok)
+
+    // periodic task
+    stop := make(chan struct{})
+    go periodicTask(stop)
+    time.Sleep(700 * time.Millisecond)
+    close(stop)
+    time.Sleep(50 * time.Millisecond)
+}
+</code></pre>
+
+  <div class="chapter-summary">
+    <h5>Chapter 6 — Key Takeaways</h5>
+    <ul>
+      <li>Pipeline: chain of channel-connected stages; compose with functions</li>
+      <li>Generator: returns a channel, owns it, closes it when done</li>
+      <li>Fan-Out: parallelize one stream across N workers</li>
+      <li>Fan-In: merge N channels; use WaitGroup to close output</li>
+      <li>Done channel: cancellation signal; closed channel broadcasts to all</li>
+      <li>Or-Done: wraps channel reads to respect cancellation</li>
+      <li>Bridge: flatten channel-of-channels into one stream</li>
+      <li>Timer/Ticker: always Stop() and drain to avoid resource leaks</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- CHAPTER 7 -->
+<!-- ================================================================ -->
+<div class="chapter" id="ch7">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 07</div>
+    <h2>Contexts &amp; Memory Barriers</h2>
+  </div>
+
+  <h3 id="s7-1">7.1 Context Tree &amp; Internals</h3>
+  <p>A <code>context.Context</code> is an immutable tree node. Each <code>With*</code> call creates a child node linked to its parent. When a parent is cancelled, all descendants are cancelled — the cancellation propagates down the tree. The tree lives as long as any goroutine holds a reference to a node.</p>
+  <p>Internally, cancellable contexts (<code>cancelCtx</code>) maintain a map of children (<code>children map[canceler]struct{}</code>). <code>Background()</code> and <code>TODO()</code> are empty <code>emptyCtx</code> values that never cancel. <code>valueCtx</code> is a singly-linked list of key-value pairs — lookups traverse upward.</p>
+
+<pre><code>// Context tree structure:
+//
+//  Background()
+//    └─ WithCancel → cancelCtx (e.g., main request context)
+//         ├─ WithTimeout → timerCtx (e.g., DB query, 100ms)
+//         │    └─ WithValue → valueCtx (request-ID)
+//         └─ WithCancel → cancelCtx (e.g., sub-task)
+
+package main
+
+import (
+    "context"
+    "fmt"
+    "time"
+)
+
+func main() {
+    root := context.Background()
+
+    // WithCancel: manual cancellation
+    ctx, cancel := context.WithCancel(root)
+    defer cancel() // always defer cancel to free resources
+
+    go func(ctx context.Context) {
+        select {
+        case <-ctx.Done():
+            fmt.Println("goroutine cancelled:", ctx.Err())
+        case <-time.After(time.Second):
+            fmt.Println("goroutine completed naturally")
+        }
+    }(ctx)
+
+    time.Sleep(100 * time.Millisecond)
+    cancel() // triggers ctx.Done() in goroutine
+    time.Sleep(50 * time.Millisecond)
+}
+</code></pre>
+
+  <h3 id="s7-2">7.2 WithCancel, WithTimeout &amp; WithDeadline</h3>
+  <p><code>WithCancel</code> creates a context cancellable by calling the returned <code>CancelFunc</code>. <code>WithTimeout(parent, d)</code> creates a context that auto-cancels after duration <code>d</code> (equivalent to <code>WithDeadline(parent, time.Now().Add(d))</code>). <code>WithDeadline</code> cancels at an absolute time.</p>
+  <p>Always check <code>ctx.Err()</code> or <code>ctx.Done()</code> at decision points in long-running operations. Pass the context as the <strong>first argument</strong> to every function that does I/O or blocking work.</p>
+
+<pre><code>package main
+
+import (
+    "context"
+    "fmt"
+    "time"
+)
+
+func fetchData(ctx context.Context, url string) (string, error) {
+    // Simulate variable latency
+    done := make(chan string, 1)
+    go func() {
+        time.Sleep(150 * time.Millisecond) // simulated I/O
+        done <- "data from " + url
+    }()
+
+    select {
+    case result := <-done:
+        return result, nil
+    case <-ctx.Done():
+        return "", ctx.Err() // context.DeadlineExceeded or Canceled
+    }
+}
+
+func main() {
+    // 200ms timeout — enough time
+    ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+    defer cancel()
+    data, err := fetchData(ctx, "https://example.com")
+    fmt.Println("200ms timeout:", data, err)
+
+    // 100ms timeout — too short
+    ctx2, cancel2 := context.WithTimeout(context.Background(), 100*time.Millisecond)
+    defer cancel2()
+    data2, err2 := fetchData(ctx2, "https://example.com")
+    fmt.Println("100ms timeout:", data2, err2)
+
+    // WithDeadline: absolute time
+    deadline := time.Now().Add(500 * time.Millisecond)
+    ctx3, cancel3 := context.WithDeadline(context.Background(), deadline)
+    defer cancel3()
+    fmt.Println("deadline:", ctx3.Deadline())
+}
+</code></pre>
+
+  <h3 id="s7-3">7.3 WithValue &amp; Typed Keys</h3>
+  <p><code>context.WithValue</code> attaches key-value pairs to a context. Use only for request-scoped data (request-ID, auth token, trace-ID) that crosses API boundaries where adding explicit parameters would be impractical. Do <strong>not</strong> use context values to pass optional function parameters or configuration.</p>
+  <p>Always define context keys as unexported types to prevent key collisions between packages. Using a plain <code>string</code> or <code>int</code> as a key risks shadowing by another package using the same value.</p>
+
+<pre><code>package main
+
+import (
+    "context"
+    "fmt"
+)
+
+// Unexported key type prevents collisions with other packages
+type contextKey int
+
+const (
+    requestIDKey contextKey = iota
+    userIDKey
+)
+
+func withRequestID(ctx context.Context, id string) context.Context {
+    return context.WithValue(ctx, requestIDKey, id)
+}
+
+func requestIDFromCtx(ctx context.Context) (string, bool) {
+    id, ok := ctx.Value(requestIDKey).(string)
+    return id, ok
+}
+
+func handler(ctx context.Context) {
+    id, ok := requestIDFromCtx(ctx)
+    if !ok {
+        fmt.Println("no request ID in context")
+        return
+    }
+    fmt.Println("handling request:", id)
+}
+
+func main() {
+    ctx := context.Background()
+    ctx = withRequestID(ctx, "req-12345")
+    ctx = context.WithValue(ctx, userIDKey, 42)
+
+    handler(ctx)
+
+    // Values are retrieved by traversing the context chain
+    fmt.Println("user ID:", ctx.Value(userIDKey))
+}
+</code></pre>
+
+  <h3 id="s7-4">7.4 Graceful Shutdown</h3>
+  <p>Graceful shutdown ensures in-flight requests complete before the process exits. The standard pattern: listen for OS signals (SIGTERM/SIGINT), cancel the root context, and wait for all goroutines to finish before calling <code>os.Exit</code>.</p>
+
+<pre><code>package main
+
+import (
+    "context"
+    "fmt"
+    "os"
+    "os/signal"
+    "sync"
+    "syscall"
+    "time"
+)
+
+func worker(ctx context.Context, id int, wg *sync.WaitGroup) {
+    defer wg.Done()
+    for {
+        select {
+        case <-ctx.Done():
+            fmt.Printf("worker %d shutting down\n", id)
+            return
+        case <-time.After(200 * time.Millisecond):
+            fmt.Printf("worker %d tick\n", id)
+        }
+    }
+}
+
+func main() {
+    ctx, cancel := context.WithCancel(context.Background())
+    var wg sync.WaitGroup
+
+    for i := 0; i < 3; i++ {
+        wg.Add(1)
+        go worker(ctx, i, &wg)
+    }
+
+    // Listen for OS signals
+    sigCh := make(chan os.Signal, 1)
+    signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
+
+    go func() {
+        sig := <-sigCh
+        fmt.Println("\nreceived signal:", sig)
+        cancel()
+    }()
+
+    // Simulate receiving a signal after 600ms
+    go func() {
+        time.Sleep(600 * time.Millisecond)
+        sigCh <- syscall.SIGTERM
+    }()
+
+    wg.Wait()
+    fmt.Println("all workers stopped, exiting cleanly")
+}
+</code></pre>
+
+  <h3 id="s7-5">7.5 Memory Barriers</h3>
+  <p>A <strong>memory barrier</strong> (fence) is a CPU or compiler instruction that enforces ordering of memory operations. Without barriers, CPUs and compilers may reorder loads and stores for performance. The four types are:</p>
+  <ul>
+    <li><strong>Full barrier</strong>: all loads/stores before the barrier complete before any after</li>
+    <li><strong>Read (load) barrier</strong>: all loads before complete before loads after</li>
+    <li><strong>Write (store) barrier</strong>: all stores before complete before stores after</li>
+    <li><strong>Acquire barrier</strong>: no reads/writes after can be reordered before (used on lock acquisition)</li>
+    <li><strong>Release barrier</strong>: no reads/writes before can be reordered after (used on lock release)</li>
+  </ul>
+  <p>Go's <code>sync/atomic</code> operations and mutex Lock/Unlock automatically insert the appropriate barriers. You rarely need explicit barrier calls in Go.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync/atomic"
+)
+
+// Without barriers, this could print 0 on a weakly ordered CPU
+// (e.g., ARM where stores may not be visible to other cores immediately)
+var (
+    data  int
+    ready int32
+)
+
+func producer() {
+    data = 42            // store data
+    atomic.StoreInt32(&ready, 1) // release barrier: ensures data store is visible
+                                  // before ready store
+}
+
+func consumer() {
+    for atomic.LoadInt32(&ready) == 0 { // acquire barrier: ensures ready load
+        // spin                          // is not reordered with data load below
+    }
+    fmt.Println("data:", data) // guaranteed to see 42
+}
+
+func main() {
+    go producer()
+    consumer()
+}
+</code></pre>
+
+  <h3 id="s7-6">7.6 Memory Reordering</h3>
+  <p><strong>Memory reordering</strong> happens at two levels: (1) the <strong>compiler</strong> may reorder independent operations to improve register utilization, and (2) the <strong>CPU</strong> may execute instructions out-of-order (store-store, load-load, store-load reordering depending on the memory model). x86/x64 has a strongly ordered TSO (Total Store Order) model; ARM/POWER are weakly ordered.</p>
+  <p>Go's memory model defines happens-before relationships through channel operations, mutex lock/unlock, <code>sync.Once</code>, <code>sync/atomic</code>, <code>go</code> statement, and <code>runtime.Gosched</code>. If your synchronization relies on any other mechanism, you have a data race.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+// Demonstrates happens-before via channel
+func main() {
+    var x, y int
+    ch := make(chan struct{})
+
+    go func() {
+        x = 1 // write before channel send
+        y = 2
+        ch <- struct{}{} // send establishes happens-before with receive
+    }()
+
+    <-ch // receive: guaranteed to happen-after the send
+    fmt.Println(x, y) // guaranteed to see 1, 2 — no race
+
+    // sync.WaitGroup also establishes happens-before
+    var wg sync.WaitGroup
+    result := 0
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+        result = 100 // write before Done
+    }()
+    wg.Wait()           // Wait happens-after all Done calls
+    fmt.Println(result) // guaranteed to see 100
+}
+</code></pre>
+
+  <div class="chapter-summary">
+    <h5>Chapter 7 — Key Takeaways</h5>
+    <ul>
+      <li>Context tree: cancellation propagates parent → all descendants</li>
+      <li>Always defer cancel() to free resources even on early return</li>
+      <li>Pass ctx as the first function argument for all I/O operations</li>
+      <li>Use unexported types as context keys to prevent package collisions</li>
+      <li>WithValue: request-scoped metadata only, not configuration</li>
+      <li>Graceful shutdown: OS signal → cancel root ctx → WaitGroup.Wait</li>
+      <li>Acquire/release barriers are inserted automatically by mutex and atomics</li>
+      <li>Go memory model: channel, mutex, once, atomics establish happens-before</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- CHAPTER 8 -->
+<!-- ================================================================ -->
+<div class="chapter" id="ch8">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 08</div>
+    <h2>Lock-free Algorithms &amp; Data Structures</h2>
+  </div>
+
+  <h3 id="s8-1">8.1 Data Structure Sharding</h3>
+  <p><strong>Sharding</strong> partitions a data structure into N independent shards, each with its own lock. A hash function maps each key to a shard. Contention drops by ~N, and throughput scales near-linearly with the number of shards (up to the point of cache saturation).</p>
+  <p>Choosing shard count: power of 2 enables bitwise masking (<code>key &amp; (N-1)</code>) instead of modulo. 256 shards is a common default — it eliminates contention for workloads with up to ~256 concurrent writers while keeping memory overhead manageable.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "hash/fnv"
+    "sync"
+)
+
+const numShards = 256
+
+type shard[K comparable, V any] struct {
+    mu   sync.RWMutex
+    data map[K]V
+}
+
+type ShardedMap[K comparable, V any] struct {
+    shards [numShards]shard[K, V]
+}
+
+func NewShardedMap[K comparable, V any]() *ShardedMap[K, V] {
+    m := &ShardedMap[K, V]{}
+    for i := range m.shards {
+        m.shards[i].data = make(map[K]V)
+    }
+    return m
+}
+
+func (m *ShardedMap[K, V]) shardFor(key string) *shard[K, V] {
+    h := fnv.New32a()
+    h.Write([]byte(key))
+    return &m.shards[h.Sum32()%numShards]
+}
+
+func (m *ShardedMap[K, V]) Set(key string, val V) {
+    s := m.shardFor(key)
+    s.mu.Lock()
+    defer s.mu.Unlock()
+    s.data[K(key)] = val // simplified; real impl would be generic
+}
+
+func main() {
+    m := NewShardedMap[string, int]()
+    var wg sync.WaitGroup
+    for i := 0; i < 10_000; i++ {
+        wg.Add(1)
+        go func(n int) {
+            defer wg.Done()
+            key := fmt.Sprintf("key-%d", n%100)
+            m.Set(key, n)
+        }(i)
+    }
+    wg.Wait()
+    fmt.Println("done")
+}
+</code></pre>
+
+  <h3 id="s8-2">8.2 RCU (Read-Copy-Update)</h3>
+  <p><strong>RCU</strong> is a synchronization mechanism optimized for read-heavy workloads. Readers access data with zero locking overhead. Writers create a <em>copy</em> of the data, modify the copy, then atomically swap the pointer. Old readers finish with the old version; new readers see the new version. The runtime waits for a <em>grace period</em> (all old readers complete) before freeing the old copy.</p>
+  <p>In Go, RCU is implemented with <code>atomic.Pointer[T]</code> (Go 1.19+). The read path is a single atomic load — as fast as reading a non-concurrent pointer.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+    "sync/atomic"
+)
+
+type Config struct {
+    Timeout int
+    Workers int
+    Debug   bool
+}
+
+// RCU-style config: reads are lock-free, writes copy-on-update
+type AtomicConfig struct {
+    ptr atomic.Pointer[Config]
+}
+
+func (ac *AtomicConfig) Load() *Config {
+    return ac.ptr.Load() // single atomic load — no lock
+}
+
+func (ac *AtomicConfig) Update(fn func(*Config) *Config) {
+    for {
+        old := ac.ptr.Load()
+        newCfg := fn(old)
+        if ac.ptr.CompareAndSwap(old, newCfg) {
+            return // successfully swapped
+        }
+        // Lost the race — retry with fresh old value
+    }
+}
+
+func main() {
+    var cfg AtomicConfig
+    cfg.ptr.Store(&Config{Timeout: 30, Workers: 4, Debug: false})
+
+    var wg sync.WaitGroup
+
+    // 100 readers — no locking
+    for i := 0; i < 100; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            c := cfg.Load()
+            _ = c.Timeout // lock-free read
+        }()
+    }
+
+    // 1 writer — copy-on-update
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+        cfg.Update(func(old *Config) *Config {
+            return &Config{
+                Timeout: old.Timeout + 10,
+                Workers: old.Workers * 2,
+                Debug:   true,
+            }
+        })
+    }()
+
+    wg.Wait()
+    fmt.Println("final config:", *cfg.Load())
+}
+</code></pre>
+
+  <h3 id="s8-3">8.3 Sync Granularity Strategies</h3>
+  <p>There are four levels of synchronization granularity, each with different trade-offs between simplicity and performance:</p>
+  <table>
+    <tr><th>Strategy</th><th>Lock scope</th><th>Throughput</th><th>Complexity</th></tr>
+    <tr><td>Coarse-grained</td><td>Entire data structure</td><td>Low</td><td>Low</td></tr>
+    <tr><td>Fine-grained</td><td>Individual nodes/buckets</td><td>Medium</td><td>Medium</td></tr>
+    <tr><td>Optimistic</td><td>Validate after, retry on conflict</td><td>High (low contention)</td><td>High</td></tr>
+    <tr><td>Non-blocking (lock-free)</td><td>No locks, CAS loops</td><td>Very high</td><td>Very high</td></tr>
+  </table>
+
+  <h3 id="s8-4">8.4 Treiber Stack (Lock-free)</h3>
+  <p>The <strong>Treiber stack</strong> is a lock-free LIFO stack using a single atomic pointer to the head node. Push: create node, CAS head from old to new node. Pop: read head, CAS head from old to old.next. The loop retries on CAS failure (another goroutine modified head concurrently).</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+    "sync/atomic"
+    "unsafe"
+)
+
+type node[T any] struct {
+    value T
+    next  unsafe.Pointer // *node[T]
+}
+
+type TreiberStack[T any] struct {
+    head unsafe.Pointer // *node[T]
+}
+
+func (s *TreiberStack[T]) Push(val T) {
+    n := &node[T]{value: val}
+    for {
+        old := atomic.LoadPointer(&s.head)
+        n.next = old
+        if atomic.CompareAndSwapPointer(&s.head, old, unsafe.Pointer(n)) {
+            return
+        }
+    }
+}
+
+func (s *TreiberStack[T]) Pop() (T, bool) {
+    for {
+        old := atomic.LoadPointer(&s.head)
+        if old == nil {
+            var zero T
+            return zero, false
+        }
+        h := (*node[T])(old)
+        if atomic.CompareAndSwapPointer(&s.head, old, h.next) {
+            return h.value, true
+        }
+    }
+}
+
+func main() {
+    var stack TreiberStack[int]
+    var wg sync.WaitGroup
+
+    // 10 concurrent pushes
+    for i := 0; i < 10; i++ {
+        wg.Add(1)
+        go func(n int) { defer wg.Done(); stack.Push(n) }(i)
+    }
+    wg.Wait()
+
+    // Sequential pop
+    for {
+        v, ok := stack.Pop()
+        if !ok { break }
+        fmt.Println(v)
+    }
+}
+</code></pre>
+
+  <h3 id="s8-5">8.5 Michael-Scott Queue (Lock-free)</h3>
+  <p>The <strong>Michael-Scott queue</strong> is a lock-free FIFO queue using two atomic pointers: head (dequeue end) and tail (enqueue end). It uses a sentinel (dummy) node so head and tail never point to null even in an empty queue. Enqueue: CAS tail.next from nil to new node, then advance tail. Dequeue: read head.next, CAS head from old to old.next.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+    "sync/atomic"
+    "unsafe"
+)
+
+type qnode[T any] struct {
+    val  T
+    next unsafe.Pointer
+}
+
+type MSQueue[T any] struct {
+    head, tail unsafe.Pointer
+}
+
+func NewMSQueue[T any]() *MSQueue[T] {
+    sentinel := unsafe.Pointer(&qnode[T]{})
+    return &MSQueue[T]{head: sentinel, tail: sentinel}
+}
+
+func (q *MSQueue[T]) Enqueue(val T) {
+    n := &qnode[T]{val: val}
+    for {
+        tail := atomic.LoadPointer(&q.tail)
+        t := (*qnode[T])(tail)
+        next := atomic.LoadPointer(&t.next)
+        if next == nil {
+            if atomic.CompareAndSwapPointer(&t.next, nil, unsafe.Pointer(n)) {
+                atomic.CompareAndSwapPointer(&q.tail, tail, unsafe.Pointer(n))
+                return
+            }
+        } else {
+            // Help advance tail (another goroutine is mid-enqueue)
+            atomic.CompareAndSwapPointer(&q.tail, tail, next)
+        }
+    }
+}
+
+func (q *MSQueue[T]) Dequeue() (T, bool) {
+    for {
+        head := atomic.LoadPointer(&q.head)
+        tail := atomic.LoadPointer(&q.tail)
+        h := (*qnode[T])(head)
+        next := atomic.LoadPointer(&h.next)
+        if head == tail {
+            if next == nil { var z T; return z, false } // empty
+            atomic.CompareAndSwapPointer(&q.tail, tail, next) // help advance
+            continue
+        }
+        n := (*qnode[T])(next)
+        val := n.val
+        if atomic.CompareAndSwapPointer(&q.head, head, next) {
+            return val, true
+        }
+    }
+}
+
+func main() {
+    q := NewMSQueue[int]()
+    var wg sync.WaitGroup
+    for i := 0; i < 5; i++ { wg.Add(1); go func(n int) { defer wg.Done(); q.Enqueue(n) }(i) }
+    wg.Wait()
+    for { v, ok := q.Dequeue(); if !ok { break }; fmt.Println(v) }
+}
+</code></pre>
+
+  <h3 id="s8-6">8.6 ABA Problem &amp; Solutions</h3>
+  <p>The <strong>ABA problem</strong> occurs when a value changes from A → B → A between a load and a CAS. The CAS succeeds (sees A, expects A) even though the state has changed — potentially leaving the data structure in an inconsistent state (e.g., a freed node is reused with the same address).</p>
+  <p>Two solutions: <strong>tagged pointers</strong> — store a version counter in the unused high bits of a pointer, incrementing on each update; <strong>hazard pointers</strong> — each goroutine announces which nodes it is currently reading, preventing their reuse until the announcement is cleared.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync/atomic"
+)
+
+// Tagged pointer: pack pointer + version into uint64
+// On 64-bit systems, user-space pointers use only 48 bits,
+// leaving the top 16 bits for a version counter.
+
+type taggedPtr struct {
+    val uint64 // low 48 bits = pointer, high 16 bits = version
+}
+
+func pack(ptr uintptr, ver uint16) uint64 {
+    return uint64(ptr) | (uint64(ver) << 48)
+}
+
+func unpack(v uint64) (ptr uintptr, ver uint16) {
+    return uintptr(v & 0x0000_FFFF_FFFF_FFFF), uint16(v >> 48)
+}
+
+// Simple demo of version-tagged CAS
+type VersionedValue struct{ raw uint64 }
+
+func (v *VersionedValue) Load() (uint64, uint16) {
+    raw := atomic.LoadUint64(&v.raw)
+    return raw & 0xFFFF_FFFF, uint16(raw >> 32)
+}
+
+func (v *VersionedValue) CAS(oldVal uint64, oldVer uint16, newVal uint64) bool {
+    oldRaw := oldVal | (uint64(oldVer) << 32)
+    newRaw := newVal | (uint64(oldVer+1) << 32) // increment version
+    return atomic.CompareAndSwapUint64(&v.raw, oldRaw, newRaw)
+}
+
+func main() {
+    var vv VersionedValue
+    vv.raw = 42 // initial value, version 0
+
+    val, ver := vv.Load()
+    fmt.Printf("initial: val=%d ver=%d\n", val, ver)
+
+    // Simulate A→B→A: another goroutine changes the value twice
+    vv.raw = 42 | (2 << 32) // value=42, version=2 (simulating two changes)
+
+    // Our CAS uses the stale version (0) — correctly FAILS
+    ok := vv.CAS(42, 0, 99)
+    fmt.Printf("CAS with stale version: %v\n", ok) // false
+
+    // Fresh load with current version
+    val2, ver2 := vv.Load()
+    ok2 := vv.CAS(val2, ver2, 99)
+    fmt.Printf("CAS with fresh version: %v\n", ok2) // true
+}
+</code></pre>
+
+  <div class="chapter-summary">
+    <h5>Chapter 8 — Key Takeaways</h5>
+    <ul>
+      <li>Sharding: N independent locks, contention drops N×; use power-of-2 shards</li>
+      <li>RCU: lock-free reads (atomic load), writers copy-then-swap</li>
+      <li>Coarse → fine → optimistic → non-blocking: increasing throughput &amp; complexity</li>
+      <li>Treiber stack: CAS head pointer; retry loop on contention</li>
+      <li>Michael-Scott queue: two CAS pointers (head/tail) with sentinel node</li>
+      <li>ABA problem: value A→B→A fools CAS into thinking nothing changed</li>
+      <li>Tagged pointers: embed version counter in high bits to defeat ABA</li>
+      <li>Hazard pointers: announce which nodes you're reading to prevent premature free</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- CHAPTER 9 -->
+<!-- ================================================================ -->
+<div class="chapter" id="ch9">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 09</div>
+    <h2>Concurrent Computation Patterns</h2>
+  </div>
+
+  <h3 id="s9-1">9.1 Amdahl's Law</h3>
+  <p><strong>Amdahl's Law</strong> predicts the theoretical maximum speedup when parallelizing a program: <code>S(n) = 1 / ((1 - p) + p/n)</code> where <code>p</code> is the parallelizable fraction and <code>n</code> is the number of processors. A program that is 95% parallel achieves at most 20× speedup, regardless of how many cores you add. The serial 5% is the bottleneck.</p>
+  <p>This is why reducing synchronization overhead (the serial fraction introduced by locks) is critical. Amdahl's law also explains why profiling is essential before parallelizing — finding the bottleneck matters more than adding goroutines.</p>
+
+<pre><code>package main
+
+import "fmt"
+
+// Amdahl's Law: maximum speedup given parallelizable fraction p
+func amdahl(p float64, n float64) float64 {
+    return 1.0 / ((1.0 - p) + p/n)
+}
+
+func main() {
+    cores := []float64{1, 2, 4, 8, 16, 32, 64, 128, 256}
+    parallels := []float64{0.50, 0.75, 0.90, 0.95, 0.99}
+
+    fmt.Printf("%-8s", "cores")
+    for _, p := range parallels {
+        fmt.Printf("  p=%.0f%%  ", p*100)
+    }
+    fmt.Println()
+
+    for _, n := range cores {
+        fmt.Printf("%-8.0f", n)
+        for _, p := range parallels {
+            fmt.Printf("  %5.1fx  ", amdahl(p, n))
+        }
+        fmt.Println()
+    }
+
+    // Practical implication: with 5% serial code, max speedup is 20x
+    fmt.Printf("\nMax speedup (95%% parallel): %.1fx\n", amdahl(0.95, 1e9))
+}
+</code></pre>
+
+  <h3 id="s9-2">9.2 Two-Phase Locking (2PL)</h3>
+  <p><strong>Two-Phase Locking</strong> is a transaction isolation protocol that guarantees serializability. A transaction acquires all needed locks (growing phase) then releases them (shrinking phase). Once a lock is released, no new locks can be acquired. This prevents read/write conflicts but can lead to deadlocks.</p>
+  <p>In Go, 2PL is relevant when building transactional data stores. The lock ordering discipline (always acquire in a consistent global order) prevents deadlocks at the cost of reduced concurrency.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sort"
+    "sync"
+)
+
+type Row struct {
+    mu   sync.Mutex
+    data map[string]int
+}
+
+type Table struct {
+    rows map[int]*Row
+    mu   sync.RWMutex
+}
+
+func NewTable() *Table {
+    return &Table{rows: make(map[int]*Row)}
+}
+
+func (t *Table) getRow(id int) *Row {
+    t.mu.RLock()
+    r := t.rows[id]
+    t.mu.RUnlock()
+    if r == nil {
+        t.mu.Lock()
+        if t.rows[id] == nil {
+            t.rows[id] = &Row{data: make(map[string]int)}
+        }
+        r = t.rows[id]
+        t.mu.Unlock()
+    }
+    return r
+}
+
+// Transfer: 2PL — acquire both row locks in ID order (prevent deadlock)
+func (t *Table) Transfer(fromID, toID int, amount int) error {
+    ids := []int{fromID, toID}
+    sort.Ints(ids) // consistent lock ordering — prevents deadlock
+
+    rows := make([]*Row, 2)
+    for i, id := range ids {
+        rows[i] = t.getRow(id)
+        rows[i].mu.Lock() // growing phase: acquire in order
+    }
+    // All locks held — execute transaction
+    from := t.getRow(fromID)
+    to := t.getRow(toID)
+    if from.data["balance"] < amount {
+        for i := len(rows) - 1; i >= 0; i-- { rows[i].mu.Unlock() }
+        return fmt.Errorf("insufficient funds")
+    }
+    from.data["balance"] -= amount
+    to.data["balance"] += amount
+    // Shrinking phase: release all locks
+    for i := len(rows) - 1; i >= 0; i-- { rows[i].mu.Unlock() }
+    return nil
+}
+
+func main() {
+    t := NewTable()
+    t.getRow(1).data["balance"] = 1000
+    t.getRow(2).data["balance"] = 500
+
+    var wg sync.WaitGroup
+    for i := 0; i < 10; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            t.Transfer(1, 2, 50)
+        }()
+    }
+    wg.Wait()
+    fmt.Println("row1 balance:", t.getRow(1).data["balance"])
+    fmt.Println("row2 balance:", t.getRow(2).data["balance"])
+}
+</code></pre>
+
+  <h3 id="s9-3">9.3 MVCC (Multi-Version Concurrency Control)</h3>
+  <p><strong>MVCC</strong> allows readers to see a consistent snapshot of data without blocking writers, and writers to work without blocking readers. Each write creates a new version of the data tagged with a transaction ID (timestamp). Readers see the latest version committed before their transaction started.</p>
+  <p>MVCC is used in PostgreSQL, CockroachDB, and most modern OLTP databases. It eliminates read/write lock conflicts at the cost of storing multiple versions and a periodic vacuum/GC to remove old versions.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sort"
+    "sync"
+    "sync/atomic"
+)
+
+type Version struct {
+    txID  int64
+    value int
+}
+
+type MVCCRow struct {
+    mu       sync.RWMutex
+    versions []Version // sorted by txID ascending
+}
+
+func (r *MVCCRow) Write(txID int64, value int) {
+    r.mu.Lock()
+    defer r.mu.Unlock()
+    r.versions = append(r.versions, Version{txID: txID, value: value})
+}
+
+// Read: find latest version committed before snapshotTxID
+func (r *MVCCRow) Read(snapshotTxID int64) (int, bool) {
+    r.mu.RLock()
+    defer r.mu.RUnlock()
+    // Find the highest txID <= snapshotTxID
+    idx := sort.Search(len(r.versions), func(i int) bool {
+        return r.versions[i].txID > snapshotTxID
+    }) - 1
+    if idx < 0 { return 0, false }
+    return r.versions[idx].value, true
+}
+
+var globalTxID int64
+
+func nextTxID() int64 { return atomic.AddInt64(&globalTxID, 1) }
+
+func main() {
+    row := &MVCCRow{}
+
+    // TX 1: write initial value
+    tx1 := nextTxID()
+    row.Write(tx1, 100)
+
+    // TX 2: reader gets snapshot at tx1 boundary
+    tx2 := nextTxID()
+
+    // TX 3: writer updates value
+    tx3 := nextTxID()
+    row.Write(tx3, 200)
+
+    // TX 2 reader sees value at its snapshot (100, not 200)
+    v, _ := row.Read(tx2)
+    fmt.Printf("TX2 snapshot (sees tx1 value): %d\n", v) // 100
+
+    // A newer reader sees the latest (200)
+    tx4 := nextTxID()
+    v2, _ := row.Read(tx4)
+    fmt.Printf("TX4 snapshot (sees tx3 value): %d\n", v2) // 200
+}
+</code></pre>
+
+  <h3 id="s9-4">9.4 Actor Model</h3>
+  <p>The <strong>actor model</strong> is a concurrency paradigm where the unit of concurrency is an <em>actor</em> — an entity with private state that communicates only via messages (channels in Go). Actors never share memory directly; all coordination happens through message passing. This eliminates data races by design.</p>
+  <p>Go's goroutines + channels naturally implement the actor model. Libraries like <code>proto.actor</code> and <code>ergo</code> provide full actor frameworks with supervision trees, remote messaging, and clustering.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+type Message struct {
+    Type    string
+    Payload any
+    Reply   chan any
+}
+
+type Actor struct {
+    mailbox chan Message
+}
+
+func NewActor(bufSize int) *Actor {
+    a := &Actor{mailbox: make(chan Message, bufSize)}
+    return a
+}
+
+func (a *Actor) Start(handler func(msg Message)) {
+    go func() {
+        for msg := range a.mailbox {
+            handler(msg)
+        }
+    }()
+}
+
+func (a *Actor) Send(msg Message) { a.mailbox <- msg }
+func (a *Actor) Stop()            { close(a.mailbox) }
+
+// Counter actor: encapsulates state, no external access
+func counterActor() *Actor {
+    a := NewActor(100)
+    a.Start(func(msg Message) {
+        count := 0 // private state — never accessed from outside
+        _ = count  // simplified: real impl would persist across messages
+        switch msg.Type {
+        case "increment":
+            if msg.Reply != nil { msg.Reply <- count + 1 }
+        case "get":
+            if msg.Reply != nil { msg.Reply <- count }
+        }
+    })
+    return a
+}
+
+func main() {
+    a := counterActor()
+    defer a.Stop()
+
+    var wg sync.WaitGroup
+    for i := 0; i < 5; i++ {
+        wg.Add(1)
+        go func(n int) {
+            defer wg.Done()
+            reply := make(chan any, 1)
+            a.Send(Message{Type: "increment", Reply: reply})
+            v := <-reply
+            fmt.Printf("actor reply: %v\n", v)
+        }(i)
+    }
+    wg.Wait()
+}
+</code></pre>
+
+  <div class="chapter-summary">
+    <h5>Chapter 9 — Key Takeaways</h5>
+    <ul>
+      <li>Amdahl's Law: serial fraction limits speedup; 5% serial → max 20× speedup</li>
+      <li>Profile before parallelizing — find the actual bottleneck first</li>
+      <li>2PL: acquire all locks (growing) then release all (shrinking); consistent order prevents deadlock</li>
+      <li>MVCC: readers get a snapshot, writers create new versions; no reader/writer blocking</li>
+      <li>Actor model: private state + message passing = no shared memory races</li>
+      <li>Go channels naturally implement actor mailboxes</li>
+      <li>Supervisor trees (erlang-style) restart failed actors automatically</li>
+      <li>MVCC needs GC of old versions; 2PL needs careful deadlock prevention</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- CHAPTER 10 -->
+<!-- ================================================================ -->
+<div class="chapter" id="ch10">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 10</div>
+    <h2>Practical Concurrency</h2>
+  </div>
+
+  <h3 id="s10-1">10.1 Worker Pool</h3>
+  <p>A <strong>worker pool</strong> is a fixed set of goroutines that process jobs from a shared queue. It bounds memory usage (no unbounded goroutine spawning) and provides back-pressure (producers block when the job queue is full). The pool size is typically tuned to <code>runtime.NumCPU()</code> for CPU-bound work or higher for I/O-bound work.</p>
+  <p>Key design decisions: buffered vs unbuffered job channel (controls back-pressure), whether to collect results (result channel + WaitGroup), and how to handle errors (error channel, errgroup, or a combined result struct).</p>
+
+<pre><code>package main
+
+import (
+    "context"
+    "fmt"
+    "runtime"
+    "sync"
+)
+
+type Job struct {
+    ID    int
+    Input int
+}
+
+type Result struct {
+    JobID  int
+    Output int
+    Err    error
+}
+
+type WorkerPool struct {
+    jobs    chan Job
+    results chan Result
+    wg      sync.WaitGroup
+}
+
+func NewWorkerPool(workers, jobBuf int) *WorkerPool {
+    wp := &WorkerPool{
+        jobs:    make(chan Job, jobBuf),
+        results: make(chan Result, jobBuf),
+    }
+    for i := 0; i < workers; i++ {
+        wp.wg.Add(1)
+        go wp.worker(i)
+    }
+    go func() { wp.wg.Wait(); close(wp.results) }()
+    return wp
+}
+
+func (wp *WorkerPool) worker(id int) {
+    defer wp.wg.Done()
+    for job := range wp.jobs {
+        // Simulate work
+        output := job.Input * job.Input
+        wp.results <- Result{JobID: job.ID, Output: output}
+    }
+}
+
+func (wp *WorkerPool) Submit(job Job) { wp.jobs <- job }
+func (wp *WorkerPool) Close()         { close(wp.jobs) }
+func (wp *WorkerPool) Results() <-chan Result { return wp.results }
+
+func main() {
+    workers := runtime.NumCPU()
+    pool := NewWorkerPool(workers, 100)
+
+    ctx, cancel := context.WithCancel(context.Background())
+    defer cancel()
+
+    // Submit 50 jobs
+    go func() {
+        defer pool.Close()
+        for i := 0; i < 50; i++ {
+            select {
+            case <-ctx.Done():
+                return
+            default:
+                pool.Submit(Job{ID: i, Input: i})
+            }
+        }
+    }()
+
+    sum := 0
+    for r := range pool.Results() {
+        if r.Err != nil {
+            fmt.Printf("job %d error: %v\n", r.JobID, r.Err)
+            continue
+        }
+        sum += r.Output
+    }
+    fmt.Printf("sum of squares 0..49 = %d\n", sum)
+}
+</code></pre>
+
+  <h3 id="s10-2">10.2 Cache Synchronizer</h3>
+  <p>A <strong>cache synchronizer</strong> maintains a local in-memory cache and synchronizes it with an external source (database, config service). It uses a <em>single goroutine</em> to serialize all writes (eliminating race conditions), while reads can use RWMutex for high throughput. Periodic refresh, TTL-based invalidation, or event-driven invalidation keep the cache fresh.</p>
+
+<pre><code>package main
+
+import (
+    "context"
+    "fmt"
+    "sync"
+    "time"
+)
+
+type CacheEntry struct {
+    Value     any
+    ExpiresAt time.Time
+}
+
+type SynchronizedCache struct {
+    mu      sync.RWMutex
+    data    map[string]CacheEntry
+    updates chan func()
+    ttl     time.Duration
+}
+
+func NewCache(ttl time.Duration) *SynchronizedCache {
+    c := &SynchronizedCache{
+        data:    make(map[string]CacheEntry),
+        updates: make(chan func(), 256),
+        ttl:     ttl,
+    }
+    return c
+}
+
+func (c *SynchronizedCache) Start(ctx context.Context) {
+    // Single writer goroutine — no lock needed for writes
+    go func() {
+        ticker := time.NewTicker(c.ttl / 2) // eviction sweep
+        defer ticker.Stop()
+        for {
+            select {
+            case <-ctx.Done():
+                return
+            case fn := <-c.updates:
+                fn()
+            case <-ticker.C:
+                c.evict()
+            }
+        }
+    }()
+}
+
+func (c *SynchronizedCache) evict() {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    now := time.Now()
+    for k, v := range c.data {
+        if now.After(v.ExpiresAt) { delete(c.data, k) }
+    }
+}
+
+func (c *SynchronizedCache) Set(key string, value any) {
+    c.updates <- func() {
+        c.mu.Lock()
+        c.data[key] = CacheEntry{Value: value, ExpiresAt: time.Now().Add(c.ttl)}
+        c.mu.Unlock()
+    }
+}
+
+func (c *SynchronizedCache) Get(key string) (any, bool) {
+    c.mu.RLock()
+    defer c.mu.RUnlock()
+    entry, ok := c.data[key]
+    if !ok || time.Now().After(entry.ExpiresAt) { return nil, false }
+    return entry.Value, true
+}
+
+func main() {
+    ctx, cancel := context.WithCancel(context.Background())
+    defer cancel()
+
+    cache := NewCache(500 * time.Millisecond)
+    cache.Start(ctx)
+
+    cache.Set("user:1", "Alice")
+    cache.Set("user:2", "Bob")
+
+    time.Sleep(50 * time.Millisecond) // allow async Set to process
+    if v, ok := cache.Get("user:1"); ok {
+        fmt.Println("cached:", v)
+    }
+
+    time.Sleep(600 * time.Millisecond) // TTL expires
+    if _, ok := cache.Get("user:1"); !ok {
+        fmt.Println("cache entry expired")
+    }
+}
+</code></pre>
+
+  <h3 id="s10-3">10.3 Task Scheduler</h3>
+  <p>A task scheduler dispatches work at specific times or intervals. The key challenge is precision: <code>time.Sleep</code> and <code>time.After</code> have OS-level granularity (~1ms on Linux). For sub-millisecond scheduling, busy-waiting with a spin loop is necessary. For second-level precision, a priority queue (min-heap) of scheduled tasks sorted by next-run time provides efficient O(log n) scheduling.</p>
+
+<pre><code>package main
+
+import (
+    "container/heap"
+    "fmt"
+    "sync"
+    "time"
+)
+
+type Task struct {
+    Name    string
+    Next    time.Time
+    Period  time.Duration
+    Handler func()
+    index   int // heap index
+}
+
+type taskHeap []*Task
+
+func (h taskHeap) Len() int            { return len(h) }
+func (h taskHeap) Less(i, j int) bool { return h[i].Next.Before(h[j].Next) }
+func (h taskHeap) Swap(i, j int) {
+    h[i], h[j] = h[j], h[i]
+    h[i].index = i; h[j].index = j
+}
+func (h *taskHeap) Push(x any) { t := x.(*Task); t.index = len(*h); *h = append(*h, t) }
+func (h *taskHeap) Pop() any   { old := *h; t := old[len(old)-1]; *h = old[:len(old)-1]; return t }
+
+type Scheduler struct {
+    mu   sync.Mutex
+    heap taskHeap
+    wake chan struct{}
+    stop chan struct{}
+}
+
+func NewScheduler() *Scheduler {
+    s := &Scheduler{wake: make(chan struct{}, 1), stop: make(chan struct{})}
+    heap.Init(&s.heap)
+    return s
+}
+
+func (s *Scheduler) Add(name string, period time.Duration, fn func()) {
+    s.mu.Lock()
+    heap.Push(&s.heap, &Task{Name: name, Period: period, Handler: fn, Next: time.Now().Add(period)})
+    s.mu.Unlock()
+    select { case s.wake <- struct{}{}: default: }
+}
+
+func (s *Scheduler) Run() {
+    for {
+        s.mu.Lock()
+        var delay time.Duration
+        if len(s.heap) == 0 {
+            delay = time.Hour
+        } else {
+            delay = time.Until(s.heap[0].Next)
+        }
+        s.mu.Unlock()
+
+        timer := time.NewTimer(delay)
+        select {
+        case <-s.stop:
+            timer.Stop(); return
+        case <-s.wake:
+            timer.Stop()
+        case <-timer.C:
+            s.mu.Lock()
+            if len(s.heap) > 0 && !time.Now().Before(s.heap[0].Next) {
+                t := heap.Pop(&s.heap).(*Task)
+                t.Next = time.Now().Add(t.Period)
+                heap.Push(&s.heap, t)
+                go t.Handler()
+            }
+            s.mu.Unlock()
+        }
+    }
+}
+
+func (s *Scheduler) Stop() { close(s.stop) }
+
+func main() {
+    sched := NewScheduler()
+    go sched.Run()
+
+    sched.Add("fast", 200*time.Millisecond, func() { fmt.Println("fast task:", time.Now().Format("15:04:05.000")) })
+    sched.Add("slow", 500*time.Millisecond, func() { fmt.Println("slow task:", time.Now().Format("15:04:05.000")) })
+
+    time.Sleep(1100 * time.Millisecond)
+    sched.Stop()
+    fmt.Println("scheduler stopped")
+}
+</code></pre>
+
+  <h3 id="s10-4">10.4 Batcher</h3>
+  <p>A <strong>batcher</strong> groups individual requests into batches to reduce per-request overhead (network round-trips, DB queries, log flushes). It collects requests up to a maximum batch size or a maximum wait time (whichever comes first), processes the batch atomically, and distributes results back to callers.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+type Request struct {
+    Value  int
+    Result chan int
+}
+
+type Batcher struct {
+    input    chan Request
+    maxSize  int
+    maxWait  time.Duration
+}
+
+func NewBatcher(maxSize int, maxWait time.Duration) *Batcher {
+    b := &Batcher{
+        input:   make(chan Request, maxSize*2),
+        maxSize: maxSize,
+        maxWait: maxWait,
+    }
+    go b.run()
+    return b
+}
+
+func (b *Batcher) run() {
+    for {
+        batch := make([]Request, 0, b.maxSize)
+        deadline := time.NewTimer(b.maxWait)
+
+        // Collect first item (blocks until available)
+        req, ok := <-b.input
+        if !ok { deadline.Stop(); return }
+        batch = append(batch, req)
+
+    collect:
+        for len(batch) < b.maxSize {
+            select {
+            case req, ok := <-b.input:
+                if !ok { break collect }
+                batch = append(batch, req)
+            case <-deadline.C:
+                break collect
+            }
+        }
+        deadline.Stop()
+
+        // Process entire batch (e.g., one DB query for all)
+        b.processBatch(batch)
+    }
+}
+
+func (b *Batcher) processBatch(batch []Request) {
+    sum := 0
+    for _, req := range batch { sum += req.Value }
+    batchAvg := sum / len(batch)
+    fmt.Printf("processing batch of %d (avg=%d)\n", len(batch), batchAvg)
+    for _, req := range batch {
+        req.Result <- req.Value * 2 // individual results
+    }
+}
+
+func (b *Batcher) Submit(value int) int {
+    result := make(chan int, 1)
+    b.input <- Request{Value: value, Result: result}
+    return <-result
+}
+
+func main() {
+    b := NewBatcher(5, 50*time.Millisecond)
+
+    var wg sync.WaitGroup
+    for i := 1; i <= 12; i++ {
+        wg.Add(1)
+        go func(n int) {
+            defer wg.Done()
+            result := b.Submit(n)
+            fmt.Printf("request %d → result %d\n", n, result)
+        }(i)
+        time.Sleep(10 * time.Millisecond) // stagger submissions
+    }
+    wg.Wait()
+}
+</code></pre>
+
+  <div class="chapter-summary">
+    <h5>Chapter 10 — Key Takeaways</h5>
+    <ul>
+      <li>Worker pool: fixed goroutines, bounded queue, tune size to workload type</li>
+      <li>Use errgroup (golang.org/x/sync/errgroup) for pools with error propagation</li>
+      <li>Cache synchronizer: single writer goroutine serializes mutations safely</li>
+      <li>TTL + eviction sweep = bounded memory; event-driven = lower latency</li>
+      <li>Scheduler: min-heap of tasks by next-run time; O(log n) scheduling</li>
+      <li>Batcher: collect until maxSize or maxWait; one DB round-trip for N requests</li>
+      <li>Back-pressure: bounded channels block producers when consumers are slow</li>
+      <li>All patterns combine context cancellation for clean lifecycle management</li>
+    </ul>
+  </div>
+</div>
+
+<!-- CLOSING SLIDE -->
+<div style="padding: 60px; text-align: center; background: #040810; color: white; min-height: 40vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+  <h2 style="font-size: 36px; margin-bottom: 16px; color: #00cec9;">You've completed Concurrency in Go</h2>
+  <p style="color: #a0a0b0; font-size: 16px; max-width: 520px; margin: 0 auto 32px;">
+    You now understand Go concurrency from the CPU level up — virtual memory, the GMP scheduler,
+    sync primitives, lock-free algorithms, and production patterns.
+  </p>
+  <p style="color: #606080; font-size: 14px;">
+    Explore further with:
+    <code style="color: #a29bfe;">go run -race</code> ·
+    <code style="color: #a29bfe;">go tool trace</code> ·
+    <code style="color: #a29bfe;">GOTRACE=1</code> ·
+    <code style="color: #a29bfe;">pprof goroutine</code>
+  </p>
+</div>
+
+<script>
+(function () {
+
+  // ── Progress bar ──
+  var bar = document.getElementById('progress-bar');
+  function updateBar() {
+    var scrolled = window.scrollY;
+    var total = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (total > 0 ? (scrolled / total) * 100 : 0) + '%';
+  }
+  window.addEventListener('scroll', updateBar, { passive: true });
+  updateBar();
+
+  // ── Back-to-top ──
+  var btt = document.getElementById('back-to-top');
+  window.addEventListener('scroll', function () {
+    btt.classList.toggle('visible', window.scrollY > 400);
+  }, { passive: true });
+  btt.addEventListener('click', function () {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ── Mobile sidebar ──
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('sidebar-overlay');
+  var toggle  = document.getElementById('nav-toggle');
+  var closeBtn = document.getElementById('sidebar-close');
+
+  function openSidebar()  { sidebar.classList.add('open');  overlay.classList.add('open'); }
+  function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('open'); }
+  if (toggle)   toggle.addEventListener('click', openSidebar);
+  if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+  if (overlay)  overlay.addEventListener('click', closeSidebar);
+  sidebar.querySelectorAll('.nav-sections a').forEach(function(a) {
+    a.addEventListener('click', function() { if (window.innerWidth <= 768) closeSidebar(); });
+  });
+
+  // ── Chapter expand/collapse ──
+  document.querySelectorAll('.nav-ch-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      btn.closest('.nav-ch').classList.toggle('open');
+    });
+  });
+
+  // ── Section number prominence ──
+  var numRe = /^(\d+\.\d+)\s+/;
+  document.querySelectorAll('h3').forEach(function(h) {
+    var m = h.textContent.match(numRe);
+    if (!m) return;
+    var rest = h.innerHTML.replace(numRe, '');
+    h.innerHTML = '<span class="section-num">' + m[1] + '</span>' + rest;
+  });
+
+  // ── Active nav tracking ──
+  var sectionLinks = {};
+  sidebar.querySelectorAll('.nav-sections a[href^="#s"]').forEach(function(a) {
+    sectionLinks[a.getAttribute('href').slice(1)] = a;
+  });
+
+  var chapterBtns = {};
+  document.querySelectorAll('.nav-ch').forEach(function(el) {
+    var btn = el.querySelector('.nav-ch-btn');
+    var id = btn.getAttribute('data-ch');
+    if (id) chapterBtns[id] = { el: el, btn: btn };
+  });
+
+  var activeSection = null, activeChapter = null;
+
+  function setActive(sid) {
+    if (sid === activeSection) return;
+    if (activeSection && sectionLinks[activeSection]) sectionLinks[activeSection].classList.remove('active');
+    activeSection = sid;
+    if (activeSection && sectionLinks[activeSection]) {
+      sectionLinks[activeSection].classList.add('active');
+      var link = sectionLinks[activeSection];
+      var sb = document.getElementById('sidebar');
+      var linkTop = link.offsetTop;
+      if (linkTop < sb.scrollTop + 60 || linkTop > sb.scrollTop + sb.clientHeight - 80) {
+        sb.scrollTo({ top: linkTop - sb.clientHeight / 2, behavior: 'smooth' });
+      }
+    }
+    var chNum = sid ? sid.match(/^s(\d+)-/) : null;
+    var newCh = chNum ? 'ch' + chNum[1] : null;
+    if (newCh !== activeChapter) {
+      if (activeChapter && chapterBtns[activeChapter]) {
+        chapterBtns[activeChapter].btn.classList.remove('active');
+        chapterBtns[activeChapter].el.classList.remove('open');
+      }
+      activeChapter = newCh;
+      if (activeChapter && chapterBtns[activeChapter]) {
+        chapterBtns[activeChapter].btn.classList.add('active');
+        chapterBtns[activeChapter].el.classList.add('open');
+      }
+    }
+  }
+
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) { if (e.isIntersecting) setActive(e.target.id); });
+  }, { rootMargin: '-3px 0px -60% 0px', threshold: 0 });
+
+  Object.keys(sectionLinks).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+
+  // ── Code block header: lang badge + copy button ──
+  document.querySelectorAll('pre').forEach(function(pre) {
+    var wrap = document.createElement('div'); wrap.className = 'code-wrap';
+    var header = document.createElement('div'); header.className = 'code-header';
+    var badge = document.createElement('span'); badge.className = 'lang-badge'; badge.textContent = 'Go';
+    var btn = document.createElement('button'); btn.className = 'copy-btn'; btn.textContent = 'Copy';
+    btn.addEventListener('click', function() {
+      var code = pre.querySelector('code');
+      var text = code ? code.innerText : pre.innerText;
+      navigator.clipboard.writeText(text).then(function() {
+        btn.textContent = 'Copied!'; btn.classList.add('copied');
+        setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+      });
+    });
+    header.appendChild(badge); header.appendChild(btn);
+    pre.parentNode.insertBefore(wrap, pre); wrap.appendChild(header); wrap.appendChild(pre);
+  });
+
+  // ── Syntax highlighting ──
+  function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function applyToPlain(html, re, cls) {
+    return html.split(/(<span[^>]*>[\s\S]*?<\/span>)/).map(function(p, i) {
+      return i % 2 === 1 ? p : p.replace(re, '<span class="' + cls + '">$1</span>');
+    }).join('');
+  }
+  document.querySelectorAll('pre code').forEach(function(block) {
+    var text = escHtml(block.innerText);
+    text = text.replace(/(`[^`]*`|"(?:[^"\\]|\\.)*")/g, '<span class="go-string">$1</span>');
+    text = applyToPlain(text, /\b(break|case|chan|const|continue|default|defer|else|fallthrough|for|func|go|goto|if|import|interface|map|package|range|return|select|struct|switch|type|var|make|new|append|len|cap|copy|delete|close|panic|recover|nil|true|false|iota)\b/g, 'go-keyword');
+    text = applyToPlain(text, /\b(int|int8|int16|int32|int64|uint|uint8|uint16|uint32|uint64|uintptr|float32|float64|complex64|complex128|byte|rune|string|bool|error|any)\b/g, 'go-type');
+    block.innerHTML = text;
+  });
+
+}());
+</script>
+</body>
+</html>

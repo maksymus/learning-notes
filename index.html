@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learning Notes</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-size: 14px; line-height: 1.7; color: #e6e6f0;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 80px 32px 64px; }
+
+  header { text-align: center; margin-bottom: 64px; }
+  header h1 {
+    font-size: 56px; font-weight: 900; letter-spacing: -2px; margin-bottom: 14px;
+    background: linear-gradient(90deg, #00d2ff, #7b2ff7);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; color: #00d2ff;
+  }
+  header p { font-size: 17px; font-weight: 300; color: #a0a0b0; }
+  header .meta {
+    display: inline-block; margin-top: 24px; padding-top: 20px;
+    border-top: 1px solid #333; font-size: 13px; color: #606080;
+  }
+
+  .courses { display: grid; gap: 20px; }
+
+  .card {
+    display: block; text-decoration: none; color: inherit;
+    background: rgba(255,255,255,0.035);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 12px; padding: 26px 28px;
+    transition: border-color .18s ease, background .18s ease, transform .18s ease;
+  }
+  .card:hover {
+    border-color: #7b2ff7; background: rgba(123,47,247,0.09);
+    transform: translateY(-2px);
+  }
+  .card-top { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+  .card-icon { font-size: 38px; line-height: 1; flex-shrink: 0; }
+  .card h2 { font-size: 24px; font-weight: 800; letter-spacing: -0.4px; color: #fff; }
+  .card .sub { font-size: 14px; color: #a0a0b0; font-weight: 300; margin-bottom: 16px; }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag {
+    font-size: 11px; letter-spacing: .6px; text-transform: uppercase;
+    color: #00d2ff; background: rgba(0,210,255,0.1);
+    border: 1px solid rgba(0,210,255,0.22);
+    padding: 3px 10px; border-radius: 999px;
+  }
+  .tag.count { color: #c4b5fd; background: rgba(123,47,247,0.12); border-color: rgba(123,47,247,0.3); }
+
+
+  @media (max-width: 600px) {
+    .wrap { padding: 48px 20px 40px; }
+    header h1 { font-size: 38px; }
+    .card h2 { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Learning Notes</h1>
+    <p>Self-contained deep-dive courses on Go and distributed systems.</p>
+    <div class="meta">3 courses &middot; 22 chapters</div>
+  </header>
+
+  <main class="courses">
+
+    <a class="card" href="deep-go.html">
+      <div class="card-top">
+        <div class="card-icon">&#128057;</div>
+        <h2>Deep Go</h2>
+      </div>
+      <div class="sub">A comprehensive guide to Go internals &mdash; how the runtime actually represents and executes your code.</div>
+      <div class="tags">
+        <span class="tag count">6 chapters</span>
+        <span class="tag">Slices &amp; maps</span>
+        <span class="tag">Interfaces</span>
+        <span class="tag">Generics</span>
+        <span class="tag">GC &amp; scheduler</span>
+      </div>
+    </a>
+
+    <a class="card" href="concurrency-go.html">
+      <div class="card-top">
+        <div class="card-icon">&#9881;&#65039;</div>
+        <h2>Concurrency in Go</h2>
+      </div>
+      <div class="sub">Goroutines, channels, sync primitives and scheduler internals, from first principles to lock-free structures.</div>
+      <div class="tags">
+        <span class="tag count">10 chapters</span>
+        <span class="tag">Goroutines</span>
+        <span class="tag">Channels</span>
+        <span class="tag">Sync primitives</span>
+        <span class="tag">Lock-free</span>
+      </div>
+    </a>
+
+    <a class="card" href="resiliency-patterns.html">
+      <div class="card-top">
+        <div class="card-icon">&#128737;&#65039;</div>
+        <h2>Resiliency Patterns</h2>
+      </div>
+      <div class="sub">Building fault-tolerant microservices &mdash; how distributed systems fail, and the patterns that contain the damage.</div>
+      <div class="tags">
+        <span class="tag count">6 chapters</span>
+        <span class="tag">Retries</span>
+        <span class="tag">Load control</span>
+        <span class="tag">Queues</span>
+        <span class="tag">Caching</span>
+      </div>
+    </a>
+
+  </main>
+
+</div>
+</body>
+</html>

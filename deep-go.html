@@ -1,0 +1,3271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep Go — Comprehensive Course</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.7; color: #1a1a1a; background: #fff; }
+  .cover { page-break-after: always; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%); color: white; text-align: center; padding: 60px; }
+  .cover h1 { font-size: 64px; font-weight: 900; letter-spacing: -2px; margin-bottom: 16px; background: linear-gradient(90deg, #00d2ff, #7b2ff7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .cover h2 { font-size: 24px; font-weight: 300; color: #a0a0b0; margin-bottom: 40px; }
+  .cover .subtitle { font-size: 16px; color: #606080; border-top: 1px solid #333; padding-top: 24px; }
+  .toc { page-break-after: always; padding: 60px; max-width: 900px; margin: 0 auto; }
+  .toc h2 { font-size: 32px; margin-bottom: 32px; color: #0a0a2e; border-bottom: 3px solid #00d2ff; padding-bottom: 12px; }
+  .toc ol { list-style: none; counter-reset: toc-counter; }
+  .toc > ol > li { counter-increment: toc-counter; margin-bottom: 12px; }
+  .toc > ol > li::before { content: counter(toc-counter) ". "; font-weight: bold; color: #7b2ff7; }
+  .toc a { text-decoration: none; color: #1a1a1a; font-size: 15px; }
+  .toc a:hover { color: #7b2ff7; text-decoration: underline; }
+  .toc ul { margin-left: 28px; margin-top: 6px; }
+  .toc ul li { margin-bottom: 4px; list-style: disc; font-size: 13px; color: #555; }
+  .chapter { page-break-before: always; padding: 60px; max-width: 900px; margin: 0 auto; }
+  .chapter-header { background: linear-gradient(135deg, #0a0a2e, #1a1a4e); color: white; padding: 40px; margin: -60px -60px 40px -60px; }
+  .chapter-header .chapter-num { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: #00d2ff; margin-bottom: 8px; }
+  .chapter-header h2 { font-size: 36px; font-weight: 800; }
+  h3 { font-size: 22px; margin: 36px 0 14px; color: #0a0a2e; border-left: 4px solid #7b2ff7; padding-left: 12px; }
+  h4 { font-size: 17px; margin: 24px 0 10px; color: #1a1a4e; }
+  p { margin-bottom: 14px; color: #2a2a2a; }
+  pre { background: #0d1117; color: #e6edf3; padding: 20px 24px; border-radius: 8px; overflow-x: auto; margin: 16px 0 24px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; border-left: 4px solid #00d2ff; }
+  code { font-family: 'Courier New', monospace; font-size: 13px; }
+  .inline-code { background: #f0f0f8; padding: 2px 6px; border-radius: 3px; color: #7b2ff7; font-family: 'Courier New', monospace; font-size: 12px; }
+  .tip { background: #e8f4fd; border-left: 4px solid #0077cc; padding: 14px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; }
+  .tip strong { color: #0077cc; }
+  .warning { background: #fff8e1; border-left: 4px solid #f59e0b; padding: 14px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; }
+  .warning strong { color: #d97706; }
+  .key-concept { background: #f5f0ff; border: 1px solid #c4b5fd; padding: 16px 20px; margin: 16px 0; border-radius: 8px; }
+  .key-concept h5 { color: #7b2ff7; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  ul, ol { margin: 10px 0 16px 28px; }
+  li { margin-bottom: 5px; }
+  .go-keyword { color: #ff7b72; }
+  .go-string { color: #a5d6ff; }
+  .go-type { color: #ffa657; }
+  .go-func { color: #d2a8ff; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; }
+  th { background: #1a1a2e; color: #fff; padding: 10px 14px; text-align: left; }
+  td { padding: 9px 14px; border-bottom: 1px solid #e0e0f0; }
+  tr:nth-child(even) { background: #f8f8ff; }
+  tbody tr:hover { background: #ededff !important; }
+  .section-break { border: none; border-top: 2px dashed #e0e0f0; margin: 32px 0; }
+
+  /* ── Progress bar ── */
+  #progress-bar { position: fixed; top: 0; left: 0; height: 3px; width: 0%; background: linear-gradient(90deg, #00d2ff, #7b2ff7); z-index: 2000; pointer-events: none; }
+
+  /* ── Sidebar navigation ── */
+  #sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 256px;
+    background: #080818; border-right: 1px solid rgba(255,255,255,0.07);
+    overflow-y: auto; z-index: 1000;
+    display: flex; flex-direction: column;
+    scrollbar-width: thin; scrollbar-color: #333355 transparent;
+  }
+  #sidebar::-webkit-scrollbar { width: 4px; }
+  #sidebar::-webkit-scrollbar-track { background: transparent; }
+  #sidebar::-webkit-scrollbar-thumb { background: #333355; border-radius: 2px; }
+
+  #sidebar-logo {
+    padding: 18px 16px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  #sidebar-logo a {
+    text-decoration: none;
+    font-size: 15px; font-weight: 800; letter-spacing: -0.3px;
+    background: linear-gradient(90deg, #00d2ff, #7b2ff7);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  #sidebar-close {
+    display: none; background: none; border: none; color: #666; font-size: 20px;
+    cursor: pointer; padding: 0 4px; line-height: 1;
+  }
+
+  #sidebar-body { padding: 8px 0 24px; flex: 1; }
+
+  .nav-ch { margin-bottom: 2px; }
+  .nav-ch-btn {
+    width: 100%; background: none; border: none; cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 14px 7px 12px;
+    color: #8888aa; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    transition: color 0.15s, background 0.15s;
+    border-left: 3px solid transparent;
+    text-align: left;
+  }
+  .nav-ch-btn:hover { color: #ccd0e0; background: rgba(255,255,255,0.04); }
+  .nav-ch-btn.active { color: #fff; border-left-color: #00d2ff; background: rgba(0,210,255,0.06); }
+  .nav-ch-num { font-size: 10px; color: #00d2ff; min-width: 18px; }
+  .nav-ch-btn.active .nav-ch-num { color: #00d2ff; }
+  .nav-ch-label { flex: 1; }
+  .nav-ch-arrow {
+    font-size: 10px; color: #555577; transition: transform 0.2s;
+    transform: rotate(0deg);
+  }
+  .nav-ch.open .nav-ch-arrow { transform: rotate(90deg); }
+
+  .nav-sections {
+    list-style: none; margin: 0; padding: 0 0 4px 0;
+    max-height: 0; overflow: hidden; transition: max-height 0.25s ease;
+  }
+  .nav-ch.open .nav-sections { max-height: 600px; }
+
+  .nav-sections li a {
+    display: block; text-decoration: none;
+    padding: 5px 14px 5px 38px;
+    color: #60607a; font-size: 12px; line-height: 1.4;
+    transition: color 0.15s, background 0.15s;
+    border-left: 2px solid transparent; margin-left: 10px;
+  }
+  .nav-sections li a:hover { color: #b0b0cc; background: rgba(255,255,255,0.04); }
+  .nav-sections li a.active {
+    color: #e0e0ff;
+    background: rgba(255,255,255,0.06);
+    border-left-color: currentColor;
+  }
+  .nav-sections li a .sec-num { color: #555577; font-size: 10px; margin-right: 5px; font-family: 'Courier New', monospace; }
+  .nav-sections li a.active .sec-num { color: #00d2ff; }
+
+  /* Per-chapter active accent colors in sidebar */
+  #nav-ch1 .nav-ch-btn.active { border-left-color: #00b894; background: rgba(0,184,148,0.06); }
+  #nav-ch2 .nav-ch-btn.active { border-left-color: #e17055; background: rgba(225,112,85,0.06); }
+  #nav-ch3 .nav-ch-btn.active { border-left-color: #27ae60; background: rgba(39,174,96,0.06); }
+  #nav-ch4 .nav-ch-btn.active { border-left-color: #e84393; background: rgba(232,67,147,0.06); }
+  #nav-ch5 .nav-ch-btn.active { border-left-color: #6c5ce7; background: rgba(108,92,231,0.06); }
+  #nav-ch6 .nav-ch-btn.active { border-left-color: #f39c12; background: rgba(243,156,18,0.06); }
+  #nav-ch1 .nav-sections li a.active { border-left-color: #00b894; }
+  #nav-ch2 .nav-sections li a.active { border-left-color: #e17055; }
+  #nav-ch3 .nav-sections li a.active { border-left-color: #27ae60; }
+  #nav-ch4 .nav-sections li a.active { border-left-color: #e84393; }
+  #nav-ch5 .nav-sections li a.active { border-left-color: #6c5ce7; }
+  #nav-ch6 .nav-sections li a.active { border-left-color: #f39c12; }
+
+  /* ── Layout: main content offset by sidebar ── */
+  body { padding-left: 256px; padding-top: 3px; }
+
+  /* ── Mobile: hamburger toggle ── */
+  #nav-toggle {
+    display: none; position: fixed; top: 10px; left: 10px; z-index: 1100;
+    background: rgba(8,8,24,0.92); border: 1px solid rgba(255,255,255,0.15);
+    color: #a0a0c0; font-size: 16px; width: 36px; height: 36px;
+    border-radius: 6px; cursor: pointer; backdrop-filter: blur(6px);
+  }
+  #sidebar-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    z-index: 999; backdrop-filter: blur(2px);
+  }
+
+  @media (max-width: 768px) {
+    body { padding-left: 0; padding-top: 0; }
+    #sidebar { transform: translateX(-100%); transition: transform 0.25s ease; box-shadow: 4px 0 24px rgba(0,0,0,0.5); }
+    #sidebar.open { transform: translateX(0); }
+    #nav-toggle { display: flex; align-items: center; justify-content: center; }
+    #sidebar-close { display: block; }
+    #sidebar-overlay.open { display: block; }
+  }
+
+  /* ── Per-chapter accent colors ── */
+  #ch1 .chapter-header { background: linear-gradient(135deg, #002e2e 0%, #004d40 100%); }
+  #ch1 .chapter-header .chapter-num { color: #00cec9; }
+  #ch1 h3 { border-left-color: #00b894; color: #003333; }
+  #ch2 .chapter-header { background: linear-gradient(135deg, #2d1200 0%, #4d2200 100%); }
+  #ch2 .chapter-header .chapter-num { color: #fdcb6e; }
+  #ch2 h3 { border-left-color: #e17055; color: #2d1200; }
+  #ch3 .chapter-header { background: linear-gradient(135deg, #0a2e14 0%, #1a4a2a 100%); }
+  #ch3 .chapter-header .chapter-num { color: #55efc4; }
+  #ch3 h3 { border-left-color: #27ae60; color: #0a2a14; }
+  #ch4 .chapter-header { background: linear-gradient(135deg, #2d0018 0%, #4a0028 100%); }
+  #ch4 .chapter-header .chapter-num { color: #fd79a8; }
+  #ch4 h3 { border-left-color: #e84393; color: #2d0018; }
+  #ch5 .chapter-header { background: linear-gradient(135deg, #0d0a2e 0%, #1e1460 100%); }
+  #ch5 .chapter-header .chapter-num { color: #a29bfe; }
+  #ch5 h3 { border-left-color: #6c5ce7; color: #0d0a30; }
+  #ch6 .chapter-header { background: linear-gradient(135deg, #2d1a00 0%, #4a2e00 100%); }
+  #ch6 .chapter-header .chapter-num { color: #ffeaa7; }
+  #ch6 h3 { border-left-color: #f39c12; color: #2d1a00; }
+
+  /* ── Code block header (badge + copy) ── */
+  .code-wrap { position: relative; margin: 16px 0 24px; }
+  .code-wrap pre { margin: 0; border-radius: 0 0 8px 8px; border-top: none; }
+  .code-header { display: flex; align-items: center; justify-content: space-between; background: #161b22; border-radius: 8px 8px 0 0; padding: 6px 14px; border: 1px solid #21262d; border-bottom: 1px solid #0d1117; }
+  .lang-badge { font-family: 'Courier New', monospace; font-size: 11px; font-weight: 700; color: #79c0ff; letter-spacing: 0.5px; }
+  .copy-btn { font-family: system-ui, sans-serif; font-size: 11px; color: #8b949e; background: none; border: 1px solid #30363d; border-radius: 4px; padding: 2px 9px; cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+  .copy-btn:hover { color: #e6edf3; border-color: #8b949e; }
+  .copy-btn.copied { color: #3fb950; border-color: #3fb950; }
+
+  /* ── Back-to-top ── */
+  #back-to-top { position: fixed; bottom: 28px; right: 28px; width: 40px; height: 40px; border-radius: 50%; background: rgba(10,10,30,0.85); border: 1px solid rgba(255,255,255,0.15); color: #a0a0c0; font-size: 18px; line-height: 40px; text-align: center; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.25s, background 0.2s; z-index: 990; backdrop-filter: blur(6px); }
+  #back-to-top.visible { opacity: 1; pointer-events: auto; }
+  #back-to-top:hover { background: rgba(30,30,60,0.95); color: #fff; }
+
+  /* ── Section number inside h3 ── */
+  .section-num { font-family: 'Courier New', monospace; font-size: 0.68em; font-weight: 400; color: #aaa; letter-spacing: 0; margin-right: 7px; vertical-align: middle; }
+
+  /* ── Key-concept icon ── */
+  .key-concept h5::before { content: "▸ "; color: #9b72ff; }
+
+  /* ── Chapter summary card ── */
+  .chapter-summary { background: #0d1117; color: #e6edf3; border-radius: 10px; padding: 24px 28px; margin: 40px 0 0; }
+  .chapter-summary h5 { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #8b949e; margin-bottom: 16px; font-family: system-ui, sans-serif; }
+  .chapter-summary ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
+  .chapter-summary ul li { font-size: 13px; color: #c9d1d9; padding-left: 16px; position: relative; line-height: 1.5; }
+  .chapter-summary ul li::before { content: "→"; position: absolute; left: 0; color: #00d2ff; font-size: 11px; top: 3px; }
+  #ch1 .chapter-summary ul li::before { color: #00b894; }
+  #ch2 .chapter-summary ul li::before { color: #e17055; }
+  #ch3 .chapter-summary ul li::before { color: #27ae60; }
+  #ch4 .chapter-summary ul li::before { color: #e84393; }
+  #ch5 .chapter-summary ul li::before { color: #6c5ce7; }
+  #ch6 .chapter-summary ul li::before { color: #f39c12; }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+<button id="back-to-top" title="Back to top">↑</button>
+<button id="nav-toggle" title="Open navigation">☰</button>
+<div id="sidebar-overlay"></div>
+
+<nav id="sidebar">
+  <div id="sidebar-logo">
+    <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Deep Go</a>
+    <button id="sidebar-close" title="Close">×</button>
+  </div>
+  <div id="sidebar-body">
+
+    <div class="nav-ch open" id="nav-ch1">
+      <button class="nav-ch-btn" data-ch="ch1">
+        <span class="nav-ch-num">01</span>
+        <span class="nav-ch-label">Data Types &amp; Slices</span>
+        <span class="nav-ch-arrow">›</span>
+      </button>
+      <ul class="nav-sections">
+        <li><a href="#s1-1"><span class="sec-num">1.1</span>Zero Values &amp; Type System</a></li>
+        <li><a href="#s1-2"><span class="sec-num">1.2</span>Endianness</a></li>
+        <li><a href="#s1-3"><span class="sec-num">1.3</span>Two's Complement</a></li>
+        <li><a href="#s1-4"><span class="sec-num">1.4</span>Pointers &amp; unsafe</a></li>
+        <li><a href="#s1-5"><span class="sec-num">1.5</span>Bitwise &amp; Bit Masks</a></li>
+        <li><a href="#s1-6"><span class="sec-num">1.6</span>Arrays — Internals</a></li>
+        <li><a href="#s1-7"><span class="sec-num">1.7</span>Slices — Internals</a></li>
+        <li><a href="#s1-8"><span class="sec-num">1.8</span>Slice Operations</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch2">
+      <button class="nav-ch-btn" data-ch="ch2">
+        <span class="nav-ch-num">02</span>
+        <span class="nav-ch-label">Strings &amp; Maps</span>
+        <span class="nav-ch-arrow">›</span>
+      </button>
+      <ul class="nav-sections">
+        <li><a href="#s2-1"><span class="sec-num">2.1</span>Character Encodings</a></li>
+        <li><a href="#s2-2"><span class="sec-num">2.2</span>String Internals</a></li>
+        <li><a href="#s2-3"><span class="sec-num">2.3</span>Runes &amp; Manipulation</a></li>
+        <li><a href="#s2-4"><span class="sec-num">2.4</span>Hash Tables — Theory</a></li>
+        <li><a href="#s2-5"><span class="sec-num">2.5</span>Go Maps — Internals</a></li>
+        <li><a href="#s2-6"><span class="sec-num">2.6</span>Map Patterns &amp; Concurrency</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch3">
+      <button class="nav-ch-btn" data-ch="ch3">
+        <span class="nav-ch-num">03</span>
+        <span class="nav-ch-label">Functions &amp; Structs</span>
+        <span class="nav-ch-arrow">›</span>
+      </button>
+      <ul class="nav-sections">
+        <li><a href="#s3-1"><span class="sec-num">3.1</span>Internals &amp; Calling Conventions</a></li>
+        <li><a href="#s3-2"><span class="sec-num">3.2</span>Closures</a></li>
+        <li><a href="#s3-3"><span class="sec-num">3.3</span>Defer</a></li>
+        <li><a href="#s3-4"><span class="sec-num">3.4</span>Struct Internals &amp; Alignment</a></li>
+        <li><a href="#s3-5"><span class="sec-num">3.5</span>Methods &amp; Receivers</a></li>
+        <li><a href="#s3-6"><span class="sec-num">3.6</span>Functional Patterns</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch4">
+      <button class="nav-ch-btn" data-ch="ch4">
+        <span class="nav-ch-num">04</span>
+        <span class="nav-ch-label">Interfaces &amp; Errors</span>
+        <span class="nav-ch-arrow">›</span>
+      </button>
+      <ul class="nav-sections">
+        <li><a href="#s4-1"><span class="sec-num">4.1</span>Interface Internals</a></li>
+        <li><a href="#s4-2"><span class="sec-num">4.2</span>Interface Patterns</a></li>
+        <li><a href="#s4-3"><span class="sec-num">4.3</span>Error Handling</a></li>
+        <li><a href="#s4-4"><span class="sec-num">4.4</span>Panics &amp; Recovery</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch5">
+      <button class="nav-ch-btn" data-ch="ch5">
+        <span class="nav-ch-num">05</span>
+        <span class="nav-ch-label">Generics &amp; Memory</span>
+        <span class="nav-ch-arrow">›</span>
+      </button>
+      <ul class="nav-sections">
+        <li><a href="#s5-1"><span class="sec-num">5.1</span>Generics</a></li>
+        <li><a href="#s5-2"><span class="sec-num">5.2</span>Reflection</a></li>
+        <li><a href="#s5-3"><span class="sec-num">5.3</span>Iterators (Go 1.23+)</a></li>
+        <li><a href="#s5-4"><span class="sec-num">5.4</span>Memory &amp; Escape Analysis</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-ch" id="nav-ch6">
+      <button class="nav-ch-btn" data-ch="ch6">
+        <span class="nav-ch-num">06</span>
+        <span class="nav-ch-label">GC &amp; Scheduler</span>
+        <span class="nav-ch-arrow">›</span>
+      </button>
+      <ul class="nav-sections">
+        <li><a href="#s6-1"><span class="sec-num">6.1</span>Garbage Collector</a></li>
+        <li><a href="#s6-2"><span class="sec-num">6.2</span>Goroutines — Internals</a></li>
+        <li><a href="#s6-3"><span class="sec-num">6.3</span>The GMP Scheduler</a></li>
+        <li><a href="#s6-4"><span class="sec-num">6.4</span>Concurrency Patterns</a></li>
+        <li><a href="#s6-5"><span class="sec-num">6.5</span>Memory Model &amp; Sync</a></li>
+      </ul>
+    </div>
+
+  </div>
+</nav>
+
+<!-- COVER -->
+<div class="cover">
+  <div>
+    <h1>Deep Go</h1>
+    <h2>A Comprehensive Guide to Go Internals</h2>
+    <div style="font-size: 72px; margin: 32px 0;">🐹</div>
+    <p style="color: #808090; font-size: 15px; max-width: 480px; margin: 0 auto 40px;">
+      From data types and memory layout to goroutines, garbage collection, and the scheduler —
+      everything you need to master Go at a deep level.
+    </p>
+    <div class="subtitle">
+      6 Chapters · Code Examples · Internals Deep Dive
+    </div>
+  </div>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#ch1">Basic Data Types, Arrays &amp; Slices</a>
+      <ul>
+        <li>Zero values, primitive vs composite types</li>
+        <li>Endianness, integer representation (two's complement)</li>
+        <li>Pointers, unsafe.Pointer, arithmetic</li>
+        <li>Bit masks and bitwise operations</li>
+        <li>Arrays: copying, iteration, stack vs heap</li>
+        <li>Slices: internals, BCE, memory leaks, capacity growth</li>
+      </ul>
+    </li>
+    <li><a href="#ch2">Strings &amp; Maps</a>
+      <ul>
+        <li>Character encodings: ASCII, UTF-8, UTF-16, UTF-32</li>
+        <li>String internals, runes, unsafe string operations</li>
+        <li>strings.Builder, interning, SSO</li>
+        <li>Hash table design: chaining, open addressing</li>
+        <li>Go map internals: buckets, top hash, rehashing</li>
+        <li>Swiss tables and SIMD</li>
+      </ul>
+    </li>
+    <li><a href="#ch3">Functions &amp; Structs</a>
+      <ul>
+        <li>Function internals, calling conventions, inline</li>
+        <li>Defer internals, closures, recursion</li>
+        <li>Functional patterns: pipeline, decorator, memoization</li>
+        <li>Struct layout, alignment, empty structs</li>
+        <li>Embedding, methods, receivers</li>
+      </ul>
+    </li>
+    <li><a href="#ch4">Interfaces &amp; Error Handling</a>
+      <ul>
+        <li>Interface internals: iface vs eface</li>
+        <li>Type assertion, type switch, devirtualization</li>
+        <li>Error wrapping, errors.Is / errors.As</li>
+        <li>Panics, recover, stack traces</li>
+      </ul>
+    </li>
+    <li><a href="#ch5">Generics, Reflection, Iterators &amp; Allocator</a>
+      <ul>
+        <li>Generics: constraints, type inference, instantiation</li>
+        <li>Reflection: TypeOf, ValueOf, struct tags</li>
+        <li>Iterators: push/pull, range-over-func</li>
+        <li>Memory allocators: linear, buddy, slab</li>
+        <li>sync.Pool, escape analysis, stack vs heap</li>
+      </ul>
+    </li>
+    <li><a href="#ch6">GC, Goroutines &amp; Scheduler</a>
+      <ul>
+        <li>GC algorithms: tracing, ref-counting, tri-color marking</li>
+        <li>Write barriers, GOGC, GOMEMLIMIT</li>
+        <li>Goroutine internals, segmented vs contiguous stacks</li>
+        <li>GMP scheduler model, work stealing, netpoller</li>
+      </ul>
+    </li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 1 -->
+<!-- ============================================================ -->
+<div class="chapter" id="ch1">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 01</div>
+    <h2>Basic Data Types, Arrays &amp; Slices</h2>
+  </div>
+
+  <h3 id="s1-1">1.1 Zero Values &amp; Type System</h3>
+  <p>Every variable in Go is initialized to its <strong>zero value</strong> automatically. This eliminates
+  an entire class of bugs common in C/C++ where uninitialized memory contains garbage.</p>
+
+  <table>
+    <tr><th>Type</th><th>Zero Value</th><th>Size (64-bit)</th></tr>
+    <tr><td>bool</td><td>false</td><td>1 byte</td></tr>
+    <tr><td>int8/uint8</td><td>0</td><td>1 byte</td></tr>
+    <tr><td>int16/uint16</td><td>0</td><td>2 bytes</td></tr>
+    <tr><td>int32/uint32/rune/float32</td><td>0 / 0.0</td><td>4 bytes</td></tr>
+    <tr><td>int64/uint64/float64/complex64</td><td>0 / 0.0</td><td>8 bytes</td></tr>
+    <tr><td>int/uint/uintptr</td><td>0</td><td>8 bytes (platform)</td></tr>
+    <tr><td>string</td><td>""</td><td>16 bytes (ptr+len)</td></tr>
+    <tr><td>slice</td><td>nil</td><td>24 bytes (ptr+len+cap)</td></tr>
+    <tr><td>pointer/map/chan/func</td><td>nil</td><td>8 bytes</td></tr>
+    <tr><td>interface</td><td>nil</td><td>16 bytes (type+data)</td></tr>
+  </table>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "unsafe"
+)
+
+func main() {
+    // Zero values - no initialization needed
+    var i int          // 0
+    var f float64      // 0.0
+    var b bool         // false
+    var s string       // ""
+    var p *int         // nil
+    var sl []int       // nil slice
+
+    fmt.Println(i, f, b, s, p, sl)
+
+    // Type sizes
+    fmt.Println("int size:", unsafe.Sizeof(i))       // 8 on 64-bit
+    fmt.Println("string size:", unsafe.Sizeof(s))    // 16
+    fmt.Println("slice size:", unsafe.Sizeof(sl))    // 24
+}</code></pre>
+
+  <div class="key-concept">
+    <h5>Primitive vs Composite Types</h5>
+    <p><strong>Primitive types</strong> (bool, int*, uint*, float*, complex*, string, pointer) are atomic — they have no sub-structure visible to the language. <strong>Composite types</strong> (array, slice, map, struct, channel, function, interface) are composed of other types.</p>
+    <p>Go distinguishes <strong>type definitions</strong> from <strong>type aliases</strong>. A type definition (<span class="inline-code">type Celsius float64</span>) creates a new distinct type — no implicit conversion to/from <span class="inline-code">float64</span>. A type alias (<span class="inline-code">type MyFloat = float64</span>) is just another name for the exact same type. This distinction matters for method sets: you can declare methods on a defined type, but not on an alias of a built-in type.</p>
+    <p><strong>Named types</strong> carry their own method set and satisfy interfaces independently. <strong>Unnamed (composite literal) types</strong> like <span class="inline-code">[]int</span> or <span class="inline-code">struct{ X int }</span> are structurally typed and interchangeable if their underlying types match.</p>
+  </div>
+
+  <h3 id="s1-2">1.2 Endianness</h3>
+  <p>Endianness determines how multi-byte integers are stored in memory. Modern x86/ARM processors use
+  <strong>little-endian</strong> (least significant byte first), while network protocols typically use
+  <strong>big-endian</strong> (most significant byte first).</p>
+  <p>The choice matters whenever you serialize or deserialize binary data, communicate over a network, or interpret raw memory. <strong>Middle-endian</strong> (PDP-endian) is a historical curiosity where byte order was mixed. Go's <span class="inline-code">encoding/binary</span> package handles both orderings. Note that <em>bit</em> order within a byte is always MSB-first in network protocols (following the convention from hardware serial transmission).</p>
+
+<pre><code>package main
+
+import (
+    "encoding/binary"
+    "fmt"
+    "unsafe"
+)
+
+func main() {
+    x := uint32(0x01020304)
+
+    // Access raw bytes via unsafe
+    bytes := (*[4]byte)(unsafe.Pointer(&amp;x))
+    fmt.Printf("x = 0x%08X\n", x)
+    fmt.Printf("bytes in memory: %02X %02X %02X %02X\n",
+        bytes[0], bytes[1], bytes[2], bytes[3])
+    // On little-endian x86: 04 03 02 01
+
+    // Detect machine endianness
+    n := uint16(0x1234)
+    b := (*[2]byte)(unsafe.Pointer(&amp;n))
+    if b[0] == 0x12 {
+        fmt.Println("Big-endian machine")
+    } else {
+        fmt.Println("Little-endian machine (x86/ARM64)")
+    }
+
+    // Converting between endianness for network protocols
+    var buf [4]byte
+    binary.BigEndian.PutUint32(buf[:], x)
+    fmt.Printf("Big-endian bytes: %02X %02X %02X %02X\n",
+        buf[0], buf[1], buf[2], buf[3])
+    // Output: 01 02 03 04
+}</code></pre>
+
+  <h3 id="s1-3">1.3 Integer Representation: Two's Complement</h3>
+  <p>Three encoding schemes have been used historically for signed integers:</p>
+  <ul>
+    <li><strong>Sign-magnitude</strong>: MSB is the sign bit; remaining bits are the magnitude. Problem: two representations of zero (+0 and -0), and addition circuits need to handle the sign bit specially.</li>
+    <li><strong>One's complement</strong>: negate by flipping all bits. Still has two zeros (0000…0000 = +0, 1111…1111 = -0) and requires an end-around carry in addition hardware.</li>
+    <li><strong>Two's complement</strong>: negate by flipping all bits and adding 1. Single zero, and addition/subtraction hardware works identically for signed and unsigned — the same ADD instruction handles both.</li>
+  </ul>
+  <p>Two's complement is universal in modern processors. The asymmetry (<span class="inline-code">int8</span> can represent -128 but not +128) arises because the most negative number's negation overflows: <span class="inline-code">-(-128) = 128</span> cannot be represented in 8 bits. Go signed integer overflow is <strong>defined behavior</strong> (wraps around), unlike in C where it is undefined.</p>
+
+<pre><code>package main
+
+import "fmt"
+
+func main() {
+    // Two's complement: -n = ^n + 1
+    var x int8 = 5    // 0000 0101
+    fmt.Printf(" 5 = %08b (%d)\n", uint8(x), x)
+
+    var neg int8 = -5
+    // ~5 = 1111 1010, +1 = 1111 1011 = -5
+    fmt.Printf("-5 = %08b (%d)\n", uint8(neg), neg)
+
+    // Overflow wraps around
+    var max int8 = 127
+    max++
+    fmt.Println("127 + 1 =", max) // -128 (overflow!)
+
+    var umax uint8 = 255
+    umax++
+    fmt.Println("255 + 1 =", umax) // 0 (wraps)
+
+    // Sign bit: MSB=1 means negative
+    fmt.Printf("int8(-1)  = %08b\n", uint8(-1))  // 11111111
+    fmt.Printf("int8(-128)= %08b\n", uint8(-128)) // 10000000
+    fmt.Printf("int8(127) = %08b\n", uint8(127))  // 01111111
+
+    // Detecting overflow
+    a, b := 120, 20
+    sum := a + b
+    // For int8: overflow if result has different sign from both operands
+    // Safe addition check:
+    if (b &gt; 0 &amp;&amp; a &gt; 127-b) || (b &lt; 0 &amp;&amp; a &lt; -128-b) {
+        fmt.Println("Overflow!")
+    } else {
+        fmt.Println("Sum:", sum)
+    }
+}</code></pre>
+
+  <h3 id="s1-4">1.4 Pointers &amp; unsafe</h3>
+  <p>Go pointers are type-safe, but <span class="inline-code">unsafe.Pointer</span> allows casting between
+  pointer types. The <span class="inline-code">uintptr</span> type is an integer holding a memory address —
+  it is <em>not</em> a pointer and does not keep allocations alive during GC.</p>
+  <p><strong>Byte vs word addressing:</strong> Modern CPUs address individual bytes (byte addressing), but hardware is optimized to load values aligned to their natural boundary. An <span class="inline-code">int64</span> at address 0x8 loads in a single bus transaction; at address 0x9 it would need two transactions and is forbidden on some architectures (bus error). Go's compiler inserts padding in structs to ensure alignment.</p>
+  <p><strong>unsafe rules</strong> — the Go spec defines exactly four valid conversions involving <span class="inline-code">unsafe.Pointer</span>:</p>
+  <ol>
+    <li>Any pointer type → <span class="inline-code">unsafe.Pointer</span></li>
+    <li><span class="inline-code">unsafe.Pointer</span> → any pointer type</li>
+    <li><span class="inline-code">unsafe.Pointer</span> ↔ <span class="inline-code">uintptr</span> (but <strong>never store a uintptr and use it later</strong> — GC can move objects)</li>
+    <li>Pointer arithmetic must be a single expression: <span class="inline-code">(*T)(unsafe.Pointer(uintptr(p) + offset))</span></li>
+  </ol>
+  <p>The <span class="inline-code">reflect.SliceHeader</span> and <span class="inline-code">reflect.StringHeader</span> types are deprecated in Go 1.20+ in favour of <span class="inline-code">unsafe.Slice</span>, <span class="inline-code">unsafe.SliceData</span>, <span class="inline-code">unsafe.String</span>, and <span class="inline-code">unsafe.StringData</span>, which are GC-safe.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "unsafe"
+)
+
+func main() {
+    x := 42
+    p := &amp;x
+
+    // Regular pointer operations
+    fmt.Println(*p)  // dereference: 42
+    *p = 100
+    fmt.Println(x)   // 100
+
+    // Pointer to pointer
+    pp := &amp;p
+    **pp = 200
+    fmt.Println(x)   // 200
+
+    // unsafe.Pointer: bypass type system
+    var arr [3]int = [3]int{10, 20, 30}
+    ptr := unsafe.Pointer(&amp;arr[0])
+
+    // Pointer arithmetic: move to next element
+    // CAUTION: unsafe, ptr must stay within allocation
+    ptr1 := unsafe.Pointer(uintptr(ptr) + unsafe.Sizeof(arr[0]))
+    fmt.Println(*(*int)(ptr1))  // 20
+
+    // uintptr DANGER: GC can move objects!
+    // BAD: GC might move obj between these two lines:
+    // addr := uintptr(unsafe.Pointer(obj))
+    // ptr  := unsafe.Pointer(addr)  // addr may be stale!
+
+    // GOOD: single expression, GC-safe
+    // ptr := (*T)(unsafe.Pointer(uintptr(unsafe.Pointer(base)) + offset))
+
+    // Sizes and alignments
+    type Example struct {
+        A int8
+        B int32
+        C int64
+    }
+    e := Example{}
+    fmt.Println("sizeof:", unsafe.Sizeof(e))          // 16
+    fmt.Println("alignof:", unsafe.Alignof(e))        // 8
+    fmt.Println("offsetof B:", unsafe.Offsetof(e.B))  // 4
+    fmt.Println("offsetof C:", unsafe.Offsetof(e.C))  // 8
+}</code></pre>
+
+  <h3 id="s1-5">1.5 Bitwise Operations &amp; Bit Masks</h3>
+<pre><code>package main
+
+import "fmt"
+
+// Permission flags using bit masks
+const (
+    PermRead    = 1 &lt;&lt; 0  // 0001
+    PermWrite   = 1 &lt;&lt; 1  // 0010
+    PermExecute = 1 &lt;&lt; 2  // 0100
+    PermAdmin   = 1 &lt;&lt; 3  // 1000
+)
+
+func hasPermission(perms, check int) bool {
+    return perms&amp;check == check
+}
+
+func main() {
+    // Bitwise AND, OR, XOR, NOT, shifts
+    a, b := 0b1010, 0b1100
+    fmt.Printf("a &amp; b = %04b\n", a&amp;b)   // 1000
+    fmt.Printf("a | b = %04b\n", a|b)   // 1110
+    fmt.Printf("a ^ b = %04b\n", a^b)   // 0110 (XOR)
+    fmt.Printf("^a    = %b\n",   ^a)    // NOT (all bits flipped)
+    fmt.Printf("a &lt;&lt; 1 = %04b\n", a&lt;&lt;1) // 10100 (multiply by 2)
+    fmt.Printf("a &gt;&gt; 1 = %04b\n", a&gt;&gt;1) // 0101  (divide by 2)
+
+    // Bit tricks
+    n := 13
+    fmt.Println("Is even:", n&amp;1 == 0)        // false
+    fmt.Println("Is power of 2:", n&amp;(n-1) == 0) // false
+    fmt.Println("Clear last bit:", n&amp;^1)       // 12
+
+    // Permission system
+    userPerms := PermRead | PermWrite
+    fmt.Println("Can read:", hasPermission(userPerms, PermRead))    // true
+    fmt.Println("Can exec:", hasPermission(userPerms, PermExecute)) // false
+
+    // Add/remove permissions
+    userPerms |= PermExecute  // add
+    userPerms &amp;^= PermWrite   // remove
+    fmt.Printf("New perms: %04b\n", userPerms) // 0101
+
+    // Count set bits (popcount)
+    x := uint(0b10110110)
+    count := 0
+    for x != 0 {
+        count += int(x &amp; 1)
+        x &gt;&gt;= 1
+    }
+    fmt.Println("Set bits:", count) // 5
+}</code></pre>
+
+  <h3 id="s1-6">1.6 Arrays — Internals</h3>
+  <p>Arrays in Go are <strong>value types</strong>: assignment and function calls copy the entire array.
+  They live on the stack when small enough, otherwise escape to the heap.</p>
+  <p>The compiler decides stack vs heap allocation via <strong>escape analysis</strong>. If a variable's address escapes the function's scope (returned, stored in a heap object, passed to an interface, etc.), it is allocated on the heap. Arrays larger than a threshold (~64 KB in current versions) are also heap-allocated even without escape. The array type includes its length — <span class="inline-code">[3]int</span> and <span class="inline-code">[4]int</span> are incompatible types, enabling the compiler to prove length at compile time and eliminate bounds checks on constant-index accesses.</p>
+  <p>For CPU cache efficiency, a <strong>row-major</strong> traversal of a 2D array (iterating across the last index first in Go) is faster than column-major because consecutive elements are in the same cache line (typically 64 bytes). Accessing memory in stride order larger than a cache line causes a cache miss on every access.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "unsafe"
+)
+
+func modifyArray(arr [5]int) {
+    arr[0] = 999  // modifies the COPY, not original
+}
+
+func modifyArrayPtr(arr *[5]int) {
+    arr[0] = 999  // modifies original
+}
+
+func main() {
+    arr := [5]int{1, 2, 3, 4, 5}
+
+    // Arrays are contiguous in memory
+    fmt.Printf("arr[0] addr: %p\n", &amp;arr[0])
+    fmt.Printf("arr[1] addr: %p\n", &amp;arr[1])
+    // Addresses differ by sizeof(int) = 8
+
+    // Array is a value type — copy on assign
+    arr2 := arr
+    arr2[0] = 42
+    fmt.Println("arr[0]:", arr[0])   // 1 (unchanged)
+    fmt.Println("arr2[0]:", arr2[0]) // 42
+
+    // Function call copies the array
+    modifyArray(arr)
+    fmt.Println("After modifyArray:", arr[0]) // 1
+
+    modifyArrayPtr(&amp;arr)
+    fmt.Println("After modifyArrayPtr:", arr[0]) // 999
+
+    // Comparing arrays
+    a := [3]int{1, 2, 3}
+    b := [3]int{1, 2, 3}
+    fmt.Println("a == b:", a == b) // true
+
+    // Array size is part of the type
+    // [3]int and [4]int are different types!
+
+    // Iterate correctly — by value or range
+    sum := 0
+    for _, v := range arr {
+        sum += v
+    }
+    fmt.Println("sum:", sum)
+
+    // Memory layout: contiguous
+    var x [4]int32
+    base := uintptr(unsafe.Pointer(&amp;x[0]))
+    next := uintptr(unsafe.Pointer(&amp;x[1]))
+    fmt.Println("element gap:", next-base) // 4 bytes
+}</code></pre>
+
+  <h3 id="s1-7">1.7 Slices — Internals</h3>
+  <p>A slice is a three-field struct: a pointer to an underlying array, a length, and a capacity.
+  Multiple slices can share the same backing array.</p>
+  <p><strong>Capacity growth algorithm</strong> (Go 1.18+): the old doubling rule (<em>if cap &lt; 1024 double, else grow by 25%</em>) was replaced with a smoother formula to reduce sudden jumps. The new algorithm blends between doubling (for small slices) and 1.25× growth (for large slices) using a proportional threshold based on the element size. The exact formula is in <span class="inline-code">runtime/slice.go:growslice</span>. The practical consequence: pre-allocate with <span class="inline-code">make([]T, 0, n)</span> when you know the size to avoid <em>any</em> re-allocation.</p>
+  <p><strong>Three-index slices</strong> (<span class="inline-code">s[low:high:max]</span>) set the capacity of the resulting slice to <span class="inline-code">max-low</span>, preventing the sub-slice from accidentally writing beyond <span class="inline-code">high</span> into the parent's memory on a subsequent <span class="inline-code">append</span>. This is useful when returning a slice from a pool or shared buffer.</p>
+  <p><strong>BCE (Bound Check Elimination)</strong>: the compiler proves at compile time that certain index accesses are in-bounds and removes the runtime check. Hints that help: early <span class="inline-code">_ = s[n-1]</span> to establish a lower bound on length, using <span class="inline-code">for i := range s</span> instead of <span class="inline-code">for i := 0; i &lt; len(s); i++</span>, and accessing <span class="inline-code">s[i]</span> only after the range check. Run with <span class="inline-code">go build -gcflags="-d=ssa/check_bce/debug=1"</span> to see remaining checks.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "reflect"
+    "unsafe"
+)
+
+func main() {
+    // Slice header: {ptr, len, cap}
+    s := make([]int, 3, 5)
+    hdr := (*reflect.SliceHeader)(unsafe.Pointer(&amp;s))
+    fmt.Printf("ptr=%x len=%d cap=%d\n", hdr.Data, hdr.Len, hdr.Cap)
+
+    // nil slice vs empty slice
+    var nilSlice []int        // {nil, 0, 0}
+    emptySlice := []int{}     // {ptr, 0, 0} — ptr to zerobase
+    emptySlice2 := make([]int, 0)
+
+    fmt.Println("nil slice is nil:", nilSlice == nil)     // true
+    fmt.Println("empty slice is nil:", emptySlice == nil) // false
+    fmt.Println("len nil:", len(nilSlice))                // 0
+    _ = emptySlice2
+
+    // Slices share backing array
+    base := []int{1, 2, 3, 4, 5}
+    s1 := base[1:3]  // {2, 3}
+    s2 := base[2:5]  // {3, 4, 5}
+    s2[0] = 99       // modifies base[2] and s1[1]!
+    fmt.Println("base:", base)  // [1 2 99 4 5]
+    fmt.Println("s1:", s1)     // [2 99]
+
+    // Capacity growth: Go 1.18+ uses a smoother formula
+    s3 := make([]int, 0)
+    for i := 0; i &lt; 10; i++ {
+        prevCap := cap(s3)
+        s3 = append(s3, i)
+        if cap(s3) != prevCap {
+            fmt.Printf("len=%d cap grew: %d -&gt; %d\n", len(s3), prevCap, cap(s3))
+        }
+    }
+    // Typical output: 0->1->2->4->8->...
+
+    // Avoid memory leaks when sub-slicing
+    bigSlice := make([]int, 1000000)
+    // LEAK: keeps entire bigSlice alive
+    leaky := bigSlice[:3]
+    _ = leaky
+
+    // SAFE: copy only what you need
+    safe := make([]int, 3)
+    copy(safe, bigSlice[:3])
+
+    // BCE: Bound Check Elimination hint
+    func(s []int) {
+        // Single bounds check at entry, not in loop
+        _ = s[len(s)-1] // panic early if empty
+        for i := range s {
+            _ = s[i] // BCE eliminates check here
+        }
+    }(safe)
+
+    fmt.Println("leaky len:", len(leaky))
+    fmt.Println("safe:", safe)
+}
+</code></pre>
+
+  <div class="tip">
+    <strong>Tip:</strong> Use <span class="inline-code">s = s[:0]</span> to clear a slice without
+    freeing the backing array — ideal for reuse. Use <span class="inline-code">s = nil</span>
+    or <span class="inline-code">s = s[:0:0]</span> to allow GC to reclaim memory.
+  </div>
+
+  <h3 id="s1-8">1.8 Slice Operations</h3>
+<pre><code>package main
+
+import "fmt"
+
+// Stack using a slice
+type Stack[T any] struct {
+    data []T
+}
+
+func (s *Stack[T]) Push(v T) {
+    s.data = append(s.data, v)
+}
+
+func (s *Stack[T]) Pop() (T, bool) {
+    if len(s.data) == 0 {
+        var zero T
+        return zero, false
+    }
+    n := len(s.data) - 1
+    v := s.data[n]
+    s.data[n] = *new(T) // clear for GC
+    s.data = s.data[:n]
+    return v, true
+}
+
+// Queue using a slice
+type Queue[T any] struct {
+    data []T
+}
+
+func (q *Queue[T]) Enqueue(v T) {
+    q.data = append(q.data, v)
+}
+
+func (q *Queue[T]) Dequeue() (T, bool) {
+    if len(q.data) == 0 {
+        var zero T
+        return zero, false
+    }
+    v := q.data[0]
+    q.data[0] = *new(T)  // clear for GC
+    q.data = q.data[1:]
+    return v, true
+}
+
+func main() {
+    // Remove element from middle (order preserved)
+    s := []int{1, 2, 3, 4, 5}
+    i := 2 // remove index 2 (value 3)
+    copy(s[i:], s[i+1:])
+    s = s[:len(s)-1]
+    fmt.Println("Remove middle:", s) // [1 2 4 5]
+
+    // Remove element (order not important — faster)
+    s2 := []int{1, 2, 3, 4, 5}
+    j := 2
+    s2[j] = s2[len(s2)-1]
+    s2 = s2[:len(s2)-1]
+    fmt.Println("Swap remove:", s2) // [1 2 5 4]
+
+    // Insert at position
+    s3 := []int{1, 2, 4, 5}
+    pos, val := 2, 3
+    s3 = append(s3, 0)
+    copy(s3[pos+1:], s3[pos:])
+    s3[pos] = val
+    fmt.Println("Insert:", s3) // [1 2 3 4 5]
+
+    // Stack usage
+    st := Stack[int]{}
+    st.Push(1); st.Push(2); st.Push(3)
+    v, _ := st.Pop()
+    fmt.Println("Pop:", v) // 3
+
+    // Queue usage
+    q := Queue[string]{}
+    q.Enqueue("a"); q.Enqueue("b")
+    item, _ := q.Dequeue()
+    fmt.Println("Dequeue:", item) // "a"
+}
+</code></pre>
+
+  <div class="chapter-summary">
+    <h5>Key Takeaways — Chapter 1</h5>
+    <ul>
+      <li>Zero values eliminate uninitialized memory bugs by design</li>
+      <li>Two's complement: overflow wraps and is defined behavior in Go</li>
+      <li><code>unsafe.Pointer</code> is the only legal way to do pointer arithmetic; never store <code>uintptr</code> across a GC point</li>
+      <li>Arrays are value types — every assignment and function call copies the entire array</li>
+      <li>A slice is a 3-word header (ptr, len, cap) pointing into a shared backing array</li>
+      <li>Pre-allocate with <code>make([]T, 0, n)</code> to avoid re-allocations; use 3-index slices to prevent accidental writes</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 2 -->
+<!-- ============================================================ -->
+<div class="chapter" id="ch2">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 02</div>
+    <h2>Strings &amp; Maps</h2>
+  </div>
+
+  <h3 id="s2-1">2.1 Character Encodings</h3>
+  <p>Go source files are UTF-8. The <span class="inline-code">string</span> type stores arbitrary bytes,
+  but by convention they are UTF-8 encoded text.</p>
+
+  <table>
+    <tr><th>Encoding</th><th>Unit</th><th>Range</th><th>Notes</th></tr>
+    <tr><td>ASCII</td><td>1 byte</td><td>0–127</td><td>English only</td></tr>
+    <tr><td>UTF-8</td><td>1–4 bytes</td><td>Full Unicode</td><td>ASCII-compatible, Go default</td></tr>
+    <tr><td>UTF-16</td><td>2 or 4 bytes</td><td>Full Unicode</td><td>Used by Windows, JavaScript</td></tr>
+    <tr><td>UTF-32</td><td>4 bytes (fixed)</td><td>Full Unicode</td><td>Simple but memory-heavy</td></tr>
+  </table>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "unicode/utf8"
+)
+
+func main() {
+    s := "Hello, 世界! 🌍"
+
+    fmt.Println("byte length:", len(s))                    // bytes
+    fmt.Println("rune count:", utf8.RuneCountInString(s))  // characters
+
+    // Iterating by byte (wrong for multibyte chars)
+    fmt.Print("Bytes: ")
+    for i := 0; i &lt; len(s); i++ {
+        fmt.Printf("%02X ", s[i])
+    }
+    fmt.Println()
+
+    // Iterating by rune (correct)
+    fmt.Print("Runes: ")
+    for i, r := range s {
+        fmt.Printf("[%d]=%c(%U) ", i, r, r)
+    }
+    fmt.Println()
+
+    // UTF-8 encoding of a rune
+    r := '世'
+    fmt.Printf("'世' = U+%04X, encoded as %d bytes\n", r, utf8.RuneLen(r))
+
+    buf := make([]byte, 4)
+    n := utf8.EncodeRune(buf, r)
+    fmt.Printf("encoded: % X\n", buf[:n]) // E4 B8 96
+
+    // Decoding
+    decoded, size := utf8.DecodeRune(buf[:n])
+    fmt.Printf("decoded: %c (%d bytes)\n", decoded, size)
+}</code></pre>
+
+  <h3 id="s2-2">2.2 String Internals</h3>
+  <p>A Go string is just a struct <span class="inline-code">{ptr *byte, len int}</span>. Strings are
+  <strong>immutable</strong>: any modification creates a new allocation.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "reflect"
+    "strings"
+    "unsafe"
+)
+
+func main() {
+    s := "hello"
+
+    // String header: ptr + len
+    hdr := (*reflect.StringHeader)(unsafe.Pointer(&amp;s))
+    fmt.Printf("ptr=%x len=%d\n", hdr.Data, hdr.Len)
+
+    // String immutability: s[0] = 'H' would not compile
+
+    // String to []byte and back — copies the data
+    b := []byte(s)
+    b[0] = 'H'
+    fmt.Println(s)        // "hello" (unchanged)
+    fmt.Println(string(b)) // "Hello"
+
+    // Zero-copy conversion (unsafe) — READ-ONLY!
+    // This works only if you never modify the slice
+    unsafeBytes := unsafe.Slice(unsafe.StringData(s), len(s))
+    fmt.Printf("unsafe bytes: %v\n", unsafeBytes)
+
+    // strings.Builder: efficient concatenation
+    var sb strings.Builder
+    sb.Grow(64) // pre-allocate to avoid re-allocations
+    for i := 0; i &lt; 5; i++ {
+        fmt.Fprintf(&amp;sb, "item%d ", i)
+    }
+    result := sb.String()
+    fmt.Println(result)
+
+    // String comparison
+    a, b2 := "abc", "abd"
+    fmt.Println(a == b2)     // false
+    fmt.Println(a &lt; b2)      // true (lexicographic)
+    fmt.Println(a[0] == b2[0]) // true
+
+    // Substring — shares backing array, no copy!
+    original := "Hello, World!"
+    sub := original[7:12] // "World"
+    fmt.Println(sub)
+    // LEAK: original cannot be GC'd while sub is alive
+    // To avoid: sub = strings.Clone(sub)
+}</code></pre>
+
+  <h3 id="s2-3">2.3 Runes and String Manipulation</h3>
+<pre><code>package main
+
+import (
+    "fmt"
+    "strings"
+    "unicode"
+)
+
+func reverseString(s string) string {
+    runes := []rune(s)
+    for i, j := 0, len(runes)-1; i &lt; j; i, j = i+1, j-1 {
+        runes[i], runes[j] = runes[j], runes[i]
+    }
+    return string(runes)
+}
+
+func main() {
+    s := "Hello, 世界!"
+
+    // Convert to rune slice for manipulation
+    runes := []rune(s)
+    fmt.Println("char count:", len(runes)) // 10
+
+    // Reverse the string correctly
+    fmt.Println(reverseString(s)) // !界世 ,olleH
+
+    // strings package
+    fmt.Println(strings.ToUpper(s))
+    fmt.Println(strings.Contains(s, "世界"))
+    fmt.Println(strings.ReplaceAll(s, "世界", "World"))
+    fmt.Println(strings.Split("a,b,c", ",")) // [a b c]
+    fmt.Println(strings.TrimSpace("  hi  "))
+
+    // Unicode categories
+    for _, r := range s {
+        if unicode.IsLetter(r) {
+            fmt.Printf("%c is letter\n", r)
+        }
+    }
+
+    // String interning: identical string literals share memory
+    a := "hello"
+    b := "hello"
+    // These point to the same read-only data in binary
+    aHdr := (*[2]uintptr)(unsafe.Pointer(&amp;a))
+    bHdr := (*[2]uintptr)(unsafe.Pointer(&amp;b))
+    fmt.Println("same ptr:", aHdr[0] == bHdr[0]) // true
+}
+</code></pre>
+
+  <div class="key-concept">
+    <h5>SSO — Small String Optimization</h5>
+    <p>Languages like C++ store short strings (≤15 chars typically) inline in the string struct itself, avoiding a heap allocation. <strong>Go does not implement SSO</strong> for the general <span class="inline-code">string</span> type — even a 1-byte string requires a pointer to backing data. However, the compiler <em>does</em> optimise string constants: string literals are placed in the read-only data segment (<span class="inline-code">.rodata</span>) of the binary, so they never involve heap allocations at all.</p>
+    <p><strong>String interning</strong> is the practice of de-duplicating equal strings so they share one backing array. Go constant strings are automatically interned by the compiler (same literal → same pointer). Runtime strings created dynamically are <em>not</em> automatically interned. The <span class="inline-code">unique</span> package (Go 1.23+) provides <span class="inline-code">unique.Make[string]</span> for runtime interning. Manual interning via a <span class="inline-code">map[string]string</span> is also common in high-performance parsers to reduce GC pressure when many equal strings are alive simultaneously.</p>
+  </div>
+
+  <h3 id="s2-4">2.4 Hash Tables — Theory</h3>
+  <p>A hash table maps keys to values using a hash function. The key challenges are:
+  <strong>collision resolution</strong> and <strong>load factor</strong> management.</p>
+  <p><strong>Collision resolution strategies:</strong></p>
+  <ul>
+    <li><strong>Chaining (separate chaining)</strong>: each bucket holds a linked list of entries. Simple and handles high load factors gracefully, but has poor cache locality due to pointer chasing.</li>
+    <li><strong>Open addressing</strong>: on collision, probe for the next empty bucket. Variants: <em>linear probing</em> (next slot), <em>quadratic probing</em> (i²), <em>double hashing</em> (second hash function). Better cache locality but degrades fast at high load (clustering).</li>
+    <li><strong>Robin Hood hashing</strong>: open addressing where a richer entry (closer to its ideal position) yields to a poorer one, bounding the maximum probe length.</li>
+  </ul>
+  <p><strong>Load factor</strong> (entries / buckets) controls the trade-off between memory and speed. Go's map triggers rehashing at load ≈ 6.5 (pre-1.24 bucket design). Beyond the threshold, the number of buckets doubles and all entries are incrementally rehashed. Good hash functions for strings use AES instructions on modern CPUs (Go does this) to spread keys uniformly and resist algorithmic complexity attacks.</p>
+
+<pre><code>package main
+
+import "fmt"
+
+// Simple open-addressing hash table (linear probing)
+type Entry[K comparable, V any] struct {
+    key   K
+    value V
+    used  bool
+}
+
+type HashTable[K comparable, V any] struct {
+    buckets []Entry[K, V]
+    size    int
+    count   int
+}
+
+func NewHashTable[K comparable, V any](size int) *HashTable[K, V] {
+    return &amp;HashTable[K, V]{
+        buckets: make([]Entry[K, V], size),
+        size:    size,
+    }
+}
+
+func (h *HashTable[K, V]) hash(key K) int {
+    // In real Go maps, a more sophisticated hash is used
+    // This is just illustrative
+    return int(fmt.Sprintf("%v", key)[0]) % h.size
+}
+
+func (h *HashTable[K, V]) Set(key K, value V) {
+    idx := h.hash(key)
+    for i := 0; i &lt; h.size; i++ {
+        pos := (idx + i) % h.size
+        if !h.buckets[pos].used || h.buckets[pos].key == key {
+            h.buckets[pos] = Entry[K, V]{key: key, value: value, used: true}
+            h.count++
+            return
+        }
+    }
+    panic("hash table full")
+}
+
+func (h *HashTable[K, V]) Get(key K) (V, bool) {
+    idx := h.hash(key)
+    for i := 0; i &lt; h.size; i++ {
+        pos := (idx + i) % h.size
+        if !h.buckets[pos].used {
+            break
+        }
+        if h.buckets[pos].key == key {
+            return h.buckets[pos].value, true
+        }
+    }
+    var zero V
+    return zero, false
+}
+
+func main() {
+    ht := NewHashTable[string, int](16)
+    ht.Set("apple", 1)
+    ht.Set("banana", 2)
+
+    v, ok := ht.Get("apple")
+    fmt.Println(v, ok)  // 1 true
+
+    v, ok = ht.Get("cherry")
+    fmt.Println(v, ok)  // 0 false
+}
+</code></pre>
+
+  <h3 id="s2-5">2.5 Go Maps — Internals</h3>
+  <p>Go maps (pre-1.24) use a bucket-based hash table. Each bucket holds 8 key-value pairs plus
+  a top-hash array for fast comparison. Iteration order is randomized intentionally.</p>
+  <p><strong>Bucket layout (hmap/bmap)</strong>: the runtime represents a map as an <span class="inline-code">hmap</span> struct containing a pointer to a bucket array. Each bucket (<span class="inline-code">bmap</span>) stores:</p>
+  <ul>
+    <li>8 <strong>top-hash</strong> bytes — the upper 8 bits of each key's hash. Zero means empty; a special value marks deleted (tombstone). Before comparing full keys, the map checks the top-hash for a cheap 1-byte equality test, avoiding expensive key comparisons on misses.</li>
+    <li>8 keys (contiguous, same type), then 8 values (contiguous) — keys and values are stored separately to improve alignment and avoid padding waste for types like <span class="inline-code">map[int32]int64</span>.</li>
+    <li>An <strong>overflow pointer</strong> to a chained bucket when the 8-slot bucket is full.</li>
+  </ul>
+  <p><strong>Incremental rehashing</strong>: when the load factor is exceeded, Go allocates new buckets but evacuates only a constant number of old buckets per map write operation, spreading the rehash cost over time. A <span class="inline-code">nevacuate</span> counter tracks progress. During rehashing, reads check both old and new buckets. Maps in Go never shrink — <span class="inline-code">delete</span> marks entries as empty but the bucket array remains allocated. To reclaim memory, replace the map: <span class="inline-code">m = make(map[K]V)</span>.</p>
+  <p><strong>Swiss map (Go 1.24+)</strong>: Go 1.24 replaced the bucket design with a Swiss-table-inspired implementation. A Swiss table uses a flat array of <strong>control bytes</strong> (one per slot) storing either a 7-bit hash fingerprint or a special marker (empty/deleted). A SIMD instruction (<span class="inline-code">PSHUFB</span> / <span class="inline-code">VPCMPEQB</span> on x86) compares all 16 control bytes in a group simultaneously in a single CPU instruction, making lookups dramatically faster than probing one entry at a time. The control word approach also enables efficient SIMD-based iteration and better cache line utilization.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "maps"
+    "slices"
+)
+
+func main() {
+    // Map creation
+    m := map[string]int{
+        "alice": 30,
+        "bob":   25,
+        "carol": 28,
+    }
+
+    // Basic operations
+    m["dave"] = 35            // insert
+    m["alice"] = 31           // update
+    delete(m, "bob")          // delete
+    age, ok := m["bob"]       // check existence
+    fmt.Println(age, ok)      // 0 false
+
+    // Iteration (randomized order!)
+    for k, v := range m {
+        fmt.Printf("%s: %d\n", k, v)
+    }
+
+    // Ordered iteration (sort first)
+    keys := slices.Sorted(maps.Keys(m))
+    for _, k := range keys {
+        fmt.Printf("%s: %d\n", k, m[k])
+    }
+
+    // Map gotcha: modifying map during iteration
+    // Safe in Go (but added elements may or may not be visited)
+    m2 := map[int]int{1: 1, 2: 2, 3: 3}
+    for k := range m2 {
+        if k == 2 {
+            delete(m2, k) // safe
+        }
+    }
+    fmt.Println(m2)
+
+    // CANNOT use slices/maps as keys (not comparable)
+    // m3 := map[[]int]string{} // compile error
+
+    // Structs as keys (if all fields comparable)
+    type Point struct{ X, Y int }
+    grid := map[Point]string{
+        {0, 0}: "origin",
+        {1, 0}: "right",
+    }
+    fmt.Println(grid[Point{0, 0}]) // "origin"
+
+    // Memory leak: maps never shrink!
+    bigMap := make(map[int]int, 1000000)
+    for i := 0; i &lt; 1000000; i++ {
+        bigMap[i] = i
+    }
+    for i := 0; i &lt; 1000000; i++ {
+        delete(bigMap, i)
+    }
+    // bigMap still holds the allocated buckets!
+    // Fix: reassign: bigMap = make(map[int]int)
+
+    // clear() zeroes the map but keeps capacity (Go 1.21+)
+    clear(bigMap) // O(n), resets all entries
+
+    fmt.Println("map len:", len(m))
+}</code></pre>
+
+  <h3 id="s2-6">2.6 Map Patterns &amp; Concurrency</h3>
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+// Concurrent map using sync.Map
+func syncMapDemo() {
+    var sm sync.Map
+
+    sm.Store("key1", 100)
+    sm.Store("key2", 200)
+
+    v, ok := sm.Load("key1")
+    fmt.Println(v, ok) // 100 true
+
+    sm.Range(func(k, v any) bool {
+        fmt.Println(k, v)
+        return true // continue
+    })
+
+    actual, loaded := sm.LoadOrStore("key3", 300)
+    fmt.Println(actual, loaded) // 300 false (stored new)
+}
+
+// Concurrent map using RWMutex (better for read-heavy)
+type SafeMap[K comparable, V any] struct {
+    mu sync.RWMutex
+    m  map[K]V
+}
+
+func (s *SafeMap[K, V]) Set(k K, v V) {
+    s.mu.Lock()
+    defer s.mu.Unlock()
+    s.m[k] = v
+}
+
+func (s *SafeMap[K, V]) Get(k K) (V, bool) {
+    s.mu.RLock()
+    defer s.mu.RUnlock()
+    v, ok := s.m[k]
+    return v, ok
+}
+
+func main() {
+    syncMapDemo()
+
+    sm := &amp;SafeMap[string, int]{m: make(map[string]int)}
+    sm.Set("x", 42)
+    v, _ := sm.Get("x")
+    fmt.Println(v) // 42
+}
+</code></pre>
+
+  <div class="chapter-summary">
+    <h5>Key Takeaways — Chapter 2</h5>
+    <ul>
+      <li>Strings are immutable (ptr + len); <code>range</code> iterates runes, not bytes</li>
+      <li>Use <code>strings.Builder</code> with <code>Grow</code> for efficient string construction</li>
+      <li>Sub-strings share the backing array — clone with <code>strings.Clone</code> to allow GC</li>
+      <li>Go maps use bucket arrays (8 slots + tophash); load factor ~6.5 triggers rehash</li>
+      <li>Maps never shrink — replace the map to reclaim memory after mass deletion</li>
+      <li>Go 1.24 Swiss tables use SIMD to compare 16 control bytes in a single instruction</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 3 -->
+<!-- ============================================================ -->
+<div class="chapter" id="ch3">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 03</div>
+    <h2>Functions &amp; Structs</h2>
+  </div>
+
+  <h3 id="s3-1">3.1 Function Internals &amp; Calling Conventions</h3>
+  <p>Go uses a <strong>register-based calling convention</strong> since Go 1.17 (ABI internal). Up to 9 integer/pointer arguments are passed in registers (RAX, RBX, RCX, RDI, RSI, R8, R9, R10, R11 on AMD64); floating-point values use X0–X14. Return values use the same registers. Excess arguments spill to the stack. This eliminates the overhead of writing arguments to memory and reading them back that the old stack-based ABI required.</p>
+  <p><strong>Stack frame layout</strong> for a call <span class="inline-code">caller() → callee()</span>:</p>
+  <ul>
+    <li>Caller's frame: local variables, saved registers, spilled args</li>
+    <li>Return address (pushed by CALL instruction)</li>
+    <li>Callee's frame: saved BP (frame pointer), then local variables growing downward</li>
+  </ul>
+  <p><strong>Function inlining</strong>: the compiler replaces a call site with the function body, eliminating call overhead, enabling further optimisations (constant propagation, dead code elimination), and improving cache locality. Go inlines functions scoring below a budget (~80 AST nodes). You can inspect decisions with <span class="inline-code">go build -gcflags="-m"</span>. Reasons a function won't inline: contains <span class="inline-code">select</span>, <span class="inline-code">for range</span> over a channel, too large, calls itself (recursion, unless Go 1.21+ leaf recursion), uses <span class="inline-code">//go:noinline</span> pragma.</p>
+  <p><strong>RVO / NRVO</strong> (Return Value Optimization): the compiler may allocate the return value in the caller's frame and pass its address to the callee, avoiding a copy. Go performs NRVO for named return values — the named result variable is already allocated in the caller's frame. This is why named returns are sometimes used for large structs even when you don't need <span class="inline-code">defer</span> manipulation.</p>
+  <p><strong>Stack overflow</strong>: goroutines begin with an 8 KB stack. Before each function call (in the function prologue), the runtime checks if the stack pointer has crossed the <em>stack guard</em> boundary. If so, a larger contiguous stack is allocated (<em>stack copying</em>): all live pointers within the stack are updated to point into the new stack, then execution resumes. Stack-allocated values therefore cannot be safely held in <span class="inline-code">uintptr</span> across a growth point. Maximum goroutine stack is configurable (<span class="inline-code">runtime/debug.SetMaxStack</span>); the default is 1 GB on 64-bit systems.</p>
+
+<pre><code>package main
+
+import "fmt"
+
+// Named return values — useful for defer modifications
+func divide(a, b float64) (result float64, err error) {
+    defer func() {
+        if r := recover(); r != nil {
+            err = fmt.Errorf("recovered: %v", r)
+        }
+    }()
+
+    if b == 0 {
+        panic("division by zero")
+    }
+    result = a / b
+    return  // bare return uses named values
+}
+
+// Variadic parameters
+func sum(nums ...int) int {
+    total := 0
+    for _, n := range nums {
+        total += n
+    }
+    return total
+}
+
+// Functions as first-class values
+type Transform func(int) int
+
+func compose(f, g Transform) Transform {
+    return func(x int) int {
+        return f(g(x))
+    }
+}
+
+func main() {
+    // Function values
+    double := func(x int) int { return x * 2 }
+    addOne := func(x int) int { return x + 1 }
+
+    doubleAddOne := compose(addOne, double)
+    fmt.Println(doubleAddOne(5)) // (5*2)+1 = 11
+
+    // Variadic
+    fmt.Println(sum(1, 2, 3, 4, 5)) // 15
+    nums := []int{1, 2, 3}
+    fmt.Println(sum(nums...)) // spread slice
+
+    // Named returns
+    r, err := divide(10, 3)
+    fmt.Printf("%.4f %v\n", r, err)
+
+    r2, err2 := divide(10, 0)
+    fmt.Printf("%.4f %v\n", r2, err2) // 0 recovered: division by zero
+
+    // Inline hint: small functions get inlined by compiler
+    // go build -gcflags="-m" to see inlining decisions
+    inline := func(x, y int) int { return x + y }
+    fmt.Println(inline(3, 4)) // 7
+}
+</code></pre>
+
+  <h3 id="s3-2">3.2 Closures</h3>
+  <p>A closure is a function value that captures variables from its enclosing scope. Internally, the compiler creates a <strong>function + environment struct</strong>. The environment holds pointers to the captured variables (not copies). If a captured variable is only read and never written after capture, the compiler may promote it to a direct copy in the environment struct as an optimisation.</p>
+  <p>Because closures capture by reference, the classic loop variable pitfall arises: all closures created in a loop capture the same loop variable. In Go 1.22+, each <span class="inline-code">for</span> iteration creates a new copy of the loop variable automatically, fixing this pitfall. In earlier versions, the workaround is <span class="inline-code">i := i</span> inside the loop body to create a new local.</p>
+  <p>Closures that escape (e.g., returned, sent on a channel) cause their captured variables to escape to the heap. This is why tight inner loops avoiding allocations sometimes refactor closures out as named functions with explicit parameters.</p>
+
+<pre><code>package main
+
+import "fmt"
+
+// Counter using closure
+func makeCounter(start int) func() int {
+    count := start  // captured variable
+    return func() int {
+        count++
+        return count
+    }
+}
+
+// Closure captures by reference
+func closurePitfall() {
+    funcs := make([]func(), 5)
+    for i := 0; i &lt; 5; i++ {
+        i := i  // shadow i to capture by value!
+        funcs[i] = func() {
+            fmt.Println(i)
+        }
+    }
+    for _, f := range funcs {
+        f()  // 0 1 2 3 4 (correct)
+    }
+}
+
+// Currying
+func multiply(a int) func(int) int {
+    return func(b int) int {
+        return a * b
+    }
+}
+
+func main() {
+    c1 := makeCounter(0)
+    c2 := makeCounter(10)
+    fmt.Println(c1(), c1(), c1()) // 1 2 3
+    fmt.Println(c2(), c2())        // 11 12
+
+    closurePitfall()
+
+    triple := multiply(3)
+    fmt.Println(triple(5))  // 15
+    fmt.Println(triple(10)) // 30
+
+    // Memoization
+    memo := func() func(int) int {
+        cache := map[int]int{}
+        var fib func(int) int
+        fib = func(n int) int {
+            if n &lt;= 1 {
+                return n
+            }
+            if v, ok := cache[n]; ok {
+                return v
+            }
+            cache[n] = fib(n-1) + fib(n-2)
+            return cache[n]
+        }
+        return fib
+    }()
+    fmt.Println(memo(40)) // 102334155 (fast with memoization)
+}
+</code></pre>
+
+  <h3 id="s3-3">3.3 Defer</h3>
+  <p>The compiler uses three different mechanisms for <span class="inline-code">defer</span>, depending on context:</p>
+  <ul>
+    <li><strong>Open-coded defer</strong> (Go 1.14+): if there are ≤8 defers in a function with no loops, the compiler expands them inline at each return site — zero runtime overhead compared to a regular call. A bitmask in the stack frame records which defers are active.</li>
+    <li><strong>Stack-allocated defer</strong>: if the count or structure prevents open-coding but the defer record is known not to escape, the <span class="inline-code">_defer</span> struct is placed on the goroutine's stack.</li>
+    <li><strong>Heap-allocated defer</strong>: the fallback for defers inside loops or in dynamically-determined contexts. Each <span class="inline-code">defer</span> allocates a <span class="inline-code">_defer</span> record on the heap linked into a per-goroutine list. Expensive — avoid in hot paths.</li>
+  </ul>
+  <p>Defer argument evaluation is immediate (at the <span class="inline-code">defer</span> statement), but body execution is deferred. This means <span class="inline-code">defer fmt.Println(x)</span> captures the current value of <span class="inline-code">x</span>, while <span class="inline-code">defer func() { fmt.Println(x) }()</span> captures a reference to <span class="inline-code">x</span> and reads it at execution time.</p>
+
+<pre><code>package main
+
+import "fmt"
+
+func deferOrder() {
+    // Defers execute LIFO (stack order)
+    defer fmt.Println("first deferred - runs LAST")
+    defer fmt.Println("second deferred - runs MIDDLE")
+    defer fmt.Println("third deferred - runs FIRST")
+    fmt.Println("function body")
+}
+
+func deferLoop() {
+    // Defer in loop: all defers accumulate
+    for i := 0; i &lt; 3; i++ {
+        i := i // capture
+        defer fmt.Println("defer", i)
+    }
+}
+
+func deferModifyReturn() (result int) {
+    defer func() {
+        result *= 2  // modifies named return via closure
+    }()
+    return 5  // result = 5, then defer sets result = 10
+}
+
+func cleanup(name string) func() {
+    fmt.Printf("Opening %s\n", name)
+    return func() {
+        fmt.Printf("Closing %s\n", name)
+    }
+}
+
+func main() {
+    deferOrder()
+    // Output:
+    // function body
+    // third deferred - runs FIRST
+    // second deferred - runs MIDDLE
+    // first deferred - runs LAST
+
+    fmt.Println("---")
+
+    // Defer for cleanup (like try/finally)
+    defer cleanup("resource A")()
+
+    // Defer argument evaluated immediately
+    x := 10
+    defer fmt.Println("deferred x:", x) // prints 10, not later value
+    x = 20
+
+    fmt.Println("deferModifyReturn:", deferModifyReturn()) // 10
+
+    deferLoop()
+}
+</code></pre>
+
+  <h3 id="s3-4">3.4 Struct Internals &amp; Alignment</h3>
+  <p>Struct fields are aligned to their natural alignment. Padding bytes are inserted to satisfy
+  alignment requirements. Field ordering matters for memory efficiency.</p>
+  <p><strong>Alignment rules</strong>: a field of type <span class="inline-code">T</span> must start at an address that is a multiple of <span class="inline-code">unsafe.Alignof(T)</span>. For primitive types, alignment equals size (up to 8). The struct's own alignment is the maximum alignment of any of its fields. The struct's total size is padded to a multiple of its alignment so that arrays of structs are correctly aligned.</p>
+  <p><strong>False sharing</strong>: two goroutines writing to different fields of the same struct can cause cache line contention if those fields reside on the same 64-byte cache line. The fix is to add padding to place hot fields on separate lines — the <span class="inline-code">// padding [56]byte</span> or <span class="inline-code">_ [64 - unsafe.Sizeof(x)%64]byte</span> pattern. <span class="inline-code">sync/atomic</span> types like <span class="inline-code">atomic.Int64</span> are internally padded to a cache line.</p>
+  <p><strong>Comparable structs</strong>: a struct is comparable (usable as a map key, comparable with <span class="inline-code">==</span>) if all its fields are comparable. The comparison is field-by-field. Padding bytes are <em>not</em> guaranteed to be zero and are <em>not</em> included in the comparison, so two struct values that are logically equal will always compare equal even if their padding bits differ.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "unsafe"
+)
+
+// Poorly aligned struct — wastes memory
+type BadLayout struct {
+    A bool   // 1 byte + 7 padding
+    B int64  // 8 bytes
+    C bool   // 1 byte + 7 padding
+    D int64  // 8 bytes
+}  // total: 32 bytes!
+
+// Well aligned struct — no wasted padding
+type GoodLayout struct {
+    B int64  // 8 bytes
+    D int64  // 8 bytes
+    A bool   // 1 byte
+    C bool   // 1 byte + 6 padding
+}  // total: 18 -&gt; padded to 24 bytes
+
+// Empty struct: zero size, special address
+type Empty struct{}
+
+func main() {
+    fmt.Println("BadLayout:", unsafe.Sizeof(BadLayout{}))   // 32
+    fmt.Println("GoodLayout:", unsafe.Sizeof(GoodLayout{})) // 24
+
+    // Alignment of each field
+    bad := BadLayout{}
+    fmt.Printf("A offset: %d\n", unsafe.Offsetof(bad.A))  // 0
+    fmt.Printf("B offset: %d\n", unsafe.Offsetof(bad.B))  // 8
+    fmt.Printf("C offset: %d\n", unsafe.Offsetof(bad.C))  // 16
+    fmt.Printf("D offset: %d\n", unsafe.Offsetof(bad.D))  // 24
+
+    // Empty struct: used as set values, signals, etc.
+    seen := make(map[string]struct{})
+    seen["a"] = struct{}{}
+    _, ok := seen["a"]
+    fmt.Println("in set:", ok) // true
+    fmt.Println("empty size:", unsafe.Sizeof(Empty{})) // 0
+
+    // Struct embedding
+    type Animal struct {
+        Name string
+        Age  int
+    }
+    type Dog struct {
+        Animal         // embedded (not a named field)
+        Breed string
+    }
+
+    d := Dog{
+        Animal: Animal{Name: "Rex", Age: 3},
+        Breed:  "Labrador",
+    }
+    fmt.Println(d.Name)  // promoted from Animal
+    fmt.Println(d.Age)   // promoted from Animal
+    fmt.Println(d.Breed)
+}
+</code></pre>
+
+  <h3 id="s3-5">3.5 Methods &amp; Receivers</h3>
+<pre><code>package main
+
+import (
+    "fmt"
+    "math"
+)
+
+type Point struct {
+    X, Y float64
+}
+
+// Value receiver: receives a COPY
+func (p Point) Distance() float64 {
+    return math.Sqrt(p.X*p.X + p.Y*p.Y)
+}
+
+// Pointer receiver: can modify the struct
+func (p *Point) Scale(factor float64) {
+    p.X *= factor
+    p.Y *= factor
+}
+
+// String() implements fmt.Stringer
+func (p Point) String() string {
+    return fmt.Sprintf("(%.2f, %.2f)", p.X, p.Y)
+}
+
+// Functional Options pattern
+type Server struct {
+    host    string
+    port    int
+    timeout int
+}
+
+type Option func(*Server)
+
+func WithHost(h string) Option   { return func(s *Server) { s.host = h } }
+func WithPort(p int) Option      { return func(s *Server) { s.port = p } }
+func WithTimeout(t int) Option   { return func(s *Server) { s.timeout = t } }
+
+func NewServer(opts ...Option) *Server {
+    s := &amp;Server{host: "localhost", port: 8080, timeout: 30}
+    for _, opt := range opts {
+        opt(s)
+    }
+    return s
+}
+
+func main() {
+    p := Point{3, 4}
+    fmt.Println(p.Distance())  // 5.0
+    fmt.Println(p)             // (3.00, 4.00)
+
+    p.Scale(2)
+    fmt.Println(p)  // (6.00, 8.00)
+
+    // Method value
+    scale := p.Scale  // bound method
+    scale(0.5)
+    fmt.Println(p)  // (3.00, 4.00)
+
+    // Method expression
+    dist := Point.Distance  // unbound method
+    fmt.Println(dist(p))    // 5.0
+
+    // Functional options
+    srv := NewServer(
+        WithHost("example.com"),
+        WithPort(9090),
+    )
+    fmt.Printf("%+v\n", *srv)
+}
+</code></pre>
+
+  <h3 id="s3-6">3.6 Functional Patterns</h3>
+<pre><code>package main
+
+import "fmt"
+
+// Pipeline pattern
+func pipeline[T any](input []T, stages ...func([]T) []T) []T {
+    result := input
+    for _, stage := range stages {
+        result = stage(result)
+    }
+    return result
+}
+
+// Map, Filter, Reduce
+func Map[T, U any](s []T, f func(T) U) []U {
+    result := make([]U, len(s))
+    for i, v := range s {
+        result[i] = f(v)
+    }
+    return result
+}
+
+func Filter[T any](s []T, pred func(T) bool) []T {
+    var result []T
+    for _, v := range s {
+        if pred(v) {
+            result = append(result, v)
+        }
+    }
+    return result
+}
+
+func Reduce[T, U any](s []T, init U, f func(U, T) U) U {
+    acc := init
+    for _, v := range s {
+        acc = f(acc, v)
+    }
+    return acc
+}
+
+func main() {
+    nums := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+
+    result := Reduce(
+        Map(
+            Filter(nums, func(n int) bool { return n%2 == 0 }),
+            func(n int) int { return n * n },
+        ),
+        0,
+        func(acc, n int) int { return acc + n },
+    )
+    fmt.Println("Sum of even squares:", result) // 220
+
+    // Pipeline
+    doubled := pipeline(nums,
+        func(s []int) []int { return Filter(s, func(n int) bool { return n &gt; 3 }) },
+        func(s []int) []int { return Map(s, func(n int) int { return n * 2 }) },
+    )
+    fmt.Println("Pipeline result:", doubled) // [8 10 12 14 16 18 20]
+}
+</code></pre>
+
+  <div class="chapter-summary">
+    <h5>Key Takeaways — Chapter 3</h5>
+    <ul>
+      <li>Go 1.17+ uses register-based ABI — up to 9 args in registers, no stack write overhead</li>
+      <li>Inlining is controlled by a budget (~80 nodes); use <code>-gcflags="-m"</code> to inspect decisions</li>
+      <li>Defer has three modes: open-coded (zero cost), stack-allocated, heap-allocated (avoid in hot paths)</li>
+      <li>Closures capture by reference; in Go &lt;1.22 shadow loop variables with <code>i := i</code></li>
+      <li>Order struct fields large→small to minimize padding; largest alignment first</li>
+      <li>Pad hot concurrent fields to 64 bytes to prevent false sharing across CPU cache lines</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 4 -->
+<!-- ============================================================ -->
+<div class="chapter" id="ch4">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 04</div>
+    <h2>Interfaces &amp; Error Handling</h2>
+  </div>
+
+  <h3 id="s4-1">4.1 Interface Internals</h3>
+  <p>A non-empty interface is represented as two pointers: <strong>itab</strong> (type + method table)
+  and <strong>data</strong> (pointer to value). An empty interface (<span class="inline-code">any</span>)
+  stores a type pointer and a data pointer.</p>
+  <p><strong>itab structure</strong>: an <span class="inline-code">itab</span> is a runtime-generated struct containing a pointer to the concrete type's <span class="inline-code">_type</span> descriptor, a pointer to the interface type's descriptor, a hash of the concrete type (for fast type switches), and a <em>fun</em> array — the virtual method table (vtable). Each slot in <em>fun</em> holds the address of the concrete method. The <span class="inline-code">itab</span> is cached globally in a hash table keyed by (interface type, concrete type); subsequent assignments of the same pair reuse the cached itab without recomputing it.</p>
+  <p><strong>Data pointer boxing</strong>: if the concrete value fits in a pointer (i.e., it <em>is</em> a pointer, or is ≤ pointer-sized and scalar), it may be stored directly in the data word. Otherwise, the value is heap-allocated and the data word holds the allocation's address. This is why assigning a small struct to an interface can cause an allocation. The compiler applies several escape-analysis based optimisations to avoid this when the interface doesn't outlive the function.</p>
+  <p><strong>Dynamic dispatch cost</strong>: a method call through an interface requires loading the itab pointer, then following the fun array to the method address — typically two pointer dereferences and an indirect call. Modern CPUs' branch predictors handle this well when the concrete type is monomorphic (always the same type), reducing the cost to near-zero. Polymorphic call sites (many different concrete types) cause branch mispredictions and can be measurably slower. <strong>Devirtualization</strong>: the compiler can sometimes prove at compile time which concrete type is behind an interface and replace the indirect call with a direct one, enabling further inlining.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "unsafe"
+)
+
+// Interface internal layout (simplified):
+// type iface struct {
+//     tab  *itab          // type info + method table
+//     data unsafe.Pointer // pointer to actual data
+// }
+// type eface struct {     // empty interface (any)
+//     _type *_type
+//     data  unsafe.Pointer
+// }
+
+type Animal interface {
+    Sound() string
+    Name() string
+}
+
+type Dog struct{ name string }
+func (d Dog) Sound() string { return "Woof" }
+func (d Dog) Name() string  { return d.name }
+
+type Cat struct{ name string }
+func (c Cat) Sound() string { return "Meow" }
+func (c Cat) Name() string  { return c.name }
+
+func describe(a Animal) {
+    fmt.Printf("%T: %s says %s\n", a, a.Name(), a.Sound())
+}
+
+func main() {
+    var a Animal
+    fmt.Println("nil interface:", a == nil) // true
+
+    a = Dog{name: "Rex"}
+    fmt.Println("non-nil:", a == nil) // false
+    describe(a)
+
+    // Interface containing nil pointer is NOT nil!
+    var d *Dog = nil
+    a = d  // a is non-nil (has type *Dog), but data is nil
+    fmt.Println("interface with nil pointer:", a == nil) // FALSE!
+    // This is a common gotcha
+
+    // Type assertion
+    if dog, ok := a.(*Dog); ok {
+        fmt.Println("is Dog:", dog) // dog is nil
+    }
+
+    // Type switch
+    animals := []Animal{Dog{"Rex"}, Cat{"Whiskers"}, Dog{"Buddy"}}
+    for _, animal := range animals {
+        switch v := animal.(type) {
+        case Dog:
+            fmt.Println("Dog:", v.name)
+        case Cat:
+            fmt.Println("Cat:", v.name)
+        default:
+            fmt.Println("Unknown:", v)
+        }
+    }
+
+    // Interface size
+    var iface Animal = Dog{"test"}
+    fmt.Println("interface size:", unsafe.Sizeof(iface)) // 16 (2 pointers)
+
+    // any (empty interface)
+    var any1 any = 42
+    var any2 any = "hello"
+    fmt.Println(any1, any2)
+    fmt.Println("any size:", unsafe.Sizeof(any1)) // 16
+}
+</code></pre>
+
+  <h3 id="s4-2">4.2 Interface Patterns</h3>
+<pre><code>package main
+
+import (
+    "fmt"
+    "io"
+    "strings"
+)
+
+// Interface composition
+type Reader interface {
+    Read(p []byte) (n int, err error)
+}
+type Writer interface {
+    Write(p []byte) (n int, err error)
+}
+type ReadWriter interface {
+    Reader
+    Writer
+}
+
+// Interface guard: compile-time check
+var _ io.Reader = (*strings.Reader)(nil)
+var _ fmt.Stringer = (*strings.Builder)(nil)
+
+// Dependency inversion: accept interfaces, return structs
+type Logger interface {
+    Log(msg string)
+}
+
+type ConsoleLogger struct{}
+func (c ConsoleLogger) Log(msg string) { fmt.Println("[LOG]", msg) }
+
+type Service struct {
+    logger Logger // depend on interface
+}
+
+func NewService(l Logger) *Service {
+    return &amp;Service{logger: l}
+}
+
+func (s *Service) DoWork() {
+    s.logger.Log("doing work")
+}
+
+// Polymorphism via interface
+type Shape interface {
+    Area() float64
+    Perimeter() float64
+}
+
+type Rectangle struct{ W, H float64 }
+func (r Rectangle) Area() float64      { return r.W * r.H }
+func (r Rectangle) Perimeter() float64 { return 2 * (r.W + r.H) }
+
+type Circle struct{ R float64 }
+func (c Circle) Area() float64      { return 3.14159 * c.R * c.R }
+func (c Circle) Perimeter() float64 { return 2 * 3.14159 * c.R }
+
+func totalArea(shapes []Shape) float64 {
+    total := 0.0
+    for _, s := range shapes {
+        total += s.Area()
+    }
+    return total
+}
+
+func main() {
+    svc := NewService(ConsoleLogger{})
+    svc.DoWork()
+
+    shapes := []Shape{
+        Rectangle{W: 5, H: 3},
+        Circle{R: 4},
+        Rectangle{W: 2, H: 2},
+    }
+    fmt.Printf("Total area: %.2f\n", totalArea(shapes))
+
+    // Reading from strings using io.Reader interface
+    r := strings.NewReader("Hello, World!")
+    buf := make([]byte, 5)
+    for {
+        n, err := r.Read(buf)
+        if err == io.EOF {
+            break
+        }
+        fmt.Printf("Read %d bytes: %q\n", n, buf[:n])
+    }
+}
+</code></pre>
+
+  <h3 id="s4-3">4.3 Error Handling</h3>
+  <p>Go treats errors as regular values of type <span class="inline-code">error</span> (an interface with a single <span class="inline-code">Error() string</span> method). This is a deliberate design choice: error handling is explicit and visible at call sites, unlike exceptions which can propagate invisibly through the call stack.</p>
+  <p><strong>Error wrapping chain</strong> (Go 1.13+): <span class="inline-code">fmt.Errorf("…: %w", err)</span> stores the original error inside the new error. <span class="inline-code">errors.Is</span> walks the chain calling <span class="inline-code">Unwrap()</span> (or <span class="inline-code">Unwrap() []error</span> for multi-errors) until it finds a match. <span class="inline-code">errors.As</span> does the same but type-asserts each element. This preserves context while allowing callers to check for specific sentinel errors deep in the chain.</p>
+  <p><strong>Sentinel errors</strong> (package-level <span class="inline-code">var</span>) are compared by identity (<span class="inline-code">==</span> or <span class="inline-code">errors.Is</span>). They should not carry additional data. <strong>Error types</strong> (structs implementing <span class="inline-code">error</span>) are compared by type (<span class="inline-code">errors.As</span>) and carry structured context. Use the <span class="inline-code">var _ error = (*MyError)(nil)</span> compile-time guard to verify your type implements the interface.</p>
+  <p><strong>Error handling anti-patterns</strong>: wrapping an error multiple times with the same message creates a confusing chain. Ignoring errors (<span class="inline-code">_ = f()</span>) is sometimes correct (e.g., <span class="inline-code">fmt.Fprintf</span> to stderr) but should be documented. Returning a <span class="inline-code">nil</span> concrete pointer as an <span class="inline-code">error</span> interface is the classic non-nil nil error bug — always return a plain <span class="inline-code">nil</span> untyped, not a typed nil.</p>
+
+<pre><code>package main
+
+import (
+    "errors"
+    "fmt"
+)
+
+// Sentinel errors
+var (
+    ErrNotFound   = errors.New("not found")
+    ErrPermission = errors.New("permission denied")
+)
+
+// Custom error type
+type ValidationError struct {
+    Field   string
+    Message string
+}
+
+func (e *ValidationError) Error() string {
+    return fmt.Sprintf("validation error on %s: %s", e.Field, e.Message)
+}
+
+// Wrapping errors preserves the chain
+func findUser(id int) error {
+    if id == 0 {
+        return fmt.Errorf("findUser(%d): %w", id, ErrNotFound)
+    }
+    if id &lt; 0 {
+        return fmt.Errorf("findUser(%d): %w", id, ErrPermission)
+    }
+    return nil
+}
+
+func processUser(id int) error {
+    if err := findUser(id); err != nil {
+        return fmt.Errorf("processUser: %w", err) // wrap again
+    }
+    return nil
+}
+
+func main() {
+    // errors.Is: checks entire error chain
+    err := processUser(0)
+    fmt.Println(err)
+    fmt.Println("Is NotFound:", errors.Is(err, ErrNotFound)) // true
+
+    err2 := processUser(-1)
+    fmt.Println("Is Permission:", errors.Is(err2, ErrPermission)) // true
+
+    // errors.As: extract specific error type from chain
+    valErr := fmt.Errorf("outer: %w", &amp;ValidationError{
+        Field:   "email",
+        Message: "invalid format",
+    })
+
+    var ve *ValidationError
+    if errors.As(valErr, &amp;ve) {
+        fmt.Printf("Validation on field: %s\n", ve.Field) // email
+    }
+
+    // Multiple errors (Go 1.20+)
+    err3 := errors.Join(ErrNotFound, ErrPermission)
+    fmt.Println("Is NotFound:", errors.Is(err3, ErrNotFound))   // true
+    fmt.Println("Is Permission:", errors.Is(err3, ErrPermission)) // true
+
+    // Don't ignore errors!
+    if err := processUser(1); err != nil {
+        fmt.Println("Error:", err)
+    } else {
+        fmt.Println("Success!")
+    }
+}
+</code></pre>
+
+  <h3 id="s4-4">4.4 Panics &amp; Recovery</h3>
+  <p>A <span class="inline-code">panic</span> unwinds the call stack of the current goroutine, running deferred functions along the way. It can be intercepted by <span class="inline-code">recover()</span> inside a deferred function. After recovery, execution continues normally after the deferred function returns — the panicking function does <em>not</em> resume.</p>
+  <p><strong>Panic vs fatal error</strong>: some runtime errors call <span class="inline-code">runtime.throw</span> (a non-recoverable abort) rather than panic. These include: concurrent map read/write, stack overflow, out-of-memory, nil pointer dereference in certain runtime paths, and <span class="inline-code">runtime.Goexit</span> called from <span class="inline-code">main</span>. These terminate the entire program regardless of any <span class="inline-code">recover()</span> calls.</p>
+  <p><strong>Panic unwinding mechanism</strong>: a <span class="inline-code">panic</span> stores a <span class="inline-code">_panic</span> struct on the goroutine's panic list. During stack unwinding, the runtime scans defer records and calls them. If one calls <span class="inline-code">recover()</span>, the panic is marked recovered and the unwind stops. The goroutine resumes after the deferred function. Multiple panics can be nested (panic during a defer), forming a chain — all are reported if none is recovered.</p>
+  <p><strong>os.Exit vs panic</strong>: <span class="inline-code">os.Exit(code)</span> terminates the process immediately — no defers run, no cleanup. Use it only in <span class="inline-code">main</span> or CLI tools where process exit is expected. In libraries, always return errors or panic; never call <span class="inline-code">os.Exit</span>.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "runtime/debug"
+)
+
+// Safe wrapper: convert panics to errors
+func safeCall(f func()) (err error) {
+    defer func() {
+        if r := recover(); r != nil {
+            err = fmt.Errorf("panic: %v", r)
+        }
+    }()
+    f()
+    return nil
+}
+
+// Stack trace on panic
+func safeCallWithTrace(f func()) (err error) {
+    defer func() {
+        if r := recover(); r != nil {
+            stack := debug.Stack()
+            err = fmt.Errorf("panic: %v\n%s", r, stack)
+        }
+    }()
+    f()
+    return nil
+}
+
+func mightPanic(n int) {
+    if n == 0 {
+        panic("n cannot be zero")
+    }
+    fmt.Println(10 / n)
+}
+
+func main() {
+    // Panic and recover
+    err := safeCall(func() {
+        mightPanic(0)
+    })
+    fmt.Println("Caught:", err)
+
+    // Normal case
+    err = safeCall(func() {
+        mightPanic(5)
+    })
+    fmt.Println("No error:", err)
+
+    // Panic vs fatal error
+    // panic: recoverable, runs defers
+    // runtime.throw: unrecoverable (like OOM, concurrent map write)
+    // os.Exit: immediate, no defers run
+
+    // Re-panicking
+    defer func() {
+        if r := recover(); r != nil {
+            fmt.Println("Recovered:", r)
+            // Uncomment to re-panic: panic(r)
+        }
+    }()
+
+    // panic with a value
+    defer func() {
+        if r := recover(); r != nil {
+            switch v := r.(type) {
+            case string:
+                fmt.Println("String panic:", v)
+            case error:
+                fmt.Println("Error panic:", v)
+            default:
+                fmt.Printf("Unknown panic: %T %v\n", v, v)
+            }
+        }
+    }()
+
+    panic("something went wrong")
+}
+</code></pre>
+
+  <div class="chapter-summary">
+    <h5>Key Takeaways — Chapter 4</h5>
+    <ul>
+      <li>An interface is (itab ptr, data ptr); itab is cached globally by (iface type, concrete type)</li>
+      <li>A non-nil interface holding a nil pointer is NOT nil — a common source of bugs</li>
+      <li>Wrap errors with <code>%w</code>; use <code>errors.Is</code> / <code>errors.As</code> to inspect the chain</li>
+      <li>Never return a typed nil as <code>error</code>; always return an untyped <code>nil</code></li>
+      <li><code>panic</code> unwinds the stack running defers; <code>runtime.throw</code> is unrecoverable</li>
+      <li><code>os.Exit</code> skips all defers — never call it from libraries, only from <code>main</code></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 5 -->
+<!-- ============================================================ -->
+<div class="chapter" id="ch5">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 05</div>
+    <h2>Generics, Reflection, Iterators &amp; Memory</h2>
+  </div>
+
+  <h3 id="s5-1">5.1 Generics</h3>
+  <p>Go 1.18 introduced generics with type parameters. The compiler instantiates specialized versions
+  (monomorphization) or uses a GC shape approach for similar types.</p>
+  <p><strong>GCShape stenciling</strong>: Go generics use a hybrid approach. Rather than fully monomorphizing (one binary copy per type combination, like C++ templates), Go groups types by their <em>GC shape</em> — roughly: pointer types share one stencil, each distinct non-pointer type gets its own. For pointer-shaped types, a single generated function works for all (<span class="inline-code">*T</span>, slices, maps, channels, functions, interfaces), with a dictionary argument passed implicitly at call sites to handle type-specific operations (equality, hashing, method dispatch). This keeps binary size bounded at the cost of a slight indirect call overhead compared to full monomorphization.</p>
+  <p><strong>Type constraints</strong> are interfaces used as bounds. A constraint can include type terms (<span class="inline-code">~int | ~string</span>) specifying the set of allowed underlying types, enabling operators (<span class="inline-code">+</span>, <span class="inline-code">&lt;</span>) to be used inside the generic function. The tilde (<span class="inline-code">~</span>) prefix means "any type whose underlying type is this" — so <span class="inline-code">type Celsius float64</span> satisfies <span class="inline-code">~float64</span>.</p>
+  <p><strong>Type inference</strong>: the compiler infers type arguments from function arguments in most cases, making explicit type arguments like <span class="inline-code">Min[int](3, 5)</span> optional. Inference works for functions but not for generic types — <span class="inline-code">NewSet[int]()</span> requires the explicit argument. Current limitations: no inference for method type parameters, no higher-kinded types, no variadic type parameters in the initial design (some added later).</p>
+
+<pre><code>package main
+
+import (
+    "cmp"
+    "fmt"
+)
+
+// Generic function with constraint
+func Min[T cmp.Ordered](a, b T) T {
+    if a &lt; b {
+        return a
+    }
+    return b
+}
+
+// Generic data structure
+type Set[T comparable] struct {
+    items map[T]struct{}
+}
+
+func NewSet[T comparable]() *Set[T] {
+    return &amp;Set[T]{items: make(map[T]struct{})}
+}
+
+func (s *Set[T]) Add(v T)      { s.items[v] = struct{}{} }
+func (s *Set[T]) Has(v T) bool { _, ok := s.items[v]; return ok }
+func (s *Set[T]) Len() int     { return len(s.items) }
+
+func (s *Set[T]) Union(other *Set[T]) *Set[T] {
+    result := NewSet[T]()
+    for k := range s.items {
+        result.Add(k)
+    }
+    for k := range other.items {
+        result.Add(k)
+    }
+    return result
+}
+
+// Type constraint with multiple types
+type Number interface {
+    ~int | ~int8 | ~int16 | ~int32 | ~int64 |
+        ~uint | ~uint8 | ~float32 | ~float64
+}
+
+func Sum[T Number](nums []T) T {
+    var total T
+    for _, n := range nums {
+        total += n
+    }
+    return total
+}
+
+// Generic result type (like Rust Result or Haskell Either)
+type Result[T any] struct {
+    value T
+    err   error
+}
+
+func Ok[T any](v T) Result[T]      { return Result[T]{value: v} }
+func Err[T any](e error) Result[T] { return Result[T]{err: e} }
+
+func (r Result[T]) Unwrap() (T, error) { return r.value, r.err }
+
+func main() {
+    fmt.Println(Min(3, 5))       // 3
+    fmt.Println(Min(3.14, 2.71)) // 2.71
+    fmt.Println(Min("abc", "abd")) // abc
+
+    s1 := NewSet[int]()
+    s1.Add(1); s1.Add(2); s1.Add(3)
+
+    s2 := NewSet[int]()
+    s2.Add(3); s2.Add(4); s2.Add(5)
+
+    union := s1.Union(s2)
+    fmt.Println("Union len:", union.Len()) // 5
+
+    fmt.Println(Sum([]int{1, 2, 3, 4, 5}))       // 15
+    fmt.Println(Sum([]float64{1.1, 2.2, 3.3}))   // 6.6
+
+    r := Ok(42)
+    v, err := r.Unwrap()
+    fmt.Println(v, err) // 42 nil
+}
+</code></pre>
+
+  <h3 id="s5-2">5.2 Reflection</h3>
+  <p>Reflection in Go is built on two types: <span class="inline-code">reflect.Type</span> (describing the type of a value) and <span class="inline-code">reflect.Value</span> (holding and manipulating a value). Both are obtained from a concrete value boxed into an <span class="inline-code">any</span> interface. Reflection is primarily used by serialization libraries (encoding/json, encoding/gob), ORMs, dependency injection frameworks, and test helpers.</p>
+  <p><strong>Settability</strong>: a <span class="inline-code">reflect.Value</span> is settable only if it was obtained from a pointer and represents an addressable location. <span class="inline-code">reflect.ValueOf(x)</span> returns a copy — not settable. <span class="inline-code">reflect.ValueOf(&amp;x).Elem()</span> is settable. Unexported struct fields are addressable but not settable via normal reflection — only <span class="inline-code">unsafe.Pointer</span> tricks can modify them.</p>
+  <p><strong>Performance</strong>: reflection is significantly slower than direct Go code because every operation goes through the <span class="inline-code">reflect</span> package's dynamic dispatch layer. In benchmarks, <span class="inline-code">reflect.Value.Field(i).Int()</span> is ~10–50× slower than direct field access. For hot paths, code generation (<span class="inline-code">go generate</span>) or generics are preferable. Libraries like <span class="inline-code">encoding/json</span> cache reflection metadata per type to amortize the cost.</p>
+  <p><strong>Kind vs Type</strong>: <span class="inline-code">reflect.Kind</span> is the underlying representation category (Struct, Slice, Int32, Ptr, …). <span class="inline-code">reflect.Type</span> is the full named type. <span class="inline-code">type Celsius float64</span> has Kind <span class="inline-code">Float64</span> but Type name <span class="inline-code">Celsius</span>. Always switch on Kind when writing generic reflection code, not on Type name strings.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "reflect"
+)
+
+type User struct {
+    Name  string `json:"name" validate:"required"`
+    Email string `json:"email" validate:"email"`
+    Age   int    `json:"age"  validate:"min=0,max=120"`
+}
+
+// Simple struct inspector using reflection
+func inspectStruct(v any) {
+    t := reflect.TypeOf(v)
+    val := reflect.ValueOf(v)
+
+    if t.Kind() == reflect.Ptr {
+        t = t.Elem()
+        val = val.Elem()
+    }
+
+    fmt.Printf("Type: %s\n", t.Name())
+    for i := 0; i &lt; t.NumField(); i++ {
+        field := t.Field(i)
+        value := val.Field(i)
+        jsonTag := field.Tag.Get("json")
+        validateTag := field.Tag.Get("validate")
+        fmt.Printf("  %s (%s) = %v [json:%s, validate:%s]\n",
+            field.Name, field.Type, value, jsonTag, validateTag)
+    }
+}
+
+// Simple validator using reflection
+func validate(v any) []string {
+    var errs []string
+    t := reflect.TypeOf(v)
+    val := reflect.ValueOf(v)
+
+    for i := 0; i &lt; t.NumField(); i++ {
+        field := t.Field(i)
+        value := val.Field(i)
+        tag := field.Tag.Get("validate")
+
+        if tag == "required" &amp;&amp; value.String() == "" {
+            errs = append(errs, field.Name+" is required")
+        }
+    }
+    return errs
+}
+
+// Deep copy using reflection
+func deepCopy(src any) any {
+    srcVal := reflect.ValueOf(src)
+    dstVal := reflect.New(srcVal.Type()).Elem()
+    dstVal.Set(srcVal)
+    return dstVal.Interface()
+}
+
+func main() {
+    u := User{Name: "Alice", Email: "alice@example.com", Age: 30}
+    inspectStruct(u)
+
+    errs := validate(User{Email: "test@test.com"})
+    fmt.Println("Errors:", errs)
+
+    copy := deepCopy(u).(User)
+    fmt.Println("Copy:", copy)
+
+    // Dynamic function call
+    fn := reflect.ValueOf(fmt.Sprintf)
+    args := []reflect.Value{
+        reflect.ValueOf("Hello, %s! You are %d years old."),
+        reflect.ValueOf("Bob"),
+        reflect.ValueOf(25),
+    }
+    results := fn.Call(args)
+    fmt.Println(results[0].String())
+
+    // Reflect on slice
+    s := []int{1, 2, 3, 4, 5}
+    sliceVal := reflect.ValueOf(s)
+    fmt.Printf("Kind: %s, Len: %d\n", sliceVal.Kind(), sliceVal.Len())
+    for i := 0; i &lt; sliceVal.Len(); i++ {
+        fmt.Printf("s[%d] = %d\n", i, sliceVal.Index(i).Int())
+    }
+}
+</code></pre>
+
+  <h3 id="s5-3">5.3 Iterators (Go 1.23+)</h3>
+  <p>Go 1.22 added <strong>range-over-function</strong> as an experimental feature; it was stabilized in Go 1.23. A function with signature <span class="inline-code">func(yield func(V) bool)</span> can be used directly in a <span class="inline-code">for … range</span> loop. The compiler desugars the loop into a call to the iterator function, passing the loop body as the <span class="inline-code">yield</span> callback.</p>
+  <p><strong>Push vs Pull iterators</strong>:</p>
+  <ul>
+    <li><strong>Push iterator</strong> (<span class="inline-code">iter.Seq[V]</span>): the iterator calls <span class="inline-code">yield</span> for each element. The caller has no control between yields except returning <span class="inline-code">false</span> to stop. Simpler to implement, efficient for simple transformations.</li>
+    <li><strong>Pull iterator</strong> (<span class="inline-code">iter.Pull[V]</span>): wraps a push iterator into a <span class="inline-code">next()</span> function that returns one element at a time. The caller controls the pacing. Implemented using two goroutines or a coroutine-like mechanism (Go uses goroutines with channel synchronization internally for <span class="inline-code">iter.Pull</span>). Useful for zipping two iterators or consuming partial results.</li>
+  </ul>
+  <p><strong>Coroutines in Go</strong>: Go does not have built-in coroutine syntax (unlike Python's <span class="inline-code">yield</span>). The iterator design deliberately uses regular functions and closures rather than coroutines to avoid the complexity of stackful coroutines. The runtime overhead of <span class="inline-code">iter.Pull</span> (goroutine + channels) is non-trivial — prefer push iterators where possible.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "iter"
+    "slices"
+)
+
+// Yield-based iterator (push iterator)
+func Fibonacci() iter.Seq[int] {
+    return func(yield func(int) bool) {
+        a, b := 0, 1
+        for {
+            if !yield(a) {
+                return
+            }
+            a, b = b, a+b
+        }
+    }
+}
+
+// Iterator with index
+func Enumerate[T any](s []T) iter.Seq2[int, T] {
+    return func(yield func(int, T) bool) {
+        for i, v := range s {
+            if !yield(i, v) {
+                return
+            }
+        }
+    }
+}
+
+// Take first N elements from iterator
+func Take[T any](n int, seq iter.Seq[T]) iter.Seq[T] {
+    return func(yield func(T) bool) {
+        count := 0
+        for v := range seq {
+            if count >= n {
+                return
+            }
+            if !yield(v) {
+                return
+            }
+            count++
+        }
+    }
+}
+
+// Filter iterator
+func FilterSeq[T any](seq iter.Seq[T], pred func(T) bool) iter.Seq[T] {
+    return func(yield func(T) bool) {
+        for v := range seq {
+            if pred(v) {
+                if !yield(v) {
+                    return
+                }
+            }
+        }
+    }
+}
+
+func main() {
+    // Use fibonacci iterator with range
+    fmt.Print("First 10 Fibonacci: ")
+    for n := range Take(10, Fibonacci()) {
+        fmt.Printf("%d ", n)
+    }
+    fmt.Println()
+
+    // Collect iterator to slice
+    fibs := slices.Collect(Take(8, Fibonacci()))
+    fmt.Println("Fibonacci slice:", fibs)
+
+    // Filter even fibonacci numbers
+    evenFibs := slices.Collect(
+        Take(8, FilterSeq(Fibonacci(), func(n int) bool { return n%2 == 0 })),
+    )
+    fmt.Println("Even fibonacci:", evenFibs)
+
+    // Enumerate
+    words := []string{"hello", "world", "go"}
+    for i, w := range Enumerate(words) {
+        fmt.Printf("[%d] %s\n", i, w)
+    }
+}
+</code></pre>
+
+  <h3 id="s5-4">5.4 Memory Allocation &amp; Escape Analysis</h3>
+  <p><strong>Go's allocator — tcmalloc-inspired</strong>: Go's runtime allocator is derived from Google's <em>tcmalloc</em> (Thread-Caching Malloc). It manages memory in a three-tier hierarchy:</p>
+  <ul>
+    <li><strong>mcache</strong>: per-P (per-logical-processor) cache of free memory spans for each size class. Allocations from mcache require no locks — they are satisfied by the local P without any synchronization.</li>
+    <li><strong>mcentral</strong>: per-size-class central list of spans shared by all P's. Protected by a mutex per size class. When mcache runs out, it replenishes from mcentral.</li>
+    <li><strong>mheap</strong>: the global heap managing the OS virtual memory reservation in large chunks (arenas of 64 MB on 64-bit). When mcentral needs more memory, it requests spans from mheap. mheap requests new virtual memory from the OS via <span class="inline-code">mmap</span>.</li>
+  </ul>
+  <p><strong>Size classes</strong>: Go has ~70 size classes from 8 bytes up to 32 KB. Each <span class="inline-code">mspan</span> is a contiguous run of pages holding objects of a single size class. Small objects (&lt;32 KB) go through this system. Large objects (&gt;32 KB) are allocated directly from the heap as dedicated spans.</p>
+  <p><strong>Escape analysis</strong> is an inter-procedural compiler analysis that determines, for each allocation, whether the variable's lifetime is bounded by the function's stack frame. If yes, stack-allocate (free at return); if not, heap-allocate (freed by GC). The analysis is conservative — when uncertain, it escapes to heap. Key escape triggers: address taken and returned, stored in an interface, stored in a heap struct, captured by a closure that escapes, passed to a function that may store it.</p>
+  <p><strong>sync.Pool</strong> stores objects in per-P local caches, falling back to a shared cache, then to the <span class="inline-code">New</span> function. Pool objects may be reclaimed by the GC at any time (specifically, at the start of each GC cycle, pool contents are cleared). This makes Pool ideal for transient allocations (buffers, scratch space) but unsuitable for caching objects that must live beyond a GC cycle. Use <span class="inline-code">sync.Pool</span> when profiling shows high allocation pressure in hot paths.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+// Escape analysis: when does a value escape to heap?
+
+// Does NOT escape: compiler can prove lifetime is bounded
+func noEscape() int {
+    x := 42  // allocated on stack
+    return x  // x is copied, not pointer
+}
+
+// DOES escape: address taken and returned
+func escapes() *int {
+    x := 42  // escapes to heap
+    return &amp;x
+}
+
+// DOES escape: stored in interface
+func escapesViaInterface() any {
+    x := 42  // escapes to heap
+    return x
+}
+
+// sync.Pool: reuse allocations to reduce GC pressure
+var bufPool = sync.Pool{
+    New: func() any {
+        return make([]byte, 0, 64*1024) // 64KB buffer
+    },
+}
+
+func processRequest(data []byte) []byte {
+    buf := bufPool.Get().([]byte)
+    defer func() {
+        buf = buf[:0]  // reset length, keep capacity
+        bufPool.Put(buf)
+    }()
+
+    // Use buf for processing
+    buf = append(buf, data...)
+    result := make([]byte, len(buf))
+    copy(result, buf)
+    return result
+}
+
+// Heap vs Stack benchmark illustration
+func stackAlloc() int {
+    sum := 0
+    for i := 0; i &lt; 1000; i++ {
+        x := i * i  // stack allocated
+        sum += x
+    }
+    return sum
+}
+
+func heapAlloc() int {
+    sum := 0
+    for i := 0; i &lt; 1000; i++ {
+        x := new(int)  // heap allocated
+        *x = i * i
+        sum += *x
+    }
+    return sum
+}
+
+func main() {
+    // Run: go build -gcflags="-m" to see escape analysis output
+    fmt.Println(noEscape())
+    p := escapes()
+    fmt.Println(*p)
+
+    result := processRequest([]byte("hello world"))
+    fmt.Println(string(result))
+
+    fmt.Println(stackAlloc())
+    fmt.Println(heapAlloc())
+}
+</code></pre>
+
+  <div class="chapter-summary">
+    <h5>Key Takeaways — Chapter 5</h5>
+    <ul>
+      <li>GCShape stenciling: all pointer-shaped types share one generic instantiation + a dictionary</li>
+      <li>Reflection is ~10–50× slower than direct code; cache <code>reflect.Type</code> per type</li>
+      <li>Push iterators (<code>iter.Seq</code>) are cheaper than pull — prefer them for simple pipelines</li>
+      <li>Go allocator tiers: mcache (lock-free, per-P) → mcentral → mheap (OS)</li>
+      <li>Stack variables are free; audit with <code>go build -gcflags="-m"</code> to find unexpected escapes</li>
+      <li><code>sync.Pool</code> objects are cleared every GC cycle — use for scratch buffers, not caches</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- CHAPTER 6 -->
+<!-- ============================================================ -->
+<div class="chapter" id="ch6">
+  <div class="chapter-header">
+    <div class="chapter-num">Chapter 06</div>
+    <h2>GC, Goroutines &amp; Scheduler</h2>
+  </div>
+
+  <h3 id="s6-1">6.1 Garbage Collector — Tri-Color Mark &amp; Sweep</h3>
+  <p>Go uses a <strong>concurrent, tri-color mark-and-sweep</strong> GC. Objects are classified as
+  white (unvisited), grey (seen but not scanned), or black (fully scanned). The GC runs concurrently
+  with application goroutines, using write barriers to maintain invariants.</p>
+  <p><strong>GC phases</strong>:</p>
+  <ol>
+    <li><strong>Sweep termination (STW)</strong>: brief stop-the-world to finish sweeping the previous cycle's dead spans and enable the write barrier.</li>
+    <li><strong>Mark</strong>: concurrent. GC goroutines scan roots (globals, stack of each goroutine), then scan grey objects and blacken them. Mutator goroutines also assist with marking if they perform allocations during this phase (<em>mark assist</em>).</li>
+    <li><strong>Mark termination (STW)</strong>: brief stop-the-world to flush remaining work, disable the write barrier, and compute the next GC trigger.</li>
+    <li><strong>Sweep</strong>: concurrent. Dead (white) objects' spans are lazily reclaimed as needed by new allocations. Sweeping is amortized — the sweeper does a proportional amount of work per allocation.</li>
+  </ol>
+  <p><strong>Write barriers</strong>: because the GC marks concurrently with mutators, a mutator could break the invariant that a black object never points to a white object (causing the GC to miss live objects). Go uses a <strong>hybrid write barrier</strong> (Dijkstra + Yuasa): when a pointer is written, both the old and new targets are shaded grey. This ensures neither can be missed by the mark phase without requiring STW for the entire mark phase. The write barrier is only active during the mark phase; it has no cost during normal execution.</p>
+  <p><strong>GOGC and GOMEMLIMIT</strong>: GOGC (default 100) sets the target: trigger GC when live heap since last collection has grown by GOGC%. Lower value = more frequent GC, less memory; higher = less GC, more memory. GOMEMLIMIT (Go 1.19+) sets a hard limit on the Go runtime's memory footprint. When approaching the limit, the GC becomes more aggressive, overriding GOGC if needed to stay under the limit. Together they replace the need for manual GC tuning in most production scenarios.</p>
+  <p><strong>Death spiral</strong>: if the GC cannot free enough memory fast enough (e.g., allocations outpace marking), the program spends most of its time in the GC and little time running user code, causing application latency to spike. Symptoms: CPU near 100%, throughput near zero, <span class="inline-code">runtime/metrics</span> shows high GC CPU fraction. Fixes: reduce allocation rate, increase GOGC, set GOMEMLIMIT, or use sync.Pool.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "runtime"
+    "runtime/debug"
+)
+
+func gcDemo() {
+    // Print GC stats
+    var stats runtime.MemStats
+    runtime.ReadMemStats(&amp;stats)
+    fmt.Printf("HeapAlloc: %d KB\n", stats.HeapAlloc/1024)
+    fmt.Printf("NumGC: %d\n", stats.NumGC)
+
+    // Trigger GC manually
+    runtime.GC()
+
+    runtime.ReadMemStats(&amp;stats)
+    fmt.Printf("After GC - HeapAlloc: %d KB\n", stats.HeapAlloc/1024)
+}
+
+func weakPointerDemo() {
+    // Go 1.24: weak pointers (don't prevent GC)
+    // import "weak"
+    // p := weak.Make(&amp;obj)
+    // v := p.Value() // returns nil if collected
+
+    fmt.Println("Weak pointers available in Go 1.24+")
+}
+
+func finalizerDemo() {
+    type Resource struct{ id int }
+
+    r := &amp;Resource{id: 42}
+
+    // Finalizer runs before GC collects the object
+    runtime.SetFinalizer(r, func(r *Resource) {
+        fmt.Printf("Finalizing resource %d\n", r.id)
+    })
+
+    r = nil         // r no longer referenced
+    runtime.GC()    // suggest GC run (not guaranteed immediately)
+}
+
+func gogcDemo() {
+    // GOGC=100 (default): GC runs when heap doubles
+    // GOGC=200: GC runs when heap triples (less frequent, more memory)
+    // GOGC=off: disable GC (not recommended for long-running programs)
+
+    // GOMEMLIMIT: hard limit on Go runtime memory usage
+    // GOMEMLIMIT=500MiB
+
+    prev := debug.SetGCPercent(200)  // reduce GC frequency
+    fmt.Println("Previous GOGC:", prev)
+    debug.SetGCPercent(prev) // restore
+
+    // SetMemoryLimit (Go 1.19+)
+    // debug.SetMemoryLimit(512 * 1024 * 1024) // 512 MiB
+}
+
+func main() {
+    gcDemo()
+    finalizerDemo()
+    gogcDemo()
+    fmt.Println("NumCPU:", runtime.NumCPU())
+    fmt.Println("GOMAXPROCS:", runtime.GOMAXPROCS(0))
+    fmt.Println("GoVersion:", runtime.Version())
+}
+</code></pre>
+
+  <h3 id="s6-2">6.2 Goroutines — Internals</h3>
+  <p>A goroutine starts with a small stack (8KB) that grows automatically using <strong>contiguous
+  stacks</strong>. When the stack needs to grow, a new larger stack is allocated and all stack variables
+  are copied. Old pointers are updated via a pointer map.</p>
+  <p><strong>Goroutine states</strong>:</p>
+  <ul>
+    <li><strong>Grunnable</strong>: ready to run, waiting for a P</li>
+    <li><strong>Grunning</strong>: currently executing on an M (OS thread)</li>
+    <li><strong>Gwaiting</strong>: blocked — waiting on a channel, mutex, I/O, timer, GC, etc. Does not occupy a P.</li>
+    <li><strong>Gdead</strong>: finished or not yet started. The <span class="inline-code">g</span> struct is recycled in a free pool.</li>
+    <li><strong>Gcopystack</strong>: stack is being grown/shrunk (transition state)</li>
+    <li><strong>Gscan*</strong>: GC is scanning this goroutine's stack</li>
+  </ul>
+  <p><strong>Segmented vs contiguous stacks</strong>: early Go versions used segmented stacks — each stack segment was a fixed chunk; overflow allocated a new segment linked to the old one. The problem: a "hot split" where a function near a segment boundary is called in a loop repeatedly triggers segment allocation/deallocation. Go 1.3 switched to contiguous stacks: on overflow, a new stack 2× larger is allocated, all live stack data is copied, and interior pointers are updated using a pointer bitmap generated by the compiler. This eliminates hot splits at the cost of pointer fixup on growth.</p>
+  <p><strong>Stack shrinking</strong>: during GC, if a goroutine's stack usage is less than ¼ of the allocated stack, the stack is shrunk by half. This keeps long-idle goroutines from wasting memory. The shrink is safe because the GC already has a consistent view of the stack via STW or a safepoint.</p>
+  <p><strong>Goroutine vs OS thread</strong>: goroutines are multiplexed onto OS threads (M's). Creating a goroutine costs ~2 KB (initial stack) vs ~1–2 MB for an OS thread. Context switching between goroutines in the same OS thread is ~100–200 ns vs ~1–10 µs for OS thread context switches, because goroutine switches happen in user space without a kernel call.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "runtime"
+    "sync"
+    "time"
+)
+
+// Goroutine states: running, runnable, waiting, dead
+func goroutineDemo() {
+    var wg sync.WaitGroup
+    results := make(chan int, 10)
+
+    for i := 0; i &lt; 5; i++ {
+        wg.Add(1)
+        go func(n int) {
+            defer wg.Done()
+            results &lt;- n * n
+        }(i)
+    }
+
+    // Close channel when all goroutines done
+    go func() {
+        wg.Wait()
+        close(results)
+    }()
+
+    for r := range results {
+        fmt.Println(r)
+    }
+}
+
+// Stack growth demo: recursive function forces stack growth
+func grow(n int) int {
+    if n == 0 {
+        // Print current goroutine stack info
+        var buf [256]byte
+        k := runtime.Stack(buf[:], false)
+        _ = buf[:k]
+        return 0
+    }
+    var localData [1024]byte // force stack usage
+    _ = localData
+    return grow(n-1) + 1
+}
+
+// Goroutine leak detection pattern
+func noLeak() {
+    done := make(chan struct{})
+
+    go func() {
+        select {
+        case &lt;-time.After(100 * time.Millisecond):
+            fmt.Println("goroutine finished")
+        case &lt;-done:
+            fmt.Println("goroutine cancelled")
+        }
+    }()
+
+    time.Sleep(50 * time.Millisecond)
+    close(done) // signal goroutine to stop — no leak
+}
+
+func main() {
+    goroutineDemo()
+
+    fmt.Println("Goroutines:", runtime.NumGoroutine())
+
+    // grow forces contiguous stack growth
+    result := grow(100)
+    fmt.Println("Stack depth:", result)
+
+    noLeak()
+    time.Sleep(100 * time.Millisecond)
+    fmt.Println("Final goroutines:", runtime.NumGoroutine())
+}
+</code></pre>
+
+  <h3 id="s6-3">6.3 The GMP Scheduler</h3>
+  <p>Go uses a <strong>GMP model</strong>: <strong>G</strong>oroutines (lightweight threads),
+  <strong>M</strong>achine threads (OS threads), and <strong>P</strong>rocessors (logical CPUs,
+  default = GOMAXPROCS). Each P has a local run queue (LRQ) and there is a global run queue (GRQ).</p>
+  <p><strong>Scheduling mechanics</strong>:</p>
+  <ul>
+    <li>Each P holds up to 256 runnable G's in its LRQ (a ring buffer). Overflow goes to the GRQ.</li>
+    <li>When a G blocks on a syscall, its M is detached from its P. Another idle M (or a newly created one) acquires the P to keep running other G's. When the syscall returns, the M tries to reacquire a P; if none is available, the G goes to the GRQ and the M becomes idle.</li>
+    <li><strong>Work stealing</strong>: an idle P randomly picks another P and steals half its LRQ. If all LRQs are empty, it checks the GRQ, then the netpoller. This distributes load without central coordination.</li>
+    <li><strong>Handoff</strong>: when an M blocks on a syscall, it "hands off" its P to another M (possibly a new OS thread), ensuring the P's runnable goroutines aren't stuck.</li>
+  </ul>
+  <p><strong>Sysmon</strong>: a special background goroutine (not tied to any P) that runs every 10ms–160ms. It retakes P's from M's that have been in a blocking syscall for too long (>20 µs), preempts goroutines that have been running for >10ms by sending them a SIGURG signal (async preemption, Go 1.14+), and polls the network (wake up goroutines whose I/O is ready). Sysmon keeps the scheduler fair even in CPU-bound programs that never voluntarily yield.</p>
+  <p><strong>Cooperative vs async preemption</strong>: before Go 1.14, goroutines could only be preempted at function call preambles (where the stack growth check happens). A tight loop with no function calls could hold a P indefinitely. Go 1.14 added asynchronous preemption: sysmon sends SIGURG to the M running the goroutine. A signal handler checks if preemption is needed and injects a call to the preemption function, which suspends the goroutine at a safepoint.</p>
+  <p><strong>Netpoller</strong>: Go wraps all network I/O in non-blocking syscalls and uses OS-specific polling mechanisms (epoll on Linux, kqueue on macOS, IOCP on Windows) via the netpoller thread. When a goroutine calls <span class="inline-code">Read</span> on a network connection and no data is available, the goroutine parks (becomes Gwaiting), freeing its P. The netpoller wakes it when data arrives. This means Go can handle thousands of concurrent network connections without thousands of OS threads — each blocked network goroutine costs only memory for its stack, not an OS thread.</p>
+
+<pre><code>package main
+
+import (
+    "fmt"
+    "runtime"
+    "sync"
+    "sync/atomic"
+    "time"
+)
+
+// Work stealing: idle P steals half of busy P's LRQ
+// GOMAXPROCS = number of P's (and OS threads)
+
+func schedulerDemo() {
+    procs := runtime.GOMAXPROCS(0)
+    fmt.Println("GOMAXPROCS:", procs)
+
+    // Computationally intensive work — uses all P's
+    var count atomic.Int64
+    var wg sync.WaitGroup
+
+    for i := 0; i &lt; procs*4; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            // CPU-bound work
+            for j := 0; j &lt; 1_000_000; j++ {
+                count.Add(1)
+            }
+        }()
+    }
+    wg.Wait()
+    fmt.Println("Total count:", count.Load())
+}
+
+// Preemption: goroutines yield at function calls
+// With async preemption (Go 1.14+): OS signals interrupt loops
+func longRunning() {
+    var wg sync.WaitGroup
+    wg.Add(2)
+
+    go func() {
+        defer wg.Done()
+        start := time.Now()
+        for time.Since(start) &lt; 50*time.Millisecond {
+            // busy loop — async preemption lets other goroutines run
+        }
+        fmt.Println("goroutine 1 done")
+    }()
+
+    go func() {
+        defer wg.Done()
+        fmt.Println("goroutine 2 running") // runs due to preemption
+        time.Sleep(10 * time.Millisecond)
+        fmt.Println("goroutine 2 done")
+    }()
+
+    wg.Wait()
+}
+
+// LockOSThread: pins goroutine to OS thread
+// Used for: CGo, GUI frameworks, thread-local storage
+func threadLocalDemo() {
+    var wg sync.WaitGroup
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+        runtime.LockOSThread()
+        defer runtime.UnlockOSThread()
+        // This goroutine runs on a dedicated OS thread
+        fmt.Println("Running on locked OS thread")
+    }()
+    wg.Wait()
+}
+
+// Netpoller: goroutines blocked on network I/O don't occupy a P
+// They are parked until the network event arrives (epoll/kqueue)
+func netpollerConcept() {
+    // When you do: conn.Read(buf)
+    // 1. Go checks if data is available (non-blocking syscall)
+    // 2. If not: goroutine parks, P is freed
+    // 3. Netpoller (separate OS thread) monitors the fd
+    // 4. When data arrives: goroutine is re-queued on a P
+    fmt.Println("Netpoller: I/O goroutines don't block OS threads")
+}
+
+func main() {
+    schedulerDemo()
+    longRunning()
+    threadLocalDemo()
+    netpollerConcept()
+
+    // runtime.Gosched() yields the current goroutine
+    go func() {
+        runtime.Gosched() // voluntarily yield
+        fmt.Println("After gosched")
+    }()
+
+    time.Sleep(10 * time.Millisecond)
+}
+</code></pre>
+
+  <h3 id="s6-4">6.4 Concurrency Patterns</h3>
+<pre><code>package main
+
+import (
+    "context"
+    "fmt"
+    "sync"
+    "time"
+)
+
+// Fan-out: one input, multiple workers
+func fanOut(ctx context.Context, input &lt;-chan int, workers int) []&lt;-chan int {
+    outputs := make([]&lt;-chan int, workers)
+    for i := 0; i &lt; workers; i++ {
+        ch := make(chan int, 10)
+        outputs[i] = ch
+        go func(out chan int) {
+            defer close(out)
+            for v := range input {
+                select {
+                case out &lt;- v * v:
+                case &lt;-ctx.Done():
+                    return
+                }
+            }
+        }(ch)
+    }
+    return outputs
+}
+
+// Fan-in: multiple inputs, one output
+func fanIn(ctx context.Context, channels ...<-chan int) &lt;-chan int {
+    out := make(chan int, 10)
+    var wg sync.WaitGroup
+
+    for _, ch := range channels {
+        wg.Add(1)
+        go func(c &lt;-chan int) {
+            defer wg.Done()
+            for v := range c {
+                select {
+                case out &lt;- v:
+                case &lt;-ctx.Done():
+                    return
+                }
+            }
+        }(ch)
+    }
+
+    go func() {
+        wg.Wait()
+        close(out)
+    }()
+    return out
+}
+
+// Context for cancellation
+func withTimeout() {
+    ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+    defer cancel()
+
+    ch := make(chan int, 1)
+    go func() {
+        time.Sleep(50 * time.Millisecond)
+        ch &lt;- 42
+    }()
+
+    select {
+    case v := &lt;-ch:
+        fmt.Println("Got:", v)
+    case &lt;-ctx.Done():
+        fmt.Println("Timeout:", ctx.Err())
+    }
+}
+
+// Rate limiter using ticker
+func rateLimited() {
+    ticker := time.NewTicker(10 * time.Millisecond)
+    defer ticker.Stop()
+
+    ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+    defer cancel()
+
+    count := 0
+    for {
+        select {
+        case &lt;-ticker.C:
+            count++
+            fmt.Printf("Request %d processed\n", count)
+        case &lt;-ctx.Done():
+            fmt.Printf("Total: %d requests\n", count)
+            return
+        }
+    }
+}
+
+func main() {
+    withTimeout()
+    rateLimited()
+}
+</code></pre>
+
+  <h3 id="s6-5">6.5 Memory Model &amp; Synchronization</h3>
+<pre><code>package main
+
+import (
+    "fmt"
+    "sync"
+    "sync/atomic"
+)
+
+// Go memory model: operations in one goroutine are visible
+// to another only if there's a "happens-before" relationship
+
+var (
+    counter int64
+    mu      sync.Mutex
+)
+
+// Race condition (WRONG)
+func raceCondition() {
+    var wg sync.WaitGroup
+    n := 0  // shared without synchronization
+    for i := 0; i &lt; 1000; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            n++ // DATA RACE! Run with: go run -race
+        }()
+    }
+    wg.Wait()
+    fmt.Println("n (racy):", n) // undefined
+}
+
+// Correct: using atomic
+func atomicCounter() {
+    var count atomic.Int64
+    var wg sync.WaitGroup
+    for i := 0; i &lt; 1000; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            count.Add(1)
+        }()
+    }
+    wg.Wait()
+    fmt.Println("count (atomic):", count.Load()) // always 1000
+}
+
+// Correct: using mutex
+func mutexCounter() {
+    n := 0
+    var mu sync.Mutex
+    var wg sync.WaitGroup
+    for i := 0; i &lt; 1000; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            mu.Lock()
+            n++
+            mu.Unlock()
+        }()
+    }
+    wg.Wait()
+    fmt.Println("n (mutex):", n) // always 1000
+}
+
+// Once: run exactly once
+var initialized bool
+var once sync.Once
+var sharedResource *expensiveResource
+
+type expensiveResource struct{ data string }
+
+func getResource() *expensiveResource {
+    once.Do(func() {
+        // Runs only once, even with concurrent calls
+        sharedResource = &amp;expensiveResource{data: "initialized"}
+        fmt.Println("Resource initialized")
+    })
+    return sharedResource
+}
+
+func main() {
+    // atomicCounter() // safe
+    mutexCounter() // safe
+
+    // Once
+    var wg sync.WaitGroup
+    for i := 0; i &lt; 5; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            r := getResource()
+            _ = r
+        }()
+    }
+    wg.Wait()
+    fmt.Println("All goroutines got resource")
+
+    // Channel as synchronization primitive
+    done := make(chan struct{})
+    value := 0
+
+    go func() {
+        value = 42        // write before close
+        close(done)       // signals completion
+    }()
+
+    &lt;-done               // happens-after the close
+    fmt.Println(value)   // guaranteed to see 42
+}
+</code></pre>
+
+  <div class="key-concept">
+    <h5>Key Takeaways — Chapter 6</h5>
+    <ul>
+      <li><strong>GC</strong>: Concurrent tri-color mark &amp; sweep. Tune with GOGC and GOMEMLIMIT.</li>
+      <li><strong>Goroutines</strong>: Cheap (8KB stack), cooperatively + asynchronously preempted.</li>
+      <li><strong>GMP Model</strong>: G=goroutines, M=OS threads, P=processors. Work stealing balances load.</li>
+      <li><strong>Netpoller</strong>: I/O-blocked goroutines release their P, allowing other goroutines to run.</li>
+      <li><strong>Memory model</strong>: Use channels, mutexes, or atomics to establish happens-before. Never rely on implicit ordering.</li>
+    </ul>
+  </div>
+</div>
+
+<div style="page-break-before: always; padding: 60px; text-align: center; background: #0a0a2e; color: white; min-height: 40vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+  <h2 style="font-size: 36px; margin-bottom: 16px; color: #00d2ff;">You've completed Deep Go</h2>
+  <p style="color: #a0a0b0; font-size: 16px; max-width: 500px; margin: 0 auto 32px;">
+    You now have a solid understanding of Go's internals — from memory layout and the type system
+    to the runtime scheduler and garbage collector.
+  </p>
+  <p style="color: #606080; font-size: 14px;">Keep exploring with: <code style="color: #d2a8ff;">go tool compile -S</code>,
+  <code style="color: #d2a8ff;">go build -gcflags="-m"</code>, <code style="color: #d2a8ff;">go run -race</code></p>
+</div>
+
+<script>
+(function () {
+
+  // ── Progress bar ──
+  var bar = document.getElementById('progress-bar');
+  function updateBar() {
+    var scrolled = window.scrollY;
+    var total = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (total > 0 ? (scrolled / total) * 100 : 0) + '%';
+  }
+  window.addEventListener('scroll', updateBar, { passive: true });
+  updateBar();
+
+  // ── Back-to-top button ──
+  var btt = document.getElementById('back-to-top');
+  window.addEventListener('scroll', function () {
+    btt.classList.toggle('visible', window.scrollY > 400);
+  }, { passive: true });
+  btt.addEventListener('click', function () {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ── Mobile sidebar toggle ──
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('sidebar-overlay');
+  var toggle = document.getElementById('nav-toggle');
+  var closeBtn = document.getElementById('sidebar-close');
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    overlay.classList.add('open');
+  }
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+  }
+  if (toggle)   toggle.addEventListener('click', openSidebar);
+  if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+  if (overlay)  overlay.addEventListener('click', closeSidebar);
+
+  // Close sidebar when a section link is clicked on mobile
+  sidebar.querySelectorAll('.nav-sections a').forEach(function(a) {
+    a.addEventListener('click', function() {
+      if (window.innerWidth <= 768) closeSidebar();
+    });
+  });
+
+  // ── Chapter group expand/collapse ──
+  document.querySelectorAll('.nav-ch-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var ch = btn.closest('.nav-ch');
+      ch.classList.toggle('open');
+    });
+  });
+
+  // ── Section number prominence in headings ──
+  var numRe = /^(\d+\.\d+)\s+/;
+  document.querySelectorAll('h3').forEach(function (h) {
+    var m = h.textContent.match(numRe);
+    if (!m) return;
+    var rest = h.innerHTML.replace(numRe, '');
+    h.innerHTML = '<span class="section-num">' + m[1] + '</span>' + rest;
+  });
+
+  // ── Active nav tracking via IntersectionObserver on sections ──
+  // Map section id → nav link
+  var sectionLinks = {};
+  sidebar.querySelectorAll('.nav-sections a[href^="#s"]').forEach(function(a) {
+    var id = a.getAttribute('href').slice(1);
+    sectionLinks[id] = a;
+  });
+
+  // Map chapter nav buttons
+  var chapterBtns = {};
+  document.querySelectorAll('.nav-ch').forEach(function(el) {
+    var btn = el.querySelector('.nav-ch-btn');
+    var chId = btn.getAttribute('data-ch');
+    if (chId) chapterBtns[chId] = { el: el, btn: btn };
+  });
+
+  var activeSection = null;
+  var activeChapter = null;
+
+  function setActive(sectionId) {
+    if (sectionId === activeSection) return;
+
+    // Deactivate old section
+    if (activeSection && sectionLinks[activeSection]) {
+      sectionLinks[activeSection].classList.remove('active');
+    }
+
+    // Activate new section
+    activeSection = sectionId;
+    if (activeSection && sectionLinks[activeSection]) {
+      sectionLinks[activeSection].classList.add('active');
+      // Scroll the link into view within sidebar
+      var link = sectionLinks[activeSection];
+      var sb = document.getElementById('sidebar');
+      var linkTop = link.offsetTop;
+      var sbScrollTop = sb.scrollTop;
+      var sbH = sb.clientHeight;
+      if (linkTop < sbScrollTop + 60 || linkTop > sbScrollTop + sbH - 80) {
+        sb.scrollTo({ top: linkTop - sbH / 2, behavior: 'smooth' });
+      }
+    }
+
+    // Determine chapter from section id (e.g. s3-4 → ch3)
+    var chNum = sectionId ? sectionId.match(/^s(\d+)-/) : null;
+    var newChapter = chNum ? 'ch' + chNum[1] : null;
+
+    if (newChapter !== activeChapter) {
+      // Deactivate old chapter
+      if (activeChapter && chapterBtns[activeChapter]) {
+        chapterBtns[activeChapter].btn.classList.remove('active');
+        chapterBtns[activeChapter].el.classList.remove('open');
+      }
+      activeChapter = newChapter;
+      if (activeChapter && chapterBtns[activeChapter]) {
+        chapterBtns[activeChapter].btn.classList.add('active');
+        chapterBtns[activeChapter].el.classList.add('open');
+      }
+    }
+  }
+
+  // Observe all h3 sections
+  var sectionIds = Object.keys(sectionLinks);
+  var sectionObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        setActive(entry.target.id);
+      }
+    });
+  }, { rootMargin: '-3px 0px -60% 0px', threshold: 0 });
+
+  sectionIds.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) sectionObserver.observe(el);
+  });
+
+  // ── Wrap pre blocks: code header with lang badge + copy button ──
+  document.querySelectorAll('pre').forEach(function (pre) {
+    var wrap = document.createElement('div');
+    wrap.className = 'code-wrap';
+    var header = document.createElement('div');
+    header.className = 'code-header';
+    var badge = document.createElement('span');
+    badge.className = 'lang-badge';
+    badge.textContent = 'Go';
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var code = pre.querySelector('code');
+      var text = code ? code.innerText : pre.innerText;
+      navigator.clipboard.writeText(text).then(function () {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+      });
+    });
+    header.appendChild(badge);
+    header.appendChild(btn);
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(header);
+    wrap.appendChild(pre);
+  });
+
+  // ── Go syntax highlighting ──
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function applyToPlain(html, re, cls) {
+    var parts = html.split(/(<span[^>]*>[\s\S]*?<\/span>)/);
+    return parts.map(function(part, i) {
+      if (i % 2 === 1) return part;
+      return part.replace(re, '<span class="' + cls + '">$1</span>');
+    }).join('');
+  }
+
+  document.querySelectorAll('pre code').forEach(function (block) {
+    var text = escHtml(block.innerText);
+    text = text.replace(/(`[^`]*`|"(?:[^"\\]|\\.)*")/g, '<span class="go-string">$1</span>');
+    text = applyToPlain(text, /\b(break|case|chan|const|continue|default|defer|else|fallthrough|for|func|go|goto|if|import|interface|map|package|range|return|select|struct|switch|type|var|make|new|append|len|cap|copy|delete|close|panic|recover|nil|true|false|iota)\b/g, 'go-keyword');
+    text = applyToPlain(text, /\b(int|int8|int16|int32|int64|uint|uint8|uint16|uint32|uint64|uintptr|float32|float64|complex64|complex128|byte|rune|string|bool|error|any)\b/g, 'go-type');
+    block.innerHTML = text;
+  });
+
+}());
+</script>
+</body>
+</html>
