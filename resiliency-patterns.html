@@ -228,6 +228,17 @@
   /* Inline code inside the dark Key Takeaways card */
   .chapter-summary .inline-code { background: rgba(255,255,255,0.08); color: #c4b5fd; }
 
+  /* Link back to the landing page, above the sidebar title */
+  #home-link { display: block; padding: 12px 16px 0; font-size: 12px; color: #8888aa; text-decoration: none; letter-spacing: .2px; }
+  #home-link:hover { color: #fff; }
+
+  /* Cover icon (matches the landing-page card icon) */
+  .cover-icon { width: 112px; height: 112px; margin: 36px auto; border-radius: 26px; display: grid; place-items: center;
+    color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    box-shadow: 0 18px 50px -18px color-mix(in srgb, var(--accent) 60%, transparent); }
+  .cover-icon svg { width: 60px; height: 60px; }
+
   /* Theme toggle in the sidebar header */
   #theme-toggle { background: none; border: 1px solid rgba(255,255,255,0.15); color: #a0a0c0; border-radius: 6px;
     width: 28px; height: 28px; cursor: pointer; font-size: 14px; line-height: 1; margin-left: auto; margin-right: 6px; }
@@ -397,7 +408,7 @@
   <div>
     <h1>Resiliency Patterns</h1>
     <h2>Building Fault-Tolerant Microservices</h2>
-    <div style="font-size: 72px; margin: 32px 0;">🛡️</div>
+    <div class="cover-icon" style="--accent:#fbbf24" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.4 8.2 8 9 4.6-.8 8-4.5 8-9V6l-8-3Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></div>
     <p style="color: #808090; font-size: 15px; max-width: 480px; margin: 0 auto 40px;">
       From the CAP theorem and the nines of availability to circuit breakers, outbox patterns,
       cache stampedes, and incident response — everything you need to keep distributed systems
@@ -2191,6 +2202,16 @@ kafka-consumer-groups.sh --bootstrap-server kafka:9092 \
     });
     label();
     logo.insertBefore(btn, document.getElementById('sidebar-close'));
+  }
+
+  // ── Back to the landing page ──
+  var sidebar = document.getElementById('sidebar');
+  if (sidebar && logo && !document.getElementById('home-link')) {
+    var home = document.createElement('a');
+    home.id = 'home-link';
+    home.href = 'index.html';
+    home.textContent = '← All courses';
+    sidebar.insertBefore(home, logo);
   }
 
   // ── Remember the last section read, for "Continue at…" on the landing page ──

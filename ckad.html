@@ -236,6 +236,17 @@
   /* Inline code inside the dark Key Takeaways card */
   .chapter-summary .inline-code { background: rgba(255,255,255,0.08); color: #c4b5fd; }
 
+  /* Link back to the landing page, above the sidebar title */
+  #home-link { display: block; padding: 12px 16px 0; font-size: 12px; color: #8888aa; text-decoration: none; letter-spacing: .2px; }
+  #home-link:hover { color: #fff; }
+
+  /* Cover icon (matches the landing-page card icon) */
+  .cover-icon { width: 112px; height: 112px; margin: 36px auto; border-radius: 26px; display: grid; place-items: center;
+    color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    box-shadow: 0 18px 50px -18px color-mix(in srgb, var(--accent) 60%, transparent); }
+  .cover-icon svg { width: 60px; height: 60px; }
+
   /* Theme toggle in the sidebar header */
   #theme-toggle { background: none; border: 1px solid rgba(255,255,255,0.15); color: #a0a0c0; border-radius: 6px;
     width: 28px; height: 28px; cursor: pointer; font-size: 14px; line-height: 1; margin-left: auto; margin-right: 6px; }
@@ -402,7 +413,7 @@
   <div>
     <h1>CKAD</h1>
     <h2>Certified Kubernetes Application Developer</h2>
-    <div style="font-size: 72px; margin: 32px 0;">☸️</div>
+    <div class="cover-icon" style="--accent:#a78bfa" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="1.6"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg></div>
     <p style="color: #808090; font-size: 15px; max-width: 480px; margin: 0 auto 40px;">
       Every exam domain, weighted the way the exam weights it — workloads, multi-container pods,
       rollouts, Helm and Kustomize, probes and debugging, RBAC, quotas, secrets, security contexts,
@@ -2430,6 +2441,16 @@ cat /opt/answer.txt</code></pre>
     });
     label();
     logo.insertBefore(btn, document.getElementById('sidebar-close'));
+  }
+
+  // ── Back to the landing page ──
+  var sidebar = document.getElementById('sidebar');
+  if (sidebar && logo && !document.getElementById('home-link')) {
+    var home = document.createElement('a');
+    home.id = 'home-link';
+    home.href = 'index.html';
+    home.textContent = '← All courses';
+    sidebar.insertBefore(home, logo);
   }
 
   // ── Remember the last section read, for "Continue at…" on the landing page ──
