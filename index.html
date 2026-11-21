@@ -4,61 +4,122 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Learning Notes</title>
+<meta name="description" content="Self-contained deep-dive courses on Go, distributed systems and Kubernetes.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Learning Notes">
+<meta property="og:description" content="Self-contained deep-dive courses on Go, distributed systems and Kubernetes.">
+<meta property="og:url" content="https://maksymus.github.io/learning-notes/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 x2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%2300d2ff%22/%3E%3Cstop offset=%221%22 stop-color=%22%237b2ff7%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%230f1117%22/%3E%3Cpath d=%22M9 8v16h6M17 24V8l7 16V8%22 fill=%22none%22 stroke=%22url(%23g)%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --text: #e6e6f0;
+    --muted: #b4b4c8;      /* card descriptions — AA on the card surface */
+    --subtle: #9a9ab5;     /* meta lines */
+    --surface: rgba(255,255,255,0.035);
+    --border: rgba(255,255,255,0.09);
+  }
   body {
     font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
-    font-size: 14px; line-height: 1.7; color: #e6e6f0;
-    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+    font-size: 14px; line-height: 1.7; color: var(--text);
+    background: #0a0a0a linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%) fixed;
     min-height: 100vh;
   }
-  .wrap { max-width: 900px; margin: 0 auto; padding: 80px 32px 64px; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 56px 32px 40px; }
 
-  header { text-align: center; margin-bottom: 64px; }
+  /* ── Header ── */
+  header { text-align: center; margin-bottom: 36px; }
   header h1 {
-    font-size: 56px; font-weight: 900; letter-spacing: -2px; margin-bottom: 14px;
+    font-size: 44px; font-weight: 900; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 10px;
     background: linear-gradient(90deg, #00d2ff, #7b2ff7);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     background-clip: text; color: #00d2ff;
   }
-  header p { font-size: 17px; font-weight: 300; color: #a0a0b0; }
-  header .meta {
-    display: inline-block; margin-top: 24px; padding-top: 20px;
-    border-top: 1px solid #333; font-size: 13px; color: #606080;
-  }
+  header p { font-size: 16px; font-weight: 300; color: var(--muted); }
+  header .meta { margin-top: 10px; font-size: 13px; color: var(--subtle); }
 
-  .courses { display: grid; gap: 20px; }
+  /* ── Subject filter ── */
+  .filters { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+  .filters button {
+    font: inherit; font-size: 13px; color: var(--muted); cursor: pointer;
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 5px 14px; border-radius: 999px; transition: color .15s, border-color .15s, background .15s;
+  }
+  .filters button:hover { color: #fff; border-color: rgba(255,255,255,0.25); }
+  .filters button[aria-pressed="true"] { color: #fff; background: rgba(123,47,247,0.18); border-color: #7b2ff7; }
+
+  /* ── Course grid ── */
+  .courses { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 
   .card {
-    display: block; text-decoration: none; color: inherit;
-    background: rgba(255,255,255,0.035);
-    border: 1px solid rgba(255,255,255,0.09);
-    border-radius: 12px; padding: 26px 28px;
-    transition: border-color .18s ease, background .18s ease, transform .18s ease;
+    --accent: #00d2ff;
+    position: relative; display: flex; flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: 12px; padding: 24px 26px 20px;
+    background-image: linear-gradient(135deg, color-mix(in srgb, var(--accent) 9%, transparent), transparent 55%);
+    transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
   }
-  .card:hover {
-    border-color: #7b2ff7; background: rgba(123,47,247,0.09);
+  .card:hover, .card:focus-within {
+    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+    border-left-color: var(--accent);
     transform: translateY(-2px);
+    box-shadow: 0 10px 30px -12px color-mix(in srgb, var(--accent) 45%, transparent);
   }
-  .card-top { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
-  .card-icon { font-size: 38px; line-height: 1; flex-shrink: 0; }
-  .card h2 { font-size: 24px; font-weight: 800; letter-spacing: -0.4px; color: #fff; }
-  .card .sub { font-size: 14px; color: #a0a0b0; font-weight: 300; margin-bottom: 16px; }
+  .card[hidden] { display: none; }
 
-  .tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .card-top { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+  .card-icon {
+    width: 42px; height: 42px; flex-shrink: 0; border-radius: 10px;
+    display: grid; place-items: center; color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+  .card-icon svg { width: 24px; height: 24px; }
+  .card h2 { font-size: 21px; font-weight: 800; letter-spacing: -0.3px; line-height: 1.25; }
+  /* Stretched link: the whole card is clickable, the "Continue" link sits above it */
+  .card h2 a { color: #fff; text-decoration: none; }
+  .card h2 a::after { content: ""; position: absolute; inset: 0; border-radius: 12px; }
+  .card h2 a:focus-visible { outline: none; }
+  .card:has(h2 a:focus-visible) { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .card .meta { font-size: 12.5px; color: var(--subtle); margin-bottom: 12px; }
+  .card .sub { font-size: 14px; color: var(--muted); font-weight: 300; margin-bottom: 16px; flex: 1; }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
   .tag {
-    font-size: 11px; letter-spacing: .6px; text-transform: uppercase;
-    color: #00d2ff; background: rgba(0,210,255,0.1);
-    border: 1px solid rgba(0,210,255,0.22);
-    padding: 3px 10px; border-radius: 999px;
+    font-size: 12px; color: color-mix(in srgb, var(--accent) 70%, #fff);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    padding: 2px 10px; border-radius: 999px;
   }
-  .tag.count { color: #c4b5fd; background: rgba(123,47,247,0.12); border-color: rgba(123,47,247,0.3); }
 
+  .cta { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding-top: 14px; border-top: 1px solid var(--border); font-size: 13px; }
+  .cta .start { color: var(--accent); font-weight: 600; }
+  .cta .continue {
+    order: -1;
+    position: relative; z-index: 1;     /* above the stretched link */
+    color: #fff; text-decoration: none; font-weight: 500;
+    max-width: 70%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .cta .continue:hover { text-decoration: underline; }
+  .cta .continue[hidden] { display: none; }
 
-  @media (max-width: 600px) {
-    .wrap { padding: 48px 20px 40px; }
-    header h1 { font-size: 38px; }
-    .card h2 { font-size: 20px; }
+  /* ── Footer ── */
+  footer {
+    margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border);
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px;
+    font-size: 13px; color: var(--subtle);
+  }
+  footer a { color: var(--muted); }
+  footer a:hover { color: #fff; }
+
+  @media (max-width: 760px) {
+    .wrap { padding: 40px 16px 32px; }
+    header h1 { font-size: 34px; }
+    .courses { grid-template-columns: 1fr; }
+    .card { padding: 20px 20px 16px; }
   }
 </style>
 </head>
@@ -68,73 +129,130 @@
   <header>
     <h1>Learning Notes</h1>
     <p>Self-contained deep-dive courses on Go, distributed systems and Kubernetes.</p>
-    <div class="meta">4 courses &middot; 28 chapters</div>
+    <div class="meta">4 courses &middot; 28 chapters &middot; ~5 hours of reading</div>
   </header>
+
+  <nav class="filters" aria-label="Filter by subject">
+    <button type="button" data-filter="all" aria-pressed="true">All</button>
+    <button type="button" data-filter="go" aria-pressed="false">Go</button>
+    <button type="button" data-filter="distributed" aria-pressed="false">Distributed systems</button>
+    <button type="button" data-filter="kubernetes" aria-pressed="false">Kubernetes</button>
+  </nav>
 
   <main class="courses">
 
-    <a class="card" href="deep-go.html">
+    <article class="card" data-group="go" data-file="deep-go.html" style="--accent:#38bdf8">
       <div class="card-top">
-        <div class="card-icon">&#128057;</div>
-        <h2>Deep Go</h2>
+        <div class="card-icon" aria-hidden="true">
+          <!-- layers: runtime internals -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="m2 13 10 5 10-5"/><path d="m2 18 10 5 10-5" opacity=".55"/></svg>
+        </div>
+        <h2><a href="deep-go.html">Deep Go</a></h2>
       </div>
-      <div class="sub">A comprehensive guide to Go internals &mdash; how the runtime actually represents and executes your code.</div>
+      <div class="meta">6 chapters &middot; ~1 h 20 min read</div>
+      <p class="sub">A comprehensive guide to Go internals &mdash; how the runtime actually represents and executes your code.</p>
       <div class="tags">
-        <span class="tag count">6 chapters</span>
         <span class="tag">Slices &amp; maps</span>
         <span class="tag">Interfaces</span>
         <span class="tag">Generics</span>
         <span class="tag">GC &amp; scheduler</span>
       </div>
-    </a>
+      <div class="cta"><span class="start">Start reading &rarr;</span><a class="continue" hidden></a></div>
+    </article>
 
-    <a class="card" href="concurrency-go.html">
+    <article class="card" data-group="go" data-file="concurrency-go.html" style="--accent:#2dd4bf">
       <div class="card-top">
-        <div class="card-icon">&#9881;&#65039;</div>
-        <h2>Concurrency in Go</h2>
+        <div class="card-icon" aria-hidden="true">
+          <!-- parallel lanes: goroutines -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10"/><path d="M4 12h16"/><path d="M4 18h7"/><path d="m17 3 3 3-3 3"/><path d="m14 15 3 3-3 3"/></svg>
+        </div>
+        <h2><a href="concurrency-go.html">Concurrency in Go</a></h2>
       </div>
-      <div class="sub">Goroutines, channels, sync primitives and scheduler internals, from first principles to lock-free structures.</div>
+      <div class="meta">10 chapters &middot; ~1 h 25 min read</div>
+      <p class="sub">Goroutines, channels, sync primitives and scheduler internals, from first principles to lock-free structures.</p>
       <div class="tags">
-        <span class="tag count">10 chapters</span>
         <span class="tag">Goroutines</span>
         <span class="tag">Channels</span>
         <span class="tag">Sync primitives</span>
         <span class="tag">Lock-free</span>
       </div>
-    </a>
+      <div class="cta"><span class="start">Start reading &rarr;</span><a class="continue" hidden></a></div>
+    </article>
 
-    <a class="card" href="resiliency-patterns.html">
+    <article class="card" data-group="distributed" data-file="resiliency-patterns.html" style="--accent:#fbbf24">
       <div class="card-top">
-        <div class="card-icon">&#128737;&#65039;</div>
-        <h2>Resiliency Patterns</h2>
+        <div class="card-icon" aria-hidden="true">
+          <!-- shield -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.4 8.2 8 9 4.6-.8 8-4.5 8-9V6l-8-3Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>
+        </div>
+        <h2><a href="resiliency-patterns.html">Resiliency Patterns</a></h2>
       </div>
-      <div class="sub">Building fault-tolerant microservices &mdash; how distributed systems fail, and the patterns that contain the damage.</div>
+      <div class="meta">6 chapters &middot; ~1 h 10 min read</div>
+      <p class="sub">Building fault-tolerant microservices &mdash; how distributed systems fail, and the patterns that contain the damage.</p>
       <div class="tags">
-        <span class="tag count">6 chapters</span>
         <span class="tag">Retries</span>
         <span class="tag">Load control</span>
         <span class="tag">Queues</span>
         <span class="tag">Caching</span>
       </div>
-    </a>
+      <div class="cta"><span class="start">Start reading &rarr;</span><a class="continue" hidden></a></div>
+    </article>
 
-    <a class="card" href="ckad.html">
+    <article class="card" data-group="kubernetes" data-file="ckad.html" style="--accent:#a78bfa">
       <div class="card-top">
-        <div class="card-icon">&#9784;&#65039;</div>
-        <h2>CKAD</h2>
+        <div class="card-icon" aria-hidden="true">
+          <!-- helm wheel -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="1.6"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
+        </div>
+        <h2><a href="ckad.html">CKAD</a></h2>
       </div>
-      <div class="sub">Certified Kubernetes Application Developer &mdash; every exam domain with working manifests, imperative commands and exam strategy.</div>
+      <div class="meta">6 chapters &middot; ~55 min read</div>
+      <p class="sub">Certified Kubernetes Application Developer &mdash; every exam domain with working manifests, imperative commands and exam strategy.</p>
       <div class="tags">
-        <span class="tag count">6 chapters</span>
         <span class="tag">Workloads</span>
         <span class="tag">Helm &amp; Kustomize</span>
         <span class="tag">RBAC &amp; security</span>
         <span class="tag">Networking</span>
       </div>
-    </a>
+      <div class="cta"><span class="start">Start reading &rarr;</span><a class="continue" hidden></a></div>
+    </article>
 
   </main>
 
+  <footer>
+    <span>Updated November 2026 &middot; every course prints cleanly to PDF (&#8984;P / Ctrl+P)</span>
+    <a href="https://github.com/maksymus/learning-notes">Source on GitHub</a>
+  </footer>
+
 </div>
+<script>
+(function () {
+  // ── Subject filter ──
+  var buttons = document.querySelectorAll('.filters button');
+  var cards = document.querySelectorAll('.card');
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var f = b.getAttribute('data-filter');
+      buttons.forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      cards.forEach(function (c) { c.hidden = f !== 'all' && c.getAttribute('data-group') !== f; });
+    });
+  });
+
+  // ── "Continue at N.M" from the section each course page last saved ──
+  cards.forEach(function (c) {
+    var file = c.getAttribute('data-file');
+    var saved = null;
+    try { saved = JSON.parse(localStorage.getItem('ln-progress:' + file)); } catch (e) {}
+    if (!saved || !saved.id) return;
+    var link = c.querySelector('.continue');
+    link.href = file + '#' + saved.id;
+    link.textContent = 'Continue at ' + saved.num + ' ' + saved.title + ' →';
+    link.title = link.textContent;
+    link.hidden = false;
+    c.querySelector('.start').textContent = 'From the start';
+    c.querySelector('.start').style.color = 'var(--subtle)';
+  });
+}());
+</script>
 </body>
 </html>

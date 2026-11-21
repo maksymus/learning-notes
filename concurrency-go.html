@@ -182,6 +182,68 @@
     #sidebar-overlay.open { display: block; }
   }
 </style>
+<!-- ln-shared:head -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 x2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%2300d2ff%22/%3E%3Cstop offset=%221%22 stop-color=%22%237b2ff7%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%230f1117%22/%3E%3Cpath d=%22M9 8v16h6M17 24V8l7 16V8%22 fill=%22none%22 stroke=%22url(%23g)%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E">
+<script>
+  // Apply the saved theme before first paint (shared key with every course page).
+  try { var t = localStorage.getItem('ln-theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+</script>
+<style>
+  /* Inline code inside the dark Key Takeaways card */
+  .chapter-summary .inline-code { background: rgba(255,255,255,0.08); color: #c4b5fd; }
+
+  /* Theme toggle in the sidebar header */
+  #theme-toggle { background: none; border: 1px solid rgba(255,255,255,0.15); color: #a0a0c0; border-radius: 6px;
+    width: 28px; height: 28px; cursor: pointer; font-size: 14px; line-height: 1; margin-left: auto; margin-right: 6px; }
+  #theme-toggle:hover { color: #fff; border-color: rgba(255,255,255,0.35); }
+
+  /* Dark theme: follows the OS unless the reader picked light/dark explicitly. Screen only — PDFs stay light. */
+  @media screen and (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) body { background: #151821; color: #d6d8e0; }
+    html:not([data-theme="light"]) p { color: #c9ccd6; }
+    html:not([data-theme="light"]) h3 { color: #ececf8 !important; }
+    html:not([data-theme="light"]) h4 { color: #c4c8ff; }
+    html:not([data-theme="light"]) .toc h2 { color: #ececf8; }
+    html:not([data-theme="light"]) .toc a { color: #d6d8e0; }
+    html:not([data-theme="light"]) .toc ul li { color: #9a9cb0; }
+    html:not([data-theme="light"]) .inline-code { background: #1e2130; color: #c4b5fd; }
+    html:not([data-theme="light"]) .tip { background: #0f2236; }
+    html:not([data-theme="light"]) .tip strong { color: #58a6ff; }
+    html:not([data-theme="light"]) .warning { background: #2a2110; }
+    html:not([data-theme="light"]) .warning strong { color: #f5b942; }
+    html:not([data-theme="light"]) .key-concept { background: #1b1530; border-color: #3d2f6b; }
+    html:not([data-theme="light"]) .key-concept h5 { color: #b49cff; }
+    html:not([data-theme="light"]) td { border-bottom-color: #2a2d3a; }
+    html:not([data-theme="light"]) tr:nth-child(even) { background: #151824; }
+    html:not([data-theme="light"]) tbody tr:hover { background: #1c2030 !important; }
+    html:not([data-theme="light"]) .section-break { border-top-color: #2a2d3a; }
+    html:not([data-theme="light"]) .section-num { color: #7a7d90; }
+    html:not([data-theme="light"]) .chapter-summary { border: 1px solid #2a2d3a; }
+  }
+  @media screen {
+    html[data-theme="dark"] body { background: #151821; color: #d6d8e0; }
+    html[data-theme="dark"] p { color: #c9ccd6; }
+    html[data-theme="dark"] h3 { color: #ececf8 !important; }
+    html[data-theme="dark"] h4 { color: #c4c8ff; }
+    html[data-theme="dark"] .toc h2 { color: #ececf8; }
+    html[data-theme="dark"] .toc a { color: #d6d8e0; }
+    html[data-theme="dark"] .toc ul li { color: #9a9cb0; }
+    html[data-theme="dark"] .inline-code { background: #1e2130; color: #c4b5fd; }
+    html[data-theme="dark"] .tip { background: #0f2236; }
+    html[data-theme="dark"] .tip strong { color: #58a6ff; }
+    html[data-theme="dark"] .warning { background: #2a2110; }
+    html[data-theme="dark"] .warning strong { color: #f5b942; }
+    html[data-theme="dark"] .key-concept { background: #1b1530; border-color: #3d2f6b; }
+    html[data-theme="dark"] .key-concept h5 { color: #b49cff; }
+    html[data-theme="dark"] td { border-bottom-color: #2a2d3a; }
+    html[data-theme="dark"] tr:nth-child(even) { background: #151824; }
+    html[data-theme="dark"] tbody tr:hover { background: #1c2030 !important; }
+    html[data-theme="dark"] .section-break { border-top-color: #2a2d3a; }
+    html[data-theme="dark"] .section-num { color: #7a7d90; }
+    html[data-theme="dark"] .chapter-summary { border: 1px solid #2a2d3a; }
+  }
+</style>
+<!-- /ln-shared:head -->
 </head>
 <body>
 
@@ -3916,5 +3978,55 @@ func main() {
 
 }());
 </script>
+<!-- ln-shared:body -->
+<script>
+(function () {
+  var file = location.pathname.split('/').pop() || 'index.html';
+  var root = document.documentElement;
+
+  // ── Theme toggle ──
+  function isDark() {
+    var t = root.getAttribute('data-theme');
+    if (t) return t === 'dark';
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  var logo = document.getElementById('sidebar-logo');
+  if (logo) {
+    var btn = document.createElement('button');
+    btn.id = 'theme-toggle';
+    function label() {
+      btn.textContent = isDark() ? '☀' : '☾';
+      btn.title = isDark() ? 'Switch to light theme' : 'Switch to dark theme';
+    }
+    btn.addEventListener('click', function () {
+      var next = isDark() ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('ln-theme', next); } catch (e) {}
+      label();
+    });
+    label();
+    logo.insertBefore(btn, document.getElementById('sidebar-close'));
+  }
+
+  // ── Remember the last section read, for "Continue at…" on the landing page ──
+  var heads = document.querySelectorAll('h3[id^="s"]');
+  if (!('IntersectionObserver' in window) || !heads.length) return;
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      var m = e.target.id.match(/^s(\d+)-(\d+)$/);
+      if (!m) return;
+      var title = e.target.textContent.replace(/^\s*\d+\.\d+\s*/, '').trim();
+      try {
+        localStorage.setItem('ln-progress:' + file, JSON.stringify({
+          id: e.target.id, num: m[1] + '.' + m[2], title: title, ts: Date.now()
+        }));
+      } catch (err) {}
+    });
+  }, { rootMargin: '-3px 0px -60% 0px', threshold: 0 });
+  heads.forEach(function (h) { obs.observe(h); });
+}());
+</script>
+<!-- /ln-shared:body -->
 </body>
 </html>
